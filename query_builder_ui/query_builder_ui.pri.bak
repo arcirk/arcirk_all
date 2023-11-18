@@ -1,0 +1,117 @@
+QT += core gui sql svg widgets
+
+TEMPLATE = lib
+CONFIG += staticlib
+
+CONFIG += c++20
+
+# You can make your code fail to compile if it uses deprecated APIs.
+# In order to do so, uncomment the following line.
+#DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
+
+include(../common/arcirk/arcirk.pri)
+include(../sql/query_builder/query_builder.pri)
+include(../tree_model/tree_model.pri)
+include(../highliter/qsourcehighlite.pri)
+include(../ws/websocket/websocket.pri)
+
+SOURCES += \
+    databasestructurewidget.cpp \
+    dialogquerybuilder.cpp \
+    dialogqueryconsole.cpp \
+    dialogtemptable.cpp \
+    querybuilderadditionallywidget.cpp \
+    querybuilderarbitraryexpressiondialog.cpp \
+    querybuilderfieldexdialog.cpp \
+    querybuilderfieldswidget.cpp \
+    querybuilderforeginkeydialog.cpp \
+    querybuildergenerator.cpp \
+    querybuildergroupbyfieldslistwidget.cpp \
+    querybuildergroupbyfunwidget.cpp \
+    querybuilderinnersaliaseswidget.cpp \
+    querybuilderpackagedialog.cpp \
+    querybuilderselectdialog.cpp \
+    querybuildersortwidget.cpp \
+    querybuildertableinnerswidget.cpp \
+    querybuildertableswidget.cpp \
+    querybuildertotalbyhierarchy.cpp \
+    querybuilderwherewidget.cpp \
+    querybuildesqlitesupportitemdialog.cpp \
+    queryeditoraddgroupdialog.cpp \
+    codeeditorwidget.cpp \
+    dialogsettablealias.cpp \
+    queryinnercomparewidget.cpp
+
+HEADERS += \
+    databasestructurewidget.h \
+    dialogquerybuilder.h \
+    dialogqueryconsole.h \
+    dialogtemptable.h \
+    querybuilderadditionallywidget.h \
+    querybuilderarbitraryexpressiondialog.h \
+    querybuilderfieldexdialog.h \
+    querybuilderfieldswidget.h \
+    querybuilderforeginkeydialog.h \
+    querybuildergenerator.h \
+    querybuildergroupbyfieldslistwidget.h \
+    querybuildergroupbyfunwidget.h \
+    querybuilderinnersaliaseswidget.h \
+    querybuilderpackagedialog.h \
+    querybuilderselectdialog.h \
+    querybuildersortwidget.h \
+    querybuildertableinnerswidget.h \
+    querybuildertableswidget.h \
+    querybuildertotalbyhierarchy.h \
+    querybuilderwherewidget.h \
+    querybuildesqlitesupportitemdialog.h \
+    queryeditoraddgroupdialog.h \
+    codeeditorwidget.h \
+    dialogsettablealias.h \
+    sqlite_utils.hpp \
+    queryinnercomparewidget.h
+
+# Default rules for deployment.
+unix {
+    target.path = $$[QT_INSTALL_PLUGINS]/generic
+}
+!isEmpty(target.path): INSTALLS += target
+
+windows:DEFINES += _CRT_SECURE_NO_WARNINGS
+windows:DEFINES += _WINDOWS
+
+DEFINES += IS_USE_QT_LIB
+
+Boost_USE_STATIC_LIBS = ON
+windows:LIBS += -lbcrypt
+windows:LIBS += -lsqlite3
+
+INCLUDEPATH += $(BOOST_INCLDUE)
+
+FORMS += \
+    databasestructurewidget.ui \
+    dialogquerybuilder.ui \
+    dialogqueryconsole.ui \
+    dialogtemptable.ui \
+    querybuilderadditionallywidget.ui \
+    querybuilderarbitraryexpressiondialog.ui \
+    querybuilderfieldexdialog.ui \
+    querybuilderfieldswidget.ui \
+    querybuilderforeginkeydialog.ui \
+    querybuildergroupbyfieldslistwidget.ui \
+    querybuildergroupbyfunwidget.ui \
+    querybuilderinnersaliaseswidget.ui \
+    querybuilderpackagedialog.ui \
+    querybuilderselectdialog.ui \
+    querybuildersortwidget.ui \
+    querybuildertableinnerswidget.ui \
+    querybuildertableswidget.ui \
+    querybuildertotalbyhierarchy.ui \
+    querybuilderwherewidget.ui \
+    querybuildesqlitesupportitemdialog.ui \
+    queryeditoraddgroupdialog.ui \
+    dialogsettablealias.ui \
+    queryinnercomparewidget.ui
+
+RESOURCES += \
+    resurses.qrc
+
