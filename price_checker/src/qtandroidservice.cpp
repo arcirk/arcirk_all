@@ -54,7 +54,7 @@ void QtAndroidService::startUpdate(const QString &file_path)
 QString QtAndroidService::getUuid()
 {
 #ifndef Q_OS_ANDROID
-    return {};
+    return QUuid::fromString(QSysInfo::machineUniqueId()).toString(QUuid::WithoutBraces);
 #endif
     QJniEnvironment env;
     jclass javaClass = env.findClass("ru/arcirk/lscanner/qtandroidservice/ActivityUtils");
@@ -123,9 +123,14 @@ QString QtAndroidService::androidId()
     return QUuid::createUuid().toString();
 }
 #else
+
+#include <QUuid>
 QtAndroidService::QtAndroidService(QObject *parent) : QObject(parent)
 {
 
 }
-
+QString QtAndroidService::getUuid()
+{
+    return QUuid::fromString(QSysInfo::machineUniqueId()).toString(QUuid::WithoutBraces);
+}
 #endif

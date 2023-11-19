@@ -61,6 +61,16 @@ QVariant TreeSortModel::headerData(int section, Qt::Orientation orientation, int
     return QSortFilterProxyModel::headerData(section, orientation, role);
 }
 
+QString TreeSortModel::dump(const int &row) const
+{
+    auto model = (TreeItemModel*)sourceModel();
+    if(model){
+        auto index = mapToSource(this->index(row, 0));
+        return model->to_object(index).dump().c_str();
+    }
+    return "";
+}
+
 bool TreeSortModel::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const {
 
     auto model = (TreeItemModel*)sourceModel();

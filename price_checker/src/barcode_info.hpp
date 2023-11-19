@@ -20,6 +20,7 @@ BOOST_FUSION_DEFINE_STRUCT(
         (std::string, trademark) //торговая марка
         (std::string, vendor_code) // артикул
         (std::string, line_uuid) // идетификатор строки если используется документ 1С на прямую
+        (int, is_marked)
         (int, quantity) //текущее количество
 );
 
@@ -34,6 +35,7 @@ class BarcodeInfo : public QObject
     Q_PROPERTY(bool is_qr READ is_qr NOTIFY is_qrChanged)
     Q_PROPERTY(QString imageSource READ imageSource NOTIFY imageSourceChanged)
     Q_PROPERTY(bool isLongImgLoad READ isLongImgLoad NOTIFY isLongImgLoadChanged)
+    Q_PROPERTY(bool isUpdate READ isUpdate WRITE setUpdate NOTIFY isUpdateChanged)
     Q_PROPERTY(QString unit READ unit NOTIFY unitChanged)
     Q_PROPERTY(QString currency READ currency NOTIFY currencyChanged)
     Q_PROPERTY(QString vendor_code READ vendor_code NOTIFY vendor_codeChanged)
@@ -75,7 +77,11 @@ public:
 
     Q_INVOKABLE void set1CRow(const QString& jsonObject);
 
+    bool isUpdate(){return m_update;}
+    void setUpdate(bool value){m_update = value;}
+
 private:
+    bool m_update;
 
 signals:
     void barcodeInfoChanged();
@@ -93,6 +99,7 @@ signals:
     void vendor_codeChanged();
     void line_uuidChanged();
     void quantityChanged();
+    void isUpdateChanged();
 };
 
 

@@ -33,17 +33,17 @@ function setRecBarcode(page, message){
             popupMessage.showNotify()
             return;
         }
-        wsClient.get_barcode_information(message, wsBarcodeInfo, true)
+        wsClient.get_barcode_information(message, wsBarcodeInfo)
     }else
         page.setFilterBarcode(message)
 }
 
 function onBarcode(value){
-    if(stackView.currentItem.objectName !== "pageDocument"){
+    if(stackView.currentItem !== pageDocument){
         wsClient.barcode_info_from_1c_service(value, wsBarcodeInfo)
     }else{
         if(!pageDocument.findToolBar)
-            wsClient.get_barcode_information(value, wsBarcodeInfo, true)
+            wsClient.get_barcode_information(value, wsBarcodeInfo)
         else
             pageDocument.setFilterBarcode(value)
     }
@@ -53,14 +53,14 @@ function onMessage(message){
     if(wsSettings.priceCheckerMode){
         openPageScanner(false);
     }
-    if(stackView.currentItem.objectName === "pageDocument"){
-        //setRecBarcode(pageDocument, message);
-    }else if(stackView.currentItem.objectName === "pageMarkedItems"){
-//        if(!pageMarkedItems.findToolBar){
-//            pageMarkedItems.setBarcode(message)
-//        }else
-//            pageMarkedItems.setFilterBarcode(message)
-    }else if(stackView.currentItem.objectName === "page1CDocument"){
+    if(stackView.currentItem === pageDocument){
+        setRecBarcode(pageDocument, message);
+    }else if(stackView.currentItem === pageMarkedItems){
+        if(!pageMarkedItems.findToolBar){
+            pageMarkedItems.setBarcode(message)
+        }else
+            pageMarkedItems.setFilterBarcode(message)
+    }else if(stackView.currentItem === page1CDocument){
 //        if(!page1CDocument.findToolBar)
 //            wsClient.get_barcode_information(message, wsBarcodeInfo, true)
 //        else
@@ -107,22 +107,25 @@ function onConnectionChanged( state){
 
 }
 
-function barcodeInfoChanged() {
+function barcodeInfoChanged(update) {
     if(wsSettings.priceCheckerMode)
         openPageScanner(false);
     else{
-        if(stackView.currentItem.objectName === "pageStart")
+        if(stackView.currentItem === pageStart)
             openPageScanner(false);
     }
 
-    if(stackView.currentItem.objectName === "pageScanner"){
+    if(stackView.currentItem === pageScanner){
         pageScanner.setBarcodeInfo(wsBarcodeInfo);
         if(wsBarcodeInfo.isLongImgLoad)
             wsClient.get_image_data(wsBarcodeInfo);
-    }else if(stackView.currentItem.objectName === "pageDocument"){
-        //pageDocument.setBarcode(wsBarcodeInfo);
-    }else if(stackView.currentItem.objectName === "page1CDocument"){
-        //page1CDocument.setBarcode(wsBarcodeInfo);
+    }else if(stackView.currentItem === pageDocument){
+        if(!update)
+            pageDocument.setBarcode(wsBarcodeInfo);
+        else
+            pageDocument.updateBarcodeInfo(wsBarcodeInfo);
+    }else if(stackView.currentItem === page1CDocument){
+        page1CDocument.setBarcode(wsBarcodeInfo);
     }
 }
 

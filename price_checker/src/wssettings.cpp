@@ -14,13 +14,15 @@ namespace arcirk{
     {
 
         read_private_conf();
-        if(client_conf.deviceId.empty())
-            init_device_id();
-        else{
-            m_device_id = QUuid::fromString(QString::fromStdString(client_conf.deviceId));
-        }
-        m_product = QSysInfo::prettyProductName();
+//        if(client_conf.deviceId.empty())
+//            init_device_id();
+//        else{
+//            m_device_id = QUuid::fromString(QString::fromStdString(client_conf.deviceId));
+//        }
+
         read_conf();
+
+        m_product = QSysInfo::prettyProductName();
 
     }
 
@@ -206,6 +208,8 @@ namespace arcirk{
         auto host_ = QString("http://%1/trade/hs/http_trade").arg(url().host());
         if(url_.indexOf("192.168.10.80") != -1)
            host_ = QString("http://%1/trade_exp/hs/http_trade").arg("192.168.10.9");
+        if(url_.indexOf("192.168.43.18") != -1)
+           host_ = QString("http://%1/trade_exp/hs/http_trade").arg("192.168.43.25");
 
         setHttpService(host_);
         setHttpPwd(crypt(pass.toLocal8Bit().toStdString(), std::string("my_key")).c_str());

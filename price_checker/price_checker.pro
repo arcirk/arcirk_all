@@ -89,6 +89,7 @@ HEADERS += \
     src/qtandroidservice.h \
     src/shared_struct.hpp \
     src/synch_data.hpp \
+    src/synch_operations.hpp \
     src/verify_database.hpp \
     src/wssettings.h
 

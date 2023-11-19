@@ -44,7 +44,7 @@ ApplicationWindow {
         id: barcodeInfo;
 
         onBarcodeInfoChanged: {
-            MainJs.barcodeInfoChanged()
+            MainJs.barcodeInfoChanged(barcodeInfo.isUpdate)
         }
 
         onImageSourceChanged: {
@@ -56,13 +56,29 @@ ApplicationWindow {
         }
     }
     property Settings wsSettings: Settings{
-
+        deviceId: machineUniqueId
         onUpdateWorkplaceView: function(org, suborg, stok, price){
             MainJs.updateWorkplaceView(org, suborg, stok, price)
         }
 
         onOptionsChanged: {
             optionsDlg.updateData()
+        }
+    }
+
+    DialogDocumentInfo{
+        id: docInfo
+        visible: false
+
+        onVisibleChanged: {
+            attachFocus.focus = !docInfo.visible;
+        }
+
+        onAccept: function(rowObject){
+            let j = ""
+            if(rowObject !== undefined)
+                j = JSON.stringify(rowObject);
+            wsClient.documentUpdate(docInfo.docNumber, docInfo.docDate, docInfo.docComent, j)
         }
     }
 
@@ -78,6 +94,12 @@ ApplicationWindow {
 
         onVisibleChanged: {
             attachFocus.focus = !optionsDlg.visible;
+        }
+
+        onAppModeChanged: {
+            if(stackView.currentItem != pageStart)
+                stackView.pop()
+            mainToolBar.updateToolbar("pageStart")
         }
     }
 
@@ -108,6 +130,23 @@ ApplicationWindow {
 
         onReadDocuments: function(jsonModel){
             if(stackView.currentItem == pageDocuments)
+                stackView.currentItem.setModel(jsonModel);
+        }
+        onReadDocumentTable: function(jsonModel){
+            MainJs.openPage(pageDocument)
+            if(stackView.currentItem == pageDocument)
+                stackView.currentItem.setModel(jsonModel);
+        }
+
+        onUpdateBarcode: function(barcode){
+            if(stackView.currentItem == pageDocument){
+                wsBarcodeInfo.isUpdate = true
+                wsClient.get_barcode_information(barcode, wsBarcodeInfo)
+            }
+        }
+
+        onReadDocumentMarkedTable: function(jsonModel){
+            if(stackView.currentItem == pageMarkedItems)
                 stackView.currentItem.setModel(jsonModel);
         }
     }
@@ -151,12 +190,12 @@ ApplicationWindow {
                 }else if(name === "docs"){
                     MainJs.openPage(pageDocuments)
                     mainToolBar.updateToolbar("pageDocuments", true)
-                    if(stackView.currentItem.objectName === "pageDocuments"){
-                        //wsClient.getDocuments();
+                    if(stackView.currentItem == pageDocuments){
+                        wsClient.getDocuments();
                     }
                 }else if(name === "sessions"){
                     MainJs.openPage(pageSessions)
-                    if(stackView.currentItem.objectName === "pageSessions"){
+                    if(stackView.currentItem == pageSessions){
                         //wsClient.get1CSessions();
                     }
                 }
@@ -183,26 +222,33 @@ ApplicationWindow {
 //            wsClient.getDocumentContent(ref)
 //            updateToolbarButton(false);
 //        }
+        onSelectedDocument: function(row, object){
+            pageDocument.rowObject = object
+            pageDocument.row = row
+            wsClient.getDocumentContent(object.ref)
+            mainToolBar.updateToolbar("pageDocument", true)
+        }
     }
 
     PageDocument{
         objectName: "pageDocument"
         id: pageDocument
         visible: false
-//        onViewBarcodeInfo: function(barcode){
-//            if(barcode.trim() !== ''){
-//                 openPageScanner(true);
-//                 wsClient.get_barcode_information(barcode, wsBarcodeInfo, false, true)
-//            }
-//        }
-//        onOpenMarkedTable: function(docRef, itemRef, itemText, quantity){
-//            pageMarkedItems.docRef = docRef
-//            pageMarkedItems.itemRef = itemRef
-//            pageMarkedItems.parentText = itemText
-//            pageMarkedItems.parentQuantity = quantity
-//            wsClient.getDocumentMarkedContent(itemRef)
-//            updateToolbarButton(false)
-//        }
+        onViewBarcodeInfo: function(barcode){
+            if(barcode.trim() !== ''){
+                 MainJs.openPageScanner(true)
+                 MainJs.onMessage(barcode)
+            }
+        }
+        onOpenMarkedTable: function(docRef, itemRef, itemText, quantity){
+            pageMarkedItems.docRef = docRef
+            pageMarkedItems.itemRef = itemRef
+            pageMarkedItems.parentText = itemText
+            pageMarkedItems.parentQuantity = quantity
+            MainJs.openPage(pageMarkedItems)
+            wsClient.getDocumentMarkedContent(itemRef)
+
+        }
     }
 
     PageMarkedItems{
@@ -210,11 +256,11 @@ ApplicationWindow {
         id: pageMarkedItems
         visible: false
 
-//        onQuantityChanged: function(quantity, parentQuantity){
-//            if(pageMarkedItems.is_document_1c){
-//                page1CDocument.rowChanged(pageMarkedItems.currentBarcode, quantity, parentQuantity)
-//            }
-//        }
+        onQuantityChanged: function(quantity, parentQuantity){
+            if(pageMarkedItems.is_document_1c){
+                page1CDocument.rowChanged(pageMarkedItems.currentBarcode, quantity, parentQuantity)
+            }
+        }
     }
 
     PageSessions{
@@ -305,15 +351,28 @@ ApplicationWindow {
         }
 
         onFindClicked:function(checked) {
-            if(stackView.currentItem.objectName === "pageDocument"){
+            if(stackView.currentItem == pageDocument){
                 pageDocument.findToolBar = checked;
                 attachFocus.focus = !checked;
-            }else if(stackView.currentItem.objectName === "pageMarkedItems"){
+            }else if(stackView.currentItem == pageMarkedItems){
                 pageMarkedItems.findToolBar = checked;
                 attachFocus.focus = !checked;
-            }else if(stackView.currentItem.objectName === "page1CDocument"){
+            }else if(stackView.currentItem == page1CDocument){
                 page1CDocument.findToolBar = checked;
                 attachFocus.focus = !checked;
+            }
+        }
+
+        onNewDocument: {
+            docInfo.docDate = Qt.formatDateTime(new Date(), "dd.MM.yyyy hh:mm:ss")
+            docInfo.docNumber = pageDocuments.newNumber();
+            docInfo.isNew = true
+            docInfo.visible = true
+        }
+
+        onRefresh: {
+            if(stackView.currentItem == pageDocument){
+                wsClient.verifyDocument(pageDocument.documentRef())
             }
         }
     }

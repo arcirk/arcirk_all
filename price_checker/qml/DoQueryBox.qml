@@ -13,6 +13,7 @@ Popup {
     focus: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
 
+    property var rowObject: undefined
     property int fontPixelSize: screenWidth > 1000 ? 20 : 16
 
     property int version: 0

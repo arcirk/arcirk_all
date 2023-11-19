@@ -37,3 +37,10 @@
 *.1cl
 *.cgr
 /.vs/
+/arcirk_apps.pro.user
+/build-price_checker-Android_Qt_6_5_2_Clang_armeabi_v7a-Debug/
+/price_checker/price_checker.pro.user.e73d076
+/price_checker/price_checker.pro.user
+/build-price_checker-Desktop_Qt_6_5_2_MSVC2019_64bit-Debug/
+/build-price_checker-Desktop_Qt_6_5_2_MSVC2019_64bit-Release/
+/build-price_checker-Android_Qt_6_5_2_Clang_armeabi_v7a-Release/

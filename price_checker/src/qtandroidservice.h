@@ -39,6 +39,7 @@ class QtAndroidService : public QObject
     Q_OBJECT
 public:
     QtAndroidService(QObject *parent = nullptr);
+    Q_INVOKABLE QString getUuid();
 signals:
     void messageFromService(const QString &message);
 };

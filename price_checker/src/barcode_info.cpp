@@ -8,6 +8,7 @@ BarcodeInfo::BarcodeInfo(QObject *parent)
     barcode_inf = arcirk::client::barcode_info();
     barcode_inf.currency = "руб.";
     barcode_inf.unit = "шт.";
+    m_update = false;
 }
 
 void BarcodeInfo::set_barcode_info_object(const std::string &source)

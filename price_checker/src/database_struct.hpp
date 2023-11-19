@@ -220,6 +220,31 @@ BOOST_FUSION_DEFINE_STRUCT(
         (int, version)
 );
 
+BOOST_FUSION_DEFINE_STRUCT(
+    (arcirk::database), document_table_view,
+    (int, _id)
+    (std::string, first)
+    (std::string, second)
+    (std::string, ref)
+    (std::string, cache)
+    (double, price)
+    (double, quantity)
+    (std::string, barcode)
+    (std::string, vendor_code)
+    (std::string, product)
+    (std::string, parent)
+    (std::string, nomenclature)
+    (std::string, trademark)
+    (std::string, unit)
+    (std::string, good)
+    (std::string, representation)
+    (int, is_marked)
+    (int, marked_quantity)
+    (int, is_group)
+    (int, deletion_mark)
+    (int, version)
+);
+
 namespace arcirk::database{
 
     enum tables{
@@ -291,108 +316,6 @@ namespace arcirk::database{
         {devExtendedLib, "ExtendedLib"},
     });
 
-//    const std::string documents_table_ddl = "CREATE TABLE Documents (\n"
-//                                            "    _id             INTEGER   PRIMARY KEY AUTOINCREMENT,\n"
-//                                            "    [first]         TEXT,\n"
-//                                            "    second          TEXT,\n"
-//                                            "    ref             TEXT (36) UNIQUE\n"
-//                                            "                             NOT NULL,\n"
-//                                            "    cache           TEXT      DEFAULT \"\",\n"
-//                                            "    number          TEXT      DEFAULT \"\",\n"
-//                                            "    date            INTEGER NOT NULL DEFAULT(0),\n"
-//                                            "    xml_type        TEXT      DEFAULT \"\",\n"
-//                                            "    version         INTEGER NOT NULL DEFAULT(0),\n"
-//                                            "    device_id       TEXT (36) DEFAULT [00000000-0000-0000-0000-000000000000],\n"
-//                                            "    workplace       TEXT (36) DEFAULT [00000000-0000-0000-0000-000000000000],\n"
-//                                            "    parent          TEXT (36) DEFAULT [00000000-0000-0000-0000-000000000000],\n"
-//                                            "    is_group        INTEGER   DEFAULT (0) NOT NULL,\n"
-//                                            "    deletion_mark   INTEGER   DEFAULT (0) NOT NULL"
-//                                            ");";
-
-//    const std::string document_table_table_ddl = "CREATE TABLE DocumentsTables (\n"
-//                                                 "    _id             INTEGER   PRIMARY KEY AUTOINCREMENT,\n"
-//                                                 "    [first]         TEXT,\n"
-//                                                 "    second          TEXT,\n"
-//                                                 "    ref             TEXT (36) UNIQUE\n"
-//                                                 "                             NOT NULL,\n"
-//                                                 "    cache           TEXT      DEFAULT \"\",\n"
-//                                                 "    price           DOUBLE DEFAULT (0),\n"
-//                                                 "    quantity        DOUBLE DEFAULT (0),\n"
-//                                                 "    barcode         TEXT      DEFAULT \"\",\n"
-//                                                 "    vendor_code     TEXT DEFAULT \"\",\n"
-//                                                 "    product         TEXT (36) DEFAULT [00000000-0000-0000-0000-000000000000],\n"
-//                                                 "    parent          TEXT (36) DEFAULT [00000000-0000-0000-0000-000000000000],\n"
-//                                                 "    is_group        INTEGER   DEFAULT (0) NOT NULL,\n"
-//                                                 "    deletion_mark   INTEGER   DEFAULT (0) NOT NULL,\n"
-//                                                 "    version         INTEGER NOT NULL DEFAULT(0)\n"
-//                                                 ");";
-
-//    const std::string nomenclature_table_ddl = "CREATE TABLE Nomenclature (\n"
-//                                               "    _id             INTEGER   PRIMARY KEY AUTOINCREMENT,\n"
-//                                               "    [first]         TEXT,\n"
-//                                               "    second          TEXT,\n"
-//                                               "    ref             TEXT (36) UNIQUE\n"
-//                                               "                             NOT NULL,\n"
-//                                               "    cache           TEXT      DEFAULT \"\",\n"
-//                                               "    vendor_code     TEXT DEFAULT \"\",\n"
-//                                               "    trademark       TEXT DEFAULT \"\",\n"
-//                                               "    unit            TEXT DEFAULT \"шт.\",\n"
-//                                               "    parent          TEXT (36) DEFAULT [00000000-0000-0000-0000-000000000000],\n"
-//                                               "    is_marked       INTEGER   DEFAULT (0) NOT NULL,\n"
-//                                               "    is_group        INTEGER   DEFAULT (0) NOT NULL,\n"
-//                                               "    deletion_mark   INTEGER   DEFAULT (0) NOT NULL,\n"
-//                                               "    version         INTEGER NOT NULL DEFAULT(0)\n"
-//                                               ");";
-
-//    const std::string document_table_marked_table_ddl = "CREATE TABLE DocumentsMarkedTables (\n"
-//                                                 "    _id             INTEGER   PRIMARY KEY AUTOINCREMENT,\n"
-//                                                 "    [first]         TEXT,\n"
-//                                                 "    second          TEXT,\n"
-//                                                 "    ref             TEXT (36) UNIQUE\n"
-//                                                 "                             NOT NULL,\n"
-//                                                 "    qr_code         TEXT,\n"
-//                                                 "    document_ref    TEXT (36) DEFAULT [00000000-0000-0000-0000-000000000000] NOT NULL,\n"
-//                                                 "    quantity        INTEGER DEFAULT (1),\n"
-//                                                 "    parent          TEXT (36) DEFAULT [00000000-0000-0000-0000-000000000000] NOT NULL,\n"
-//                                                 "    is_group        INTEGER   DEFAULT (0) NOT NULL,\n"
-//                                                 "    deletion_mark   INTEGER   DEFAULT (0) NOT NULL,\n"
-//                                                 "    version         INTEGER NOT NULL DEFAULT(0)\n"
-//                                                 ");";
-
-//    const std::string database_config_table_ddl = "CREATE TABLE DatabaseConfig (\n"
-//                                               "    _id             INTEGER   PRIMARY KEY AUTOINCREMENT,\n"
-//                                               "    [first]         TEXT,\n"
-//                                               "    second          TEXT,\n"
-//                                               "    ref             TEXT (36) UNIQUE\n"
-//                                               "                             NOT NULL,\n"
-//                                               "    version         INTEGER  DEFAULT(0)  NOT NULL\n"
-//                                               ");";
-
-//    const std::string pending_operations_table_ddl = "CREATE TABLE PendingOperations (\n"
-//                                               "    _id             INTEGER   PRIMARY KEY AUTOINCREMENT,\n"
-//                                               "    [first]         TEXT,\n"
-//                                               "    second          TEXT,\n"
-//                                               "    ref             TEXT (36) UNIQUE\n"
-//                                               "                             NOT NULL,\n"
-//                                               "    operation       TEXT,\n"
-//                                               "    parent          TEXT (36) DEFAULT [00000000-0000-0000-0000-000000000000]\n"
-//                                               ");";
-
-//    const std::string barcodes_table_ddl = "CREATE TABLE Barcodes (\n"
-//                                           "    _id             INTEGER   PRIMARY KEY AUTOINCREMENT,\n"
-//                                           "    [first]         TEXT,\n"
-//                                           "    second          TEXT,\n"
-//                                           "    ref             TEXT (36) UNIQUE\n"
-//                                           "                             NOT NULL,\n"
-//                                           "    barcode         TEXT (128) DEFAULT \"\",\n"
-//                                           "    vendor_code     TEXT DEFAULT \"\",\n"
-//                                           "    first_name      TEXT DEFAULT \"\",\n"
-//                                           "    parent          TEXT (36) DEFAULT [00000000-0000-0000-0000-000000000000],\n"
-//                                           "    is_group        INTEGER   DEFAULT (0) NOT NULL,\n"
-//                                           "    deletion_mark   INTEGER   DEFAULT (0) NOT NULL,\n"
-//                                           "    version         INTEGER NOT NULL DEFAULT(0)\n"
-//                                               ");";
-
     const inline std::string documents_table_view_ddl(){return "CREATE VIEW DocumentsTableView AS\n"
                                                  "    SELECT DocumentsTables._id,\n"
                                                  "           DocumentsTables.[first],\n"
@@ -413,7 +336,7 @@ namespace arcirk::database{
                                                  "           IFNULL(Nomenclature.unit, \"шт.\") AS unit,\n"
                                                  "           IFNULL(Nomenclature.vendor_code, \"\") AS vendor_code,\n"
                                                  "           IFNULL(Nomenclature.[first], \"\") AS good,\n"
-                                                 "           DocumentsTables.barcode || \"/\" || IFNULL(Nomenclature.vendor_code, \"\") AS representation,\n"
+                                                 "           DocumentsTables.barcode || \"/\" || IFNULL(Nomenclature.vendor_code, \"\") || \"/\" || IFNULL(Nomenclature.[first], \"\") AS representation,\n"
                                                  "           COUNT(DocumentsMarkedTables._id) AS marked_quantity\n"
                                                  "      FROM DocumentsTables AS DocumentsTables\n"
                                                  "           LEFT JOIN\n"
@@ -424,104 +347,5 @@ namespace arcirk::database{
                                                  "           DocumentsMarkedTables AS DocumentsMarkedTables ON DocumentsTables.ref = DocumentsMarkedTables.parent\n"
                "     GROUP BY DocumentsTables.ref;";};
 
-
-//    static inline nlohmann::json table_default_json(arcirk::database::tables table) {
-
-//        //using namespace arcirk::database;
-//        switch (table) {
-//            case tbUsers:{
-//                break;
-//            }
-//            case tbMessages:{
-//                break;
-//            }
-//            case tbOrganizations:{
-//                break;
-//            }
-//            case tbSubdivisions:{
-//                break;
-//            }
-//            case tbWarehouses:{
-//                break;
-//            }
-//            case tbPriceTypes:{
-//                break;
-//            }
-//            case tbWorkplaces:{
-//                break;
-//            }
-//            case tbDevices:{
-//                break;
-//            }
-//            case tbDocumentsTables: {
-//                auto tbl = document_table();
-//                tbl.ref = arcirk::uuids::nil_string_uuid();
-//                tbl.price = 0;
-//                tbl.quantity = 0;
-//                tbl.parent = arcirk::uuids::nil_string_uuid();
-//                return pre::json::to_json(tbl);
-
-//            }
-//            case tbDocuments: {
-//                auto tbl = documents();
-//                tbl.ref = arcirk::uuids::nil_string_uuid();
-//                tbl.device_id = arcirk::uuids::nil_string_uuid();
-//                tbl.date = 0;
-//                tbl.parent = arcirk::uuids::nil_string_uuid();
-//                tbl.is_group = 0;
-//                tbl.deletion_mark = 0;
-//                return pre::json::to_json(tbl);
-//            }
-//            case tbPendingOperations: {
-//                auto tbl = pending_operations();
-//                tbl.ref = arcirk::uuids::nil_string_uuid();
-//                tbl.parent = arcirk::uuids::nil_string_uuid();
-//                return pre::json::to_json(tbl);
-//            }
-//            case tbNomenclature: {
-//                auto tbl = nomenclature();
-//                tbl.ref = arcirk::uuids::nil_string_uuid();
-//                tbl.parent = arcirk::uuids::nil_string_uuid();
-//                tbl.parent = arcirk::uuids::nil_string_uuid();
-//                tbl.is_group = 0;
-//                tbl.deletion_mark = 0;
-//                return pre::json::to_json(tbl);
-//            }
-//            case tbBarcodes: {
-//                auto tbl = barcodes();
-//                tbl.ref = arcirk::uuids::nil_string_uuid();
-//                tbl.parent = arcirk::uuids::nil_string_uuid();
-//                tbl.is_group = 0;
-//                tbl.deletion_mark = 0;
-//                return pre::json::to_json(tbl);
-//            }
-//            case tbDocumentsMarkedTables: {
-//                auto tbl = document_marked_table();
-//                tbl.ref = arcirk::uuids::nil_string_uuid();
-//                tbl.first = "Qr code";
-//                tbl.second = "Qr code";
-//                tbl.quantity = 1;
-//                tbl.document_ref = arcirk::uuids::nil_string_uuid();
-//                tbl.parent = arcirk::uuids::nil_string_uuid();
-//                tbl.is_group = 0;
-//                tbl.deletion_mark = 0;
-//                return pre::json::to_json(tbl);
-//            }
-//            case tables_INVALID:{
-//                break;
-//            }
-//            case tbDevicesType:
-//                break;
-//        }
-
-//        return {};
-//    }
-
-//    template<typename T>
-//    static inline T table_default_struct(arcirk::database::tables table){
-//        auto j = table_default_json(table);
-//        auto result = pre::json::from_json<T>(j);
-//        return result;
-//    }
 }
 #endif // DATABASE_STRUCT_HPP

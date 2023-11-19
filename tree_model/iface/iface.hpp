@@ -129,15 +129,18 @@ namespace arcirk::tree_model {
             explicit IQMLTreeItemModel(QObject *parent = nullptr)
                 : TreeItemModel(parent){
                 setProperty("typeName", typeid(this).name());
+                set_hierarchical_list(false);
             }
             Q_INVOKABLE int getColumnIndex(const QString& name){
                 return column_index(name);
             }
+
             Q_INVOKABLE QString value(const QModelIndex &index, int role = Qt::DisplayRole){
                 return data(index, role).toString();
             }
 
-            Q_INVOKABLE QString dump(const QModelIndex& index){
+            Q_INVOKABLE QString dump(const int& row){
+                auto index = this->index(row, 0);
                 return to_object(index).dump().c_str();
             }
 
@@ -161,6 +164,8 @@ namespace arcirk::tree_model {
                 return data(this->index(index.row(), i)).toString();
             }
 
+
+
             Q_INVOKABLE void insertRow(int pos, const QString& rowJson){
                 if(json::accept(rowJson.toStdString())){
                     if(insertRows(pos, 1)){
@@ -169,15 +174,14 @@ namespace arcirk::tree_model {
                     }
                 }
             }
+
             void insertRow(int pos, const json& rowJson){
                 if(insertRows(pos, 1)){
                     set_object(index(pos, 0), rowJson);
                     emit rowCountChanged(rowCount());
                 }
             }
-//            Q_INVOKABLE void addRow(const QString& barcode, const QString& parent, int quantity){
 
-//            }
             void addRow(const json& row){
                 add(row);
             }
@@ -192,25 +196,29 @@ namespace arcirk::tree_model {
                     set_object(index(0,0), object);
                 }
             };
+
             void updateRow(const json& obj, int index){set_object(this->index(index, 0), obj);};
+
+            void updateRow(const json& obj, const QModelIndex& index){set_object(index, obj);};
 
             Q_INVOKABLE void updateRow(const QString& barcode, const int quantity, int index){
                 auto obj = to_object(this->index(index, 0));
                 obj["barcode"] = barcode.toStdString();
                 obj["quantity"] = quantity;
-                obj["representation"] = QString("%1 / %2").arg(barcode).arg(obj["vendor_code"].get<std::string>().c_str()).toStdString();
+                obj["representation"] = QString("%1 / %2 / %3").arg(barcode).arg(obj["good"].get<std::string>().c_str()).arg(obj["vendor_code"].get<std::string>().c_str()).toStdString();
                 updateRow(obj, index);
             }
 
             Q_INVOKABLE void moveTop(const QModelIndex &index){
                 moveTop(index.row());
             }
+
             Q_INVOKABLE QString getObjectToString(int row){
                 auto object = to_object(index(row, 0));
                 return object.dump().c_str();
             }
-            Q_INVOKABLE QModelIndex findInTable(const QString &value, int column, bool findData){
-                Q_UNUSED(findData);
+
+            Q_INVOKABLE QModelIndex findInTable(const QString &value, int column){
                 return find(column, value);
             }
 

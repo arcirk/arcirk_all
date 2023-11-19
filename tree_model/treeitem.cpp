@@ -40,8 +40,10 @@ TreeItem::TreeItem(const json &data, TreeItem *parent)
           m_item_data["is_group"] = 0;
     }
 
-    m_item_data["parent"] = tree::quuid_to_string(parent->ref()).toStdString();
     m_conf = parent->conf();
+    if(m_conf->hierarchical_list())
+        m_item_data["parent"] = tree::quuid_to_string(parent->ref()).toStdString();
+
     m_is_group = m_item_data.value("is_group", 0) != 0;
 
     init_ids();
@@ -216,7 +218,8 @@ void TreeItem::set_object(const json &object, bool upgrade_database){
     if(m_item_data.find("ref") == m_item_data.end())
         m_item_data["ref"] = tree::generate_uuid().toStdString();
 
-    m_item_data["parent"] = tree::quuid_to_string(m_parentItem->ref()).toStdString();
+    if(m_conf->hierarchical_list())
+        m_item_data["parent"] = tree::quuid_to_string(m_parentItem->ref()).toStdString();
 
     if(m_item_data.find("is_group") == m_item_data.end())
         m_item_data["is_group"] = 0;

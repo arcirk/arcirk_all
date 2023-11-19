@@ -5,7 +5,7 @@ import QtQuick.Controls.Material.impl 2.15
 import QtQuick.Layouts 1.12
 
 Popup {
-    id: popupSettingsDialog
+    id: control
     anchors.centerIn: parent
     width: screenWidth > 1000 ? parent.width / 2 : parent.width - 20
     height: parent.height - 20
@@ -16,6 +16,7 @@ Popup {
 
     ///////////////////////////
     signal webSocketConnect();
+    signal appModeChanged();
     ///////////////////////////
 
     function updateData(){
@@ -115,6 +116,8 @@ Popup {
                                             url_ = "ws://192.168.35.10:8080";
                                         }else if (key === "Демо сервер"){
                                             url_ = "ws://192.168.10.80:8080";
+                                        }else if (key === "Демо сервер 1"){
+                                            url_ = "ws://192.168.43.18:8080";
                                         }
                                         wsSettings.setDefault(url_);
                                     }
@@ -153,13 +156,19 @@ Popup {
                                                 btnOptions.menuItemSelect("Демо сервер")
                                             }
                                         }
+                                        MenuItem {
+                                            text: "Демо сервер"
+                                            onTriggered: {
+                                                btnOptions.menuItemSelect("Демо сервер 1")
+                                            }
+                                        }
                                     }
                                 }
                             }
                             Text{
                                 font.pixelSize: fontPixelSize
                                 text: "Пользователь:"
-                                color: popupSettingsDialog.theme === "Light" ? "#424242" : "#efebe9"
+                                color: control.theme === "Light" ? "#424242" : "#efebe9"
                                 padding: 0
                             }
 
@@ -167,7 +176,7 @@ Popup {
                                 id: txtUser
                                 font.pixelSize: fontPixelSize
                                 text: wsSettings.userName
-                                color: popupSettingsDialog.theme === "Light" ? "#424242" : "#efebe9"
+                                color: control.theme === "Light" ? "#424242" : "#efebe9"
                                 Material.accent: Material.Blue
                                 Layout.fillWidth: true
                                 wrapMode: Text.WordWrap
@@ -185,7 +194,7 @@ Popup {
                             Text{
                                 font.pixelSize: fontPixelSize
                                 text: "Пароль:"
-                                color: popupSettingsDialog.theme === "Light" ? "#424242" : "#efebe9"
+                                color: control.theme === "Light" ? "#424242" : "#efebe9"
                             }
 
                             RowLayout{
@@ -196,7 +205,7 @@ Popup {
                                     id: txtPass
                                     font.pixelSize: fontPixelSize
                                     text: wsSettings.hash.length > 0 ? "***" : "";
-                                    color: popupSettingsDialog.theme === "Light" ? "#424242" : "#efebe9"
+                                    color: control.theme === "Light" ? "#424242" : "#efebe9"
 
                                     echoMode: TextInput.Password
                                     Material.accent: Material.Blue
@@ -212,9 +221,9 @@ Popup {
                                     }
 
                                     onEnabledChanged: {
-                                        var textColor = popupSettingsDialog.theme === "Light" ? "#424242" : "#efebe9"
+                                        var textColor = control.theme === "Light" ? "#424242" : "#efebe9"
                                         if(txtPass.enabled){
-                                            txtPass.color = popupSettingsDialog.theme === "Light" ? "#424242" : "#efebe9"
+                                            txtPass.color = control.theme === "Light" ? "#424242" : "#efebe9"
                                         }else{
                                             txtPass.color = "grey";
                                         }
@@ -278,7 +287,7 @@ Popup {
                             Text{
                                 font.pixelSize: fontPixelSize
                                 text: "Идентификатор:"
-                                color: popupSettingsDialog.theme === "Light" ? "#424242" : "#efebe9"
+                                color: control.theme === "Light" ? "#424242" : "#efebe9"
                             }
 
                             TextField{
@@ -294,7 +303,7 @@ Popup {
                             Text{
                                 font.pixelSize: fontPixelSize
                                 text: "Продукт:"
-                                color: popupSettingsDialog.theme === "Light" ? "#424242" : "#efebe9"
+                                color: control.theme === "Light" ? "#424242" : "#efebe9"
 
                             }
                             TextField{
@@ -310,13 +319,13 @@ Popup {
                             Text{
                                 font.pixelSize: fontPixelSize
                                 text: "Http сервис 1C:"
-                                color: popupSettingsDialog.theme === "Light" ? "#424242" : "#efebe9"
+                                color: control.theme === "Light" ? "#424242" : "#efebe9"
                             }
                             TextField{
                                 id: txtHttpService
                                 font.pixelSize: fontPixelSize
                                 text: wsSettings.httpService
-                                //color: popupSettingsDialog.theme === "Light" ? "#424242" : "#efebe9"
+                                //color: control.theme === "Light" ? "#424242" : "#efebe9"
                                 Material.accent: Material.Blue
                                 Layout.fillWidth: true
                                 color: "grey"
@@ -407,6 +416,7 @@ Popup {
                                 onCheckedChanged: {
                                     wsSettings.priceCheckerMode = isPriceCheckerMode.checked
                                     wsSettings.save()
+                                    control.appModeChanged()
                                 }
 
                                 //enabled: false //в этом проекте всегда ложь
@@ -456,7 +466,7 @@ Popup {
                 icon.source:  wsClient.isStarted() ? "qrc:/img/lan_check_online.png" : "qrc:/img/lan_check_offline.png"
                 onClicked: {
                     if(!wsClient.isStarted())
-                        popupSettingsDialog.webSocketConnect();
+                        control.webSocketConnect();
                     else
                        wsClient.close();
                 }
@@ -469,7 +479,7 @@ Popup {
 
                 onClicked: {
                     wsSettings.save()
-                    popupSettingsDialog.visible = false
+                    control.visible = false
                 }
             }
 

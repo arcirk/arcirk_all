@@ -59,5 +59,9 @@
         <file>qml/DialogDocumentInfo.qml</file>
         <file>qml/DatePicker.qml</file>
         <file>js/PageDocumentsJs.js</file>
+        <file>js/ListViewJs.js</file>
+        <file>js/PageDocumentJs.js</file>
+        <file>qml/DialogEditBarcode.qml</file>
+        <file>js/PageMarkedItemsJs.js</file>
     </qresource>
 </RCC>

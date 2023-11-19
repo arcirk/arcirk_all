@@ -1,5 +1,5 @@
 function new_number(){
-    let m = wsDocuments.max("_id");
+    let m = wsClient.dataMax();
     if(m > 0)
         return wsClient.documentGenerateNewNumber(m + 1);
     else

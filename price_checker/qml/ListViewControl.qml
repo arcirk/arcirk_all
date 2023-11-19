@@ -4,27 +4,34 @@ import QtQuick.Controls.Material 2.15
 import QtQuick.Controls.Material.impl 2.15
 import QtQuick.Layouts 1.12
 
-
 ListView {
     id: control
-    leftMargin: 10
-    rightMargin: 10
+//    leftMargin: 10
+//    rightMargin: 10
+//    topMargin: 10
     anchors.fill: parent
     displayMarginBeginning: 40
     displayMarginEnd: 40
     spacing: 12
 
-    property string objectName: ""
+
+    property int currentRow: -1
+    property bool quantityVisible: false
+    //property var elide: Text.ElideRight
+    property ListModel delegateMenu: undefined
+    property var menuProperty: undefined
 
     function setSourceModel(modelObject){
         control.model = modelObject
     }
 
-    signal selectedRow(var modelindex)
+    signal selectedRow(int row, var object)
     signal removeRow(var modelindex)
+    signal menuTriggered(int row, string command, var object, string comment)
 
     delegate: Column {
         spacing: 6
+        property QtObject parentModel: control.model
         Row {
             id: messageRow
             spacing: 6
@@ -32,29 +39,19 @@ ListView {
             ListItemDelegate{
                 id: delegate
                 objectName: control.objectName
-                width: listView.width - messageRow.spacing - 12
-                rowObject: JSON.parse(control.model.dump(model) )
+                width: control.width - messageRow.spacing + 5// - 12
+                row: model.row
+                menu: control.delegateMenu
+                quantityVisible: control.quantityVisible
+                isSelectedItem: control.currentRow === model.row ? true : false
+                menuProperty: control.menuProperty
 
-//                onMenuTriggered: function(command){
-//                    console.debug("onMenuTriggered: " + command)
-//                    if(command === "mnuOpen"){
-//                        docInfo.docNumber = wsDocuments.get(model.row, "number") //model.number
-//                        docInfo.docDate = wsClient.documentDate(wsDocuments.get(model.row, "date")) //model.date
-//                        docInfo.docComent = delegate.getComment()
-//                        //docInfo.docSourceComment = delegate.getSourceComment();
-//                        docInfo.modelIndex = model;
-//                        docInfo.visible = true
-//                    }else if(command === "mnuDelete"){
-//                        queryBox.text = "Удалить выбранный документ?"
-//                        queryBox.uuid = wsDocuments.get(model.row, "ref") //model.ref
-//                        queryBox.version = Number(wsDocuments.get(model.row, "version")); //model.version
-//                        queryBox.visible = true
-//                    }
-//                }
-//                onClicked: function(row){
-//                    console.log("onSelectItem " + row)
-//                    listView.selectedRow(wsDocuments.index(model.row,0))
-//                }
+                onPopupMenuTriggered: function(row, command, object, comment){
+                    control.menuTriggered(row, command, object, comment)
+                }
+                onItemClicked: function(row, object){                    
+                    control.selectedRow(row, object)
+                }
             }
         }
     }

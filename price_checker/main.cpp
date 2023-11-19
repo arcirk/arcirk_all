@@ -83,6 +83,8 @@ int main(int argc, char *argv[])
 
     QtAndroidService *qtAndroidService = new QtAndroidService(&app);
     context->setContextProperty(QLatin1String("qtAndroidService"), qtAndroidService);
+    context->setContextProperty(QLatin1String("machineUniqueId"), qtAndroidService->getUuid());
+
 
     const QUrl url(QStringLiteral("qrc:/qml/main.qml"));
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated,

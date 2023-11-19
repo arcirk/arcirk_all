@@ -17,12 +17,18 @@ Page {
 
     property string currentDocument: ""
 
+    signal selectedDocument(int row, var object)
+
     property QmlTableModel wsDocuments: QmlTableModel{
         currentObjectName: "Documents"
     }
 
     function setModel(text){
         PageDocumentsJs.setDcumentsModel(text)
+    }
+
+    function newNumber(){
+        return PageDocumentsJs.new_number()
     }
 
     DoQueryBox{
@@ -39,16 +45,16 @@ Page {
         id: docInfo
         visible: false
 
-        onAccept:function(modelIndex){
+        onAccept:function(rowObject){
             let source = "";
-            if(modelIndex !== undefined){
+            if(rowObject !== undefined){
                 try{
-                    source = wsDocuments.getObjectToString(modelIndex.row)
+                    source = JSON.stringify(rowObject)//wsDocuments.getObjectToString(modelIndex.row)
                 }catch(e){
                     source = "";
                 }
             }
-            wsClient.documentUpdate(docInfo.docNumber, docInfo.docDate, docInfo.docComent, source, docInfo.uuid)
+            wsClient.documentUpdate(docInfo.docNumber, docInfo.docDate, docInfo.docComent, source)
         }
 
     }
@@ -56,17 +62,45 @@ Page {
     Column{
         anchors.fill: parent
         spacing: 10
+        //anchors.margins: 10
 
         ListViewControl {
             id: listView
             model: wsDocuments
+            objectName: "documents"
+            delegateMenu: ListModel{
+                id: contextMenu
+                    ListElement{
+                        text:"Открыть"
+                        objectName: "mnuOpen"
+                    }
+                    ListElement{
+                        text:"Удалить"
+                        objectName: "mnuDelete"
+                    }
+            }
 
-            onSelectedRow: function(modelindex){
-
+            onSelectedRow: function(row, object){
+                pageDocs.selectedDocument(row, object)
             }
 
             onRemoveRow: function(modelindex){
 
+            }
+
+            onMenuTriggered: function(row, command, object, comment){
+                if(command === "mnuOpen"){
+                    docInfo.docNumber = object.number
+                    docInfo.docDate = wsClient.documentDate(object.date)
+                    docInfo.docComent = comment
+                    docInfo.rowObject = object;
+                    docInfo.visible = true
+                }else if(command === "mnuDelete"){
+                    queryBox.text = "Удалить выбранный документ?"
+                    queryBox.uuid = object.ref
+                    queryBox.version = Number(object.version); //model.version
+                    queryBox.visible = true
+                }
             }
         }
 

@@ -14,7 +14,7 @@ Popup {
     focus: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
 
-    property QtObject modelIndex: null
+    property var rowObject: undefined
 
     property alias docNumber: txtNumber.text
     property alias docDate: txtDate.text
@@ -24,7 +24,7 @@ Popup {
     property bool isNew: false
 
 
-    signal accept(QtObject index);
+    signal accept(var index);
 
 
     GridLayout {
@@ -52,8 +52,8 @@ Popup {
                 icon.source: "qrc:/img/arrow_back.svg"
                 id: btnGenerateNumber
                 onClicked: {
-                    if(documentInfoDialog.modelIndex !== undefined)
-                        txtNumber.text = wsClient.documentGenerateNewNumber(Number(documentInfoDialog.modelIndex._id))
+                    if(documentInfoDialog.rowObject !== undefined)
+                        txtNumber.text = wsClient.documentGenerateNewNumber(Number(rowObject._id))
                     else{
                         txtNumber.text = wsClient.documentGenerateNewNumber(1)
                     }
@@ -126,11 +126,7 @@ Popup {
             Button {
                 text: "OK"
                 onClicked: {
-//                    if(documentInfoDialog.isNew){
-//                        documentInfoDialog.add_document;
-//                    }else{
-                        documentInfoDialog.accept(documentInfoDialog.modelIndex);
-//                    }
+                    documentInfoDialog.accept(documentInfoDialog.rowObject);
                     documentInfoDialog.visible = false;
                 }
             }

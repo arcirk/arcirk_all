@@ -22,6 +22,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 windows:DEFINES += _CRT_SECURE_NO_WARNINGS
 windows:DEFINES += _WINDOWS
+DEFINES += BADMIN_APPLICATION
 
 Boost_USE_STATIC_LIBS = ON
 windows:LIBS += -lbcrypt

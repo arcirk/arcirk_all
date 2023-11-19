@@ -27,6 +27,7 @@ ToolBar {
     signal connectClick();
     signal findClicked(bool checked);
     signal newDocument();
+    signal refresh();
 
     RowLayout{
         ToolButton{
@@ -60,10 +61,7 @@ ToolBar {
             icon.source: "qrc:/img/documetAdd.svg"
             visible: false
             onClicked: {
-//                docInfo.docDate = Qt.formatDateTime(new Date(), "dd.MM.yyyy hh:mm:ss")
-//                docInfo.docNumber = pageDocuments.new_number();
-//                docInfo.isNew = true
-//                docInfo.visible = true
+                control.newDocument()
             }
         }
         ToolButton{
@@ -90,6 +88,7 @@ ToolBar {
                 onClicked: {
                     wsClient.synchronizeBase();
                     attachFocus.focus = true;
+                    control.refresh()
                 }
 
             }
@@ -121,7 +120,7 @@ ToolBar {
                     MenuItem {
                         text: "Провирить обновления"
                         onTriggered: {
-//                            console.log(qtAndroidService.getUuid());
+                            console.log(qtAndroidService.getUuid());
 //                            wsClient.checkUpdate()
                         }
                     }

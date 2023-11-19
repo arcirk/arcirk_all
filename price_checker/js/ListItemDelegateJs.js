@@ -3,11 +3,11 @@ function getSynonim(){
     if(rowObject === undefined)
         return "";
 
-    if(listTable === "documents"){
-        return rowObject.second + "  " + rowObject.number + " от " + wsClient.documentDate(rowObject.date);
-    }else if(control.listTable === "document_table"){
+    if(objectName === "documents"){
+        return "" + rowObject.second + "  " + rowObject.number + " от " + wsClient.documentDate(rowObject.date);
+    }else if(control.objectName === "document_table"){
         return rowObject.barcode //control.modelIndex.barcode //representation;
-    }else if(control.listTable === "document_table_marked"){
+    }else if(control.objectName === "document_table_marked"){
         return wsClient.parseQr(rowObject.qr_code); //control.modelIndex.qr_code
     }else if(control.currentTable === "sessions_table"){
         let info_base = control.modelIndex.info_base;
@@ -29,11 +29,13 @@ function getSynonim(){
 function getComment(){
     if(rowObject === undefined)
         return "";
-    if(listTable === "1c_document_table"){
-        return rowObject.nomenclature
-    }else if(listTable === "document_table"){
-        return rowObject.good
-    }else if(listTable === "session_forms_table"){
+    if(objectName === "1c_document_table"){
+        let val = rowObject.nomenclature;
+        return val !== undefined ? val : ""
+    }else if(objectName === "document_table"){
+        let val = rowObject.good;
+        return val !== undefined ? val : ""
+    }else if(objectName === "session_forms_table"){
         return rowObject.responsible
     }else{
         try{
@@ -41,8 +43,9 @@ function getComment(){
             let cm = cache.trim()
             if(cm !== undefined && cm !== ""){
                 try{
-                 let obj = JSON.parse(cm)
-                    return obj['comment'].trim()
+                    let obj = JSON.parse(cm)
+                    let val = obj['comment']
+                    return val !== undefined ? val.trim() : ""
                 }catch(e){
                     return ""
                 }
@@ -86,7 +89,7 @@ function setSelectedBackground(){
 function item_is_marked(){
     if(rowObject === undefined)
         return false;
-    if(control.listTable === "document_table"){
+    if(control.objectName === "document_table"){
         let is_marked = Number(rowObject.is_marked)
         return is_marked !== undefined ? is_marked === 1 : false
     }
@@ -96,7 +99,7 @@ function item_is_marked(){
 function quantityText(){
     if(rowObject === undefined)
         return "";
-    if(control.listTable === "document_table"){
+    if(control.objectName === "document_table"){
         let quant = Number(rowObject.quantity)
         let unit = rowObject.unit
         let is_marked = Number(rowObject.is_marked)
@@ -119,4 +122,9 @@ function quantityText(){
             return l
     }else
         return ""
+}
+
+function getCurrentObject(){
+    let obj = JSON.parse(parentModel.dump(model.row))
+    return obj;
 }

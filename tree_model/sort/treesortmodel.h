@@ -36,6 +36,8 @@ public:
 
     QString object_name() const {return "TreeSortModel";};
 
+    Q_INVOKABLE QString dump(const int& row) const;
+
 protected:
     bool filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const  override;
 

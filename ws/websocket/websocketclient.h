@@ -366,7 +366,7 @@ signals:
     void urlChanged();
 
     void syncGetDiscrepancyInData(const arcirk::server::server_response& resp);
-
+    void updateBarcodeInformation(const arcirk::server::server_response& resp);
 
 private slots:
 

@@ -13,15 +13,18 @@ RoundPane {
 
     property alias text: txt.text
     property alias elide: txt.elide
-    property QtObject rowObject: undefined
-    property QtObject menu: undefined
+    property var rowObject: ListItemDelegateJs.getCurrentObject()
+    property ListModel menu: undefined
+    property var menuProperty: undefined
     property bool checkable: false
     property bool isSelected: false
+    property bool isSelectedItem: false
+    property bool quantityVisible: false
     property int row: 0
-    property string objectName: "documents"
+    property var menuItemsData: undefined
 
-    signal popupMenuTriggered(string name)
-    signal itemClicked(string buttonId)
+    signal popupMenuTriggered(int row, string name, var object, string comment)
+    signal itemClicked(int row, var object)
 
     Material.elevation: {
         if(isSelected)
@@ -32,10 +35,6 @@ RoundPane {
 
     radius: 3
 
-    function setData(dump){
-        rowObject = JSON.parse(dump)
-    }
-
     function setMenu(menu){
         control.menu = menu
     }
@@ -43,7 +42,7 @@ RoundPane {
     Material.background:{
 
         if(control.checked && !control.chldrenList){
-            if(!control.isSelected){
+            if(!control.isSelectedItem){
                 if(Theme === "Dark")
                     "#424242"
                 else
@@ -52,7 +51,7 @@ RoundPane {
                 "red"
             }
         }else
-            if(!control.isSelected)
+            if(!control.isSelectedItem)
                 undefined
             else
                 "#424242"
@@ -76,13 +75,40 @@ RoundPane {
                 id: contextMenu
 
                 Instantiator {
-                   model: control.menu
-                   MenuItem {
-                      text: model.text
-                   }
+                    model: control.menu
+                    MenuItem {
+                        text: model.text
+                        visible: {
+                          let v = control.menuProperty;
+                          if(v === undefined)
+                              return true
+                          else{
+                              let obj = JSON.parse(v)
+                              let prop = obj[model.objectName]
+                              if(prop !== undefined){
+                                  let val = prop['visible']
+                                  if(val !== undefined){
+                                        let data_ = rowObject[val.name]
+                                        if(data_ === val.value){
+                                          return true
+                                        }else
+                                          return false
+                                  }else
+                                      return true
+                              }else
+                                  return true
+                          }
+                        }
+                        height: visible ? implicitHeight : 0
+
+                        onTriggered: {
+                         control.popupMenuTriggered(control.row, model.objectName, control.rowObject, ListItemDelegateJs.getComment())
+                        }
+                    }
                    onObjectAdded: contextMenu.insertItem(index, object)
                    onObjectRemoved: contextMenu.removeItem(object)
                }
+
             }
 
             Row{
@@ -95,8 +121,8 @@ RoundPane {
                     height: 16
                     source: "qrc:/img/!.png"
                     visible:  {
-                        if(control.listTable === "document_table"){
-                            let nomenclature = wsDocumentTable.get(wsProxyModel, control.modelIndex.row, "nomenclature")
+                        if(control.objectName === "document_table"){
+                            let nomenclature = rowObject.nomenclature
                             return control.quantityVisible ? (nomenclature === "") : false
                         }else
                             return false
@@ -107,7 +133,6 @@ RoundPane {
                     width: 16
                     height: 16
                     source: "qrc:/img/honest_sign.png"
-                    //visible:  control.quantityVisible ? (control.modelIndex.is_marked === 1) : false
                     visible: {
                         let is_marked = ListItemDelegateJs.item_is_marked()
                         return control.quantityVisible ? is_marked : false
@@ -119,7 +144,13 @@ RoundPane {
                 textFormat: Text.RichText
                 wrapMode: Text.WordWrap
                 anchors.left: rowImages.right
-                text: control.getSynonim()
+                text: {
+                    let v = ListItemDelegateJs.getSynonim()
+                    if(v !== undefined)
+                        return v
+                    else
+                        return ""
+                }
                 font.bold: control.isSelected
                 width: rowDetalis.width - quantity.implicitWidth - rowImages.implicitWidth//control.quantityVisible ? parent.width - quantity.implicitWidth - (imgErr.visible ? imgErr.height : 0) - (imageQr.visible ? imageQr.height : 0) - 10 : parent.width
                 font.pixelSize: control.fontPixelSize
@@ -134,7 +165,7 @@ RoundPane {
                     cursorShape: Qt.PointingHandCursor;
 
                     onClicked: {
-                        control.clicked(control.row)
+                        control.itemClicked(control.row, rowObject)
                     }
                     onEntered: {
                         if(!control.checkable){
@@ -146,7 +177,7 @@ RoundPane {
                             control.Material.elevation = 7
                     }
                     onPressAndHold: {
-                        if (!control.menu !== undefined)
+                        if (control.menu !== undefined)
                             contextMenu.popup()
                     }
                 }
@@ -185,13 +216,10 @@ RoundPane {
                     onPressAndHold: {
                             if (!control.menuDisable)
                                 contextMenu.popup()
-                        }
-
+                    }
                 }
             }
         }
-
-
 
         Pane{
             leftPadding: 10
@@ -227,7 +255,7 @@ RoundPane {
                 cursorShape: Qt.PointingHandCursor;
 
                 onClicked: {
-                    control.clicked(control.row)
+                    control.itemClicked(control.row, rowObject)
                     console.log("onClicked");
                 }
                 onEntered: {
@@ -242,7 +270,7 @@ RoundPane {
                     console.log("onExited");
                 }
                 onPressAndHold: {
-                        if (control.alowMenu)
+                        if (control.menu !== undefined)
                             contextMenu.popup()
                     }
             }

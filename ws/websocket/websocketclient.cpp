@@ -277,7 +277,7 @@ void WebSocketClient::parse_response(const QString &resp)
             emit syncGetDiscrepancyInData(msg);
         }
         else if(msg.command == arcirk::enum_synonym(arcirk::server::server_commands::SyncUpdateBarcode)){
-            //update_barcode_information(msg);
+            emit updateBarcodeInformation(msg);
         }
         else if(msg.command == arcirk::enum_synonym(arcirk::server::server_commands::ServerOnlineClientsList)){
             emit serverResponse(msg);
