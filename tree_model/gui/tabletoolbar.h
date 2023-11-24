@@ -20,6 +20,7 @@ namespace arcirk::tree_widget {
         void setHierarchyState(bool state);
 
         void setButtonEnabled(const QString& name, bool value);
+        void setButtonVisible(const QString& name, bool value);
 
     private:
         Ui::TableToolBar *ui;

@@ -87,7 +87,9 @@ QVariant TreeItem::data(int column, int role) const
 {
     if(m_item_data.size() == 0)
         return QVariant();
-    Q_ASSERT(m_item_data.size() > column);
+    //Q_ASSERT(m_item_data.size() > column);
+    if(column >= m_item_data.size() || column < 0)
+        return QVariant();
 
     auto c_name = m_conf->column_name(column);
 
@@ -95,15 +97,6 @@ QVariant TreeItem::data(int column, int role) const
         auto value = m_item_data.value(c_name.toStdString(), json{});
         if(value.is_null())
             return QVariant();
-//        else{
-//            auto fr = data(column, FormatTextRole);
-//            if(fr.isValid()){
-//                QString v;
-//                if(value.is_number()){
-
-//                }
-//            }
-//        }
         return to_variant(value);
     }else if(role >= Qt::UserRole && role <= Qt::UserRole + tree::user_roles_max()){
         auto itr =m_userData.find(role);
@@ -117,11 +110,7 @@ QVariant TreeItem::data(int column, int role) const
                     return m_widget;
             }
         else
-            //if(m_widget == tree::item_editor_widget_roles::widgetINVALID)
-                return QVariant();
-//            else
-//                return m_widget;
-
+            return QVariant();
     }else if(role == Qt::ForegroundRole)
         return m_text_color;
 
@@ -207,6 +196,7 @@ void TreeItem::clearChildren()
 void TreeItem::setParent(TreeItem *parent)
 {
     m_parentItem = parent;
+    m_item_data["parent"] = quuid_to_string(parent->ref()).toStdString();
     m_conf = parent->conf();
 
 }

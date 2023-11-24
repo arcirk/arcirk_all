@@ -33,7 +33,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     m_queryasToolbar = new TableToolBar(ui->dockWidget);
     m_queryasToolbar->setButtonEnabled("add_group", true);
-    //m_queryasToolbar->setButtonEnabled("add_item", true);
+    m_queryasToolbar->setButtonVisible("move_up_item", false);
+    m_queryasToolbar->setButtonVisible("move_down_item", false);
+
     m_treeQueryas = new TreeViewWidget(ui->dockWidget);
     m_treeQueryas->setTableToolBar(m_queryasToolbar);
     m_treeQueryas->set_inners_dialogs(true);
@@ -49,7 +51,6 @@ MainWindow::MainWindow(QWidget *parent) :
             m_treeQueryas->hideColumn(model->column_index(itr));
         }
     }
-    //
 
     ui->dockVerticalLayout->addWidget(m_queryasToolbar);
     ui->dockVerticalLayout->addWidget(m_treeQueryas);
@@ -89,6 +90,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->mnuOpenDatabase, &QAction::triggered, this, &MainWindow::onMnuOpenDatabaseTriggered);
     connect(ui->mnuClose, &QAction::triggered, this, &MainWindow::mnMnuClose);
+    connect(m_treeQueryas, &TreeViewWidget::treeItemClicked, this, &MainWindow::onTreeQueryasRowSelected);
+    connect(m_treeQueryas, &TreeViewWidget::treeItemClicked, this, &MainWindow::onTreeQueryasRowSelected);
+    connect(m_treeQueryas, &TreeViewWidget::addTreeItem, this, &MainWindow::onAddTreeItem);
+    connect(m_treeQueryas, &TreeViewWidget::editTreeItem, this, &MainWindow::onEditTreeItem);
+    connect(m_treeQueryas, &TreeViewWidget::deleteTreeItem, this, &MainWindow::onDeleteTreeItem);
 
 //    //test
 //    const data_ref struct_d(generate_uuid().toStdString(), "test_synonim", "test_table");
@@ -100,6 +106,7 @@ MainWindow::MainWindow(QWidget *parent) :
 //    auto c = ref_j["ref"].get<char>();
 //    const char * c_ = &c;
 //    data_ref df = root_tree_conf::ref_from_buffer(c_);
+
 
 }
 
@@ -116,7 +123,24 @@ void MainWindow::initDatabase()
     if(!m_connection.isOpen())
         return;
 
+    auto tables = database::get_database_tables(m_connection);
+    QList<QString> m_tables{
+        "qbQueryas",
+        "qbData",
+    };
 
+    bool is_ex = true;
+
+    foreach (auto itr, m_tables) {
+        if(tables.indexOf(itr) == -1){
+            is_ex = false;
+            break;
+        }
+
+    }
+
+    if(is_ex)
+        return;
 
     std::vector<query_builder> m_query;
     m_query.push_back(std::move(query_builder().create_table("qbQueryas", from_structure<query_builder_main>(query_builder_main()))));
@@ -150,6 +174,11 @@ void MainWindow::initDatabase()
 
 }
 
+void MainWindow::openDatabase()
+{
+
+}
+
 void MainWindow::onMnuOpenDatabaseTriggered()
 {
 
@@ -160,3 +189,44 @@ void MainWindow::mnMnuClose()
     QApplication::quit();
 }
 
+void MainWindow::onTreeQueryasRowSelected(const QModelIndex &index)
+{
+    qDebug() << __FUNCTION__ << index.row() << index.column();
+}
+
+void MainWindow::onAddTreeItem(const QModelIndex &index, const json &data)
+{
+    qDebug() << __FUNCTION__;
+
+    if(!m_connection.isOpen())
+        return;
+
+    auto query = query_builder();
+    query.use(data);
+    QSqlQuery rc(query.insert("qbQueryas", true).prepare().c_str(), m_connection);
+    rc.exec();
+
+}
+void MainWindow::onEditTreeItem(const QModelIndex &index, const json &data)
+{
+    qDebug() << __FUNCTION__;
+    if(!m_connection.isOpen())
+        return;
+
+    auto query = query_builder();
+    query.use(data);
+    QSqlQuery rc(query.update("qbQueryas", true).where(json{{"ref", data["ref"]}}, true).prepare().c_str(), m_connection);
+    rc.exec();
+
+}
+void MainWindow::onDeleteTreeItem(const json &data)
+{
+    qDebug() << __FUNCTION__;
+
+    if(!m_connection.isOpen())
+        return;
+
+    auto query = query_builder();
+    QSqlQuery rc(query.remove().from("qbQueryas").where(json{{"ref", data["ref"]}}, true).prepare().c_str(), m_connection);
+    rc.exec();
+}

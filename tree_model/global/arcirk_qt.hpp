@@ -427,6 +427,7 @@ namespace arcirk::tree_model{
                 m_enable_rows_icons     = true;
                 m_database_changed      = false;
                 m_database              = nullptr;
+                m_use_binary_links      = false;
                 m_http_conf = http::http_conf();
                 enable_drag_and_drop(false);
                 m_row_icons.insert(tree::item_icons_enum::ItemGroup, QIcon(":/img/group.png"));
@@ -766,6 +767,7 @@ namespace arcirk::tree_model{
             json                                m_user_where;
             bool                                m_database_changed;
             QSqlDatabase*                       m_database;
+            bool                                m_use_binary_links;
 
             void user_data_init()
             {

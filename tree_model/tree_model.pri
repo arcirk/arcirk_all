@@ -8,6 +8,7 @@ SOURCES += \
     $$PWD/gui/comparewidget.cpp \
     $$PWD/gui/rowdialog.cpp \
     $$PWD/gui/selectgroupdialog.cpp \
+    $$PWD/gui/selectitemdialog.cpp \
     $$PWD/gui/tabletoolbar.cpp \
     $$PWD/gui/texteditdialog.cpp \
     $$PWD/gui/treeitemcheckbox.cpp \
@@ -27,6 +28,7 @@ HEADERS += \
     $$PWD/gui/comparewidget.h \
     $$PWD/gui/rowdialog.h \
     $$PWD/gui/selectgroupdialog.h \
+    $$PWD/gui/selectitemdialog.h \
     $$PWD/gui/tabletoolbar.h \
     $$PWD/gui/texteditdialog.h \
     $$PWD/gui/treeitemcheckbox.h \
@@ -57,6 +59,7 @@ FORMS += \
     $$PWD/gui/comparewidget.ui \
     $$PWD/gui/rowdialog.ui \
     $$PWD/gui/selectgroupdialog.ui \
+    $$PWD/gui/selectitemdialog.ui \
     $$PWD/gui/tabletoolbar.ui \
     $$PWD/gui/texteditdialog.ui \
     $$PWD/gui/treeitemwidget.ui

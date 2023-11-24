@@ -73,6 +73,13 @@ namespace arcirk::tree::widgets {
         void setAutoMarkIncomplete(bool value);
         bool autoMarkIncomplete(){return m_text_line->autoMarkIncomplete();}
 
+        void setSynonim(const QString& value);
+        void setValue(const QString& value);
+        QString synonim() const;
+        QString value() const;
+
+        void enableClearBottom(bool value);
+
     private:
         QToolButton* m_button;
         QToolButton* m_clear_button;
@@ -83,12 +90,16 @@ namespace arcirk::tree::widgets {
         QHBoxLayout* hbox;
         bool is_border;
         bool m_autoMarkIncomplete;
+        QString m_synonim;
+        QString m_value;
+        bool is_synonim;
 
     private slots:
         void onButtonClicked();
         void onTextChanged(const QVariant& value = "");
     signals:
         void textChanged(const QVariant& value = "");
+        void valueChanged(const QVariant& value = "");
     };
 } // namespace arcirk::tree::widgets
 

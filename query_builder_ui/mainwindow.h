@@ -52,8 +52,10 @@ public:
 private slots:
     void onMnuOpenDatabaseTriggered();
     void mnMnuClose();
-    //void onDialogRowChangedData(const json data, bool is_new = false);
-
+    void onTreeQueryasRowSelected(const QModelIndex& index);
+    void onAddTreeItem(const QModelIndex& index, const json& data);
+    void onEditTreeItem(const QModelIndex& index, const json& data);
+    void onDeleteTreeItem(const json& data);
 private:
     Ui::MainWindow *ui;
 
@@ -66,6 +68,7 @@ private:
     QSqlDatabase m_connection;
 
     void initDatabase();
+    void openDatabase();
 };
 
 #endif // MAINWINDOW_H

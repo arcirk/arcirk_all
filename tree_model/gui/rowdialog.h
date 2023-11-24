@@ -21,7 +21,8 @@ namespace arcirk::tree_widget {
         explicit RowDialog(const json& data, const User_Data& user_data = {},
                            QWidget *parent = nullptr, const QMap<QString, QString>& aliases = {},
                            const QList<QString>& invisible = {}, const QList<QString>& order = {},
-                           const QList<QString>& not_null = {});
+                           const QList<QString>& not_null = {},
+                           const QString& parentSynonim = "");
         ~RowDialog();
 
         json data();
@@ -36,7 +37,11 @@ namespace arcirk::tree_widget {
         QMap<QString, QString> m_aliases;
         QList<QString> m_disable{"_id", "ref", "parent", "is_group"};
         QList<QString> m_not_null;
+        QMap<QString, QList<QWidget*>> m_widgets;
         bool is_group;
+        QString m_parentSynonim;
+        QString m_parentRef;
+        bool is_new_element;
 
         void createControls(const QList<QString>& invisible = {}, const QList<QString>& order = {});
         QList<QWidget*> createControl(const QString& key, const json& value);
@@ -53,7 +58,7 @@ namespace arcirk::tree_widget {
 
     private slots:
         void onControlDataChanged(const QVariant& value = false);
-
+        void onValueChanged(const QVariant& value);
     signals:
         void onError(const QString& what, const QString& desc);
 

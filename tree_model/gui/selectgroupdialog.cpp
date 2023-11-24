@@ -3,6 +3,8 @@
 #include "ui_selectgroupdialog.h"
 #include "sort/treesortmodel.h"
 
+using namespace arcirk::tree_widget;
+
 SelectGroupDialog::SelectGroupDialog(arcirk::tree_model::TreeItemModel * model, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::SelectGroupDialog)

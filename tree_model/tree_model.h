@@ -68,9 +68,11 @@ namespace arcirk::tree_model {
         Q_INVOKABLE void clear();
         Q_INVOKABLE void reset();
 
+        bool belongsToItem(const QModelIndex& index, const QModelIndex parent);
+
         void move_up(const QModelIndex &index);
         void move_down(const QModelIndex &index);
-        void move_to_gui(const QModelIndex &index);
+        //void move_to_gui(const QModelIndex &index);
         void move_to(const QModelIndex &index, const QModelIndex &new_parent);
 
         bool remove(const QModelIndex &index, bool upgrade_database = false);
@@ -79,9 +81,9 @@ namespace arcirk::tree_model {
         void set_table(const json& table, const QModelIndex &parent = QModelIndex(), bool upgrade_database = false);
         void set_object(const QModelIndex &index, const nlohmann::json& object, bool upgrade_database = false);
 
-        json to_array(const QModelIndex &parent, bool childs = false) const;
+        json to_array(const QModelIndex &parent, bool childs = false, bool group_only = false) const;
         json to_object(const QModelIndex &index) const;
-        json to_table_model(const QModelIndex &parent, bool childs = false) const;
+        json to_table_model(const QModelIndex &parent, bool childs = false, bool group_only = false) const;
 
         QModelIndex find(const QUuid& ref, const QModelIndex parent = QModelIndex()) const;
         QModelIndex find(int column, const QVariant& source, const QModelIndex parent = QModelIndex()) const;
@@ -167,7 +169,7 @@ namespace arcirk::tree_model {
         QPair<int, int> m_widget_address;
 
         void init_class(const json& rootData = {});
-        void to_array_(const QModelIndex &parent, json& result, bool childs = false) const;
+        void to_array_(const QModelIndex &parent, json& result, bool childs = false, bool group_only = false) const;
 
         bool connect_sql_database(const QString& table_name = "");
         void load_from_database(const QString& parent = NIL_STRING_UUID);

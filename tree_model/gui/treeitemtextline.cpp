@@ -14,6 +14,7 @@ TreeItemTextLine::TreeItemTextLine(int row, int column, QWidget *parent) :
     is_clear = false;
     is_border = false;
     m_autoMarkIncomplete = false;
+    is_synonim = false;
 
     hbox = new QHBoxLayout(this);
     hbox->setContentsMargins(0,0,0,0);
@@ -39,9 +40,37 @@ TreeItemTextLine::TreeItemTextLine(int row, int column, QWidget *parent) :
     connect(m_text_line, &TextBox::textChanged, this, &TreeItemTextLine::onTextChanged);
 }
 
+void TreeItemTextLine::setSynonim(const QString &value)
+{
+    m_synonim = value;
+    is_synonim = true;
+    m_text_line->setText(value);
+}
+
+void TreeItemTextLine::setValue(const QString &value)
+{
+    m_value = value;
+}
+
+QString TreeItemTextLine::synonim() const
+{
+    return m_synonim;
+}
+
+QString TreeItemTextLine::value() const
+{
+    return m_value;
+}
+
+void TreeItemTextLine::enableClearBottom(bool value)
+{
+    m_clear_button->setEnabled(value);
+}
+
 void TreeItemTextLine::setText(const QString &text)
 {
     m_text_line->setText(text);
+    m_value = text;
 }
 
 QString TreeItemTextLine::text() const
@@ -113,7 +142,13 @@ void TreeItemTextLine::onButtonClicked()
                 m_text_line->setText(dlg.text());
             }
         }else if(btn->objectName() == "ClearButton"){
-            m_text_line->setText(m_default);
+            if(!is_synonim)
+                m_text_line->setText(m_default);
+            else{
+                m_value = m_default;
+                m_text_line->setText("");
+                emit valueChanged(m_value);
+            }
         }
     }
 

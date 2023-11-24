@@ -12,6 +12,8 @@
 #include <QMimeData>
 #include "rowdialog.h"
 #include <QMessageBox>
+#include "gui/selectgroupdialog.h"
+#include "gui/selectitemdialog.h"
 
 using namespace arcirk::tree_widget;
 TreeViewWidget::TreeViewWidget(QWidget *parent, const QString& typeName)
@@ -229,16 +231,27 @@ void TreeViewWidget::currentChanged(const QModelIndex &current, const QModelInde
                 m_toolBar->setButtonEnabled("add_group", false);
                 m_toolBar->setButtonEnabled("add_item", false);
             }
+
+            m_toolBar->setButtonEnabled("move_to_item", true);
+            if(!model->hierarchical_list()){
+                if(index.row() < model->rowCount() - 1)
+                    m_toolBar->setButtonEnabled("move_down_item", true);
+
+                if(index.row() != 0)
+                    m_toolBar->setButtonEnabled("move_up_item", true);
+            }
         }else{
             m_toolBar->setButtonEnabled("add_group", false);
             m_toolBar->setButtonEnabled("add_item", false);
-            m_toolBar->setButtonEnabled("move_to", false);
+            m_toolBar->setButtonEnabled("move_to_item", false);
             m_toolBar->setButtonEnabled("delete_item", false);
             m_toolBar->setButtonEnabled("edit_item", false);
-            m_toolBar->setButtonEnabled("move_down", false);
-            m_toolBar->setButtonEnabled("move_up", false);
+            m_toolBar->setButtonEnabled("move_down_item", false);
+            m_toolBar->setButtonEnabled("move_up_item", false);
         }
     }
+
+    emit treeItemClicked(current);
     return QTreeView::currentChanged(current, previous);
 }
 
@@ -436,10 +449,28 @@ void TreeViewWidget::onToolBarItemClicked(const QString &buttonName)
                 m_udata.insert(model->column_name(i).toStdString(),
                                qMakePair(ctrl, ext));
             }
-            auto dlg = RowDialog(row_data, m_udata, this, model->column_aliases_default(), QList<QString>{"data_type", "_id", "path"}, model->columns_order(), model->not_null_fields());
+            QString m_parent_name = "";
+            if(row_data["parent"] != NIL_STRING_UUID){
+                auto indexParent = model->find(QUuid::fromString(row_data["parent"].get<std::string>().c_str()));
+                if(indexParent.isValid()){
+                    auto obj = model->to_object(indexParent);
+                    m_parent_name = obj.value("first", "").c_str();
+                    if(m_parent_name.isEmpty())
+                        m_parent_name = obj.value("name", "").c_str();
+                }
+            }
+            std::string m_current_parent = row_data.value("parent", NIL_STRING_UUID);
+            auto dlg = RowDialog(row_data, m_udata, this, model->column_aliases_default(),
+                                 QList<QString>{"data_type", "_id", "path"},
+                                 model->columns_order(), model->not_null_fields(),
+                                 m_parent_name);
             dlg.setIcon(model->rows_icon(item_icons_enum::Item));
             if(dlg.exec()){
-                model->add(dlg.data(), current_index);
+                auto data = dlg.data();
+                if(data["parent"].get<std::string>() != m_current_parent)
+                    current_index = QModelIndex();
+                auto n_index = model->add(dlg.data(), current_index);
+                emit addTreeItem(n_index, dlg.data());
             }
 
         }else if(btn == add_group){
@@ -459,22 +490,51 @@ void TreeViewWidget::onToolBarItemClicked(const QString &buttonName)
                 m_udata.insert(model->column_name(i).toStdString(),
                                qMakePair(ctrl, ext));
             }
-            auto dlg = RowDialog(row_data, m_udata, this, model->column_aliases_default(), QList<QString>{"data_type", "_id", "path"}, model->columns_order(), model->not_null_fields());
+            QString m_parent_name = "";
+            std::string m_current_parent = row_data.value("parent", NIL_STRING_UUID);
+            if(row_data["parent"] != NIL_STRING_UUID){
+                auto indexParent = model->find(QUuid::fromString(row_data["parent"].get<std::string>().c_str()));
+                if(indexParent.isValid()){
+                    auto obj = model->to_object(indexParent);
+                    m_parent_name = obj.value("first", "").c_str();
+                    if(m_parent_name.isEmpty())
+                        m_parent_name = obj.value("name", "").c_str();
+                }
+            }
+            auto dlg = RowDialog(row_data, m_udata, this, model->column_aliases_default(), QList<QString>{"data_type", "_id", "path"},
+                                 model->columns_order(),
+                                 model->not_null_fields(),
+                                 m_parent_name);
             dlg.setIcon(model->rows_icon(item_icons_enum::ItemGroup));
             if(dlg.exec()){
-                //emit dialogRowChangedData(dlg.data(), true);
-                model->add(dlg.data(), current_index);
+                auto data = dlg.data();
+                if(data["parent"].get<std::string>() != m_current_parent)
+                    current_index = QModelIndex();
+                auto n_index = model->add(dlg.data(), current_index);
+                emit addTreeItem(n_index, dlg.data());
             }
         }else if(btn == delete_item){
             if(!current_index.isValid())
                 return;
             if(QMessageBox::question(this, "Удаление", "Удалить выбранную строку?") == QMessageBox::Yes){
+                auto obj = model->to_object(current_index);
                 model->remove(current_index);
+                emit deleteTreeItem(obj);
             }
         }else if(btn == edit_item){
             if(!current_index.isValid())
                 return;
             row_data = model->to_object(current_index);
+            QString m_parent_name = "";
+            if(row_data["parent"] != NIL_STRING_UUID){
+                auto indexParent = model->find(QUuid::fromString(row_data["parent"].get<std::string>().c_str()));
+                if(indexParent.isValid()){
+                    auto obj = model->to_object(indexParent);
+                    m_parent_name = obj.value("first", "").c_str();
+                    if(m_parent_name.isEmpty())
+                        m_parent_name = obj.value("name", "").c_str();
+                }
+            }
             User_Data m_udata{};
             for (int i = 0; i < model->rowCount(); ++i) {
                 auto ctrl = model->user_role_data(model->column_name(i), tree::WidgetRole);
@@ -482,9 +542,42 @@ void TreeViewWidget::onToolBarItemClicked(const QString &buttonName)
                 m_udata.insert(model->column_name(i).toStdString(),
                                qMakePair(ctrl, ext));
             }
-            auto dlg = RowDialog(row_data, m_udata, this, model->column_aliases_default(), QList<QString>{"data_type", "_id", "path"}, model->columns_order());
+            auto dlg = RowDialog(row_data, m_udata, this, model->column_aliases_default(), QList<QString>{"data_type", "_id", "path"}, model->columns_order(), {}, m_parent_name);
             if(dlg.exec()){
                 model->set_object(current_index, dlg.data());
+                emit editTreeItem(current_index, dlg.data());
+            }
+        }else if(btn == move_to_item){
+            if(!current_index.isValid())
+                return;
+
+            auto table = model->to_table_model(QModelIndex(),true, true);
+            auto gr_model = new TreeItemModel(this);
+            gr_model->set_columns_order(model->columns_order());
+            gr_model->set_column_aliases(gr_model->column_aliases_default());
+            gr_model->set_table(table);
+
+            auto dlg = SelectItemDialog(gr_model, this);
+            dlg.setWindowTitle("Выбрать группу");
+            if(dlg.exec()){
+                auto obj = dlg.result();
+                auto parent_index = model->find(QUuid::fromString(obj.value("ref", NIL_STRING_UUID).c_str()));
+                auto current_index = this->current_index();
+                auto current_oject = model->to_object(current_index);
+                if(parent_index.isValid()){
+                    auto verify = model->belongsToItem(parent_index, current_index);
+                    if(verify){
+                        QMessageBox::critical(this, "Ошибка", "В выбранную группу перемещение не возможно!");
+                        return;
+                    }
+                    if(current_index.parent() == parent_index)
+                        return;
+                    model->move_to(current_index, parent_index);
+                    auto n_index = model->find(QUuid::fromString(current_oject["ref"].get<std::string>().c_str()), parent_index);
+                    if(n_index.isValid())
+                        emit editTreeItem(n_index, model->to_object(n_index));
+                }
+
             }
         }
     }

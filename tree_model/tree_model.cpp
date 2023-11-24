@@ -5,9 +5,9 @@
 #include <QSqlError>
 #include "query_builder.hpp"
 
-#ifndef IS_OS_ANDROID
-#include "gui/selectgroupdialog.h"
-#endif
+//#ifndef IS_OS_ANDROID
+//#include "gui/selectgroupdialog.h"
+//#endif
 
 using namespace arcirk::tree_model;
 using namespace arcirk::database;
@@ -387,6 +387,16 @@ void TreeItemModel::reset()
     endResetModel();
 }
 
+bool TreeItemModel::belongsToItem(const QModelIndex &index, const QModelIndex parent)
+{
+    auto item = getItem(index);
+    auto parentItem = getItem(parent);
+    if(item == parentItem)
+        return true;
+    auto index_ = find(item->ref(), parent);
+    return index_.isValid();
+}
+
 void TreeItemModel::move_up(const QModelIndex &index)
 {
     Q_ASSERT(index.isValid());
@@ -425,20 +435,20 @@ void TreeItemModel::move_down(const QModelIndex &index)
     endMoveRows();
 }
 
-void TreeItemModel::move_to_gui(const QModelIndex &index)
-{
-#ifndef IS_OS_ANDROID
-    auto dlg = SelectGroupDialog(this);
-    if(dlg.exec() == QDialog::Accepted){
-        auto pr = dlg.result();
-        auto parent = find(QUuid::fromString(pr.value("ref", NIL_STRING_UUID)));
-        if(parent.isValid())
-            move_to(index, parent);
-    }
-#else
-    Q_UNUSED(index);
-#endif
-}
+//void TreeItemModel::move_to_gui(const QModelIndex &index)
+//{
+//#ifndef IS_OS_ANDROID
+//    auto dlg = SelectGroupDialog(this);
+//    if(dlg.exec() == QDialog::Accepted){
+//        auto pr = dlg.result();
+//        auto parent = find(QUuid::fromString(pr.value("ref", NIL_STRING_UUID)));
+//        if(parent.isValid())
+//            move_to(index, parent);
+//    }
+//#else
+//    Q_UNUSED(index);
+//#endif
+//}
 
 void TreeItemModel::move_to(const QModelIndex &index, const QModelIndex &new_parent)
 {
@@ -514,17 +524,17 @@ void TreeItemModel::reset_sql_table()
     }
 }
 
-json TreeItemModel::to_array(const QModelIndex &parent, bool childs) const
+json TreeItemModel::to_array(const QModelIndex &parent, bool childs, bool group_only) const
 {
 
     json result = json::array();
 
-    to_array_(parent, result, childs);
+    to_array_(parent, result, childs, group_only);
 
     return result;
 }
 
-void TreeItemModel::to_array_(const QModelIndex &parent, json& result, bool childs) const
+void TreeItemModel::to_array_(const QModelIndex &parent, json& result, bool childs, bool group_only) const
 {
     auto parent_ = index(parent.row(), 0, parent.parent());
 
@@ -532,9 +542,13 @@ void TreeItemModel::to_array_(const QModelIndex &parent, json& result, bool chil
         auto in = index(itr, 0, parent_);
         if(in.isValid()){
             auto item = getItem(in);
+            if(group_only){
+                if(!item->is_group())
+                    continue;
+            }
             result += item->to_object();
             if(childs)
-                to_array_(in, result, childs);
+                to_array_(in, result, childs, group_only);
         }
     }
 
@@ -811,14 +825,14 @@ json TreeItemModel::to_object(const QModelIndex &index) const
     return item->to_object();
 }
 
-json TreeItemModel::to_table_model(const QModelIndex &parent, bool childs) const
+json TreeItemModel::to_table_model(const QModelIndex &parent, bool childs, bool group_only) const
 {
     auto columns_j = json::array();
     foreach (const auto& key , m_conf->columns()) {
         columns_j += key.toStdString();
     }
 
-    auto rows = to_array(parent, childs);
+    auto rows = to_array(parent, childs, group_only);
 
     return json::object({
         {"columns" , columns_j},

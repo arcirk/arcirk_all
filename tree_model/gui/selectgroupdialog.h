@@ -10,24 +10,24 @@
 namespace Ui {
 class SelectGroupDialog;
 }
+namespace arcirk::tree_widget {
+    class SelectGroupDialog : public QDialog
+    {
+        Q_OBJECT
 
-class SelectGroupDialog : public QDialog
-{
-    Q_OBJECT
+    public:
+        explicit SelectGroupDialog(arcirk::tree_model::TreeItemModel * model, QWidget *parent = nullptr);
+        ~SelectGroupDialog();
 
-public:
-    explicit SelectGroupDialog(arcirk::tree_model::TreeItemModel * model, QWidget *parent = nullptr);
-    ~SelectGroupDialog();
+        void accept() override;
 
-    void accept() override;
+        json result();
 
-    json result();
-
-private:
-    Ui::SelectGroupDialog *ui;
-    json m_result;
-    arcirk::tree_widget::TreeViewWidget * treeView;
-};
-
+    private:
+        Ui::SelectGroupDialog *ui;
+        json m_result;
+        arcirk::tree_widget::TreeViewWidget * treeView;
+    };
+}
 #endif
 #endif // SELECTGROUPDIALOG_H

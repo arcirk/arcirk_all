@@ -25,6 +25,9 @@ namespace arcirk::tree_widget {
         add_group,
         delete_item,
         edit_item,
+        move_to_item,
+        move_down_item,
+        move_up_item,
         btnINVALID = -1
     };
     NLOHMANN_JSON_SERIALIZE_ENUM(toolbar_buttons, {
@@ -33,6 +36,9 @@ namespace arcirk::tree_widget {
         {add_group, "add_group"}  ,
         {delete_item, "delete_item"}  ,
         {edit_item, "edit_item"}  ,
+        {move_to_item, "move_to_item"}  ,
+        {move_down_item, "move_down_item"}  ,
+        {move_up_item, "move_up_item"}  ,
     })
 
     class TreeViewWidget : public QTreeView
@@ -113,7 +119,11 @@ namespace arcirk::tree_widget {
         void itemDoubleClicked(const QModelIndex& index, const QString& item_name);
         void fetch(const QModelIndex& parent);
         void toolBarItemClicked(const QString& buttonName);
-        //void dialogRowChangedData(const json data, bool is_new = false);
+        void treeItemClicked(const QModelIndex& index);
+
+        void addTreeItem(const QModelIndex& index, const json& data);
+        void editTreeItem(const QModelIndex& index, const json& data);
+        void deleteTreeItem(const json& data);
 
     private slots:
         void onItemClicked(const QModelIndex& index);

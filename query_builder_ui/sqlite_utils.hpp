@@ -4,6 +4,7 @@
 #include <sqlite3.h>
 #include <QSqlDatabase>
 #include <QSqlDriver>
+#include <QSqlQuery>
 #include <QVariant>
 
 namespace arcirk::database {
@@ -86,6 +87,31 @@ inline bool sqliteDBMemFile(QSqlDatabase memdb, QString filename, bool save )
     return state;
 }
 
+static inline QList<QString> get_database_tables(QSqlDatabase& sql){
+
+    QSqlQuery rs("SELECT name FROM sqlite_master WHERE type='table';", sql);
+    rs.exec();
+    QList<QString> result;
+    while (rs.next())
+    {
+        result.append(rs.value(0).toString());
+    }
+
+    return result;
+}
+
+static inline QList<QString> get_database_views(QSqlDatabase& sql){
+
+    QSqlQuery rs("SELECT name FROM sqlite_master WHERE type='view';", sql);
+    rs.exec();
+    QList<QString> result;
+    while (rs.next())
+    {
+        result.append(rs.value(0).toString());
+    }
+
+    return result;
+}
 }
 
 #endif // SQLITE_UTILS_HPP
