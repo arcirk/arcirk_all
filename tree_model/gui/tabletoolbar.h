@@ -21,9 +21,13 @@ namespace arcirk::tree_widget {
 
         void setButtonEnabled(const QString& name, bool value);
         void setButtonVisible(const QString& name, bool value);
+        void setSeparatorVisible(int index, bool value);
+        QToolButton *botton(const QString& name);
+        void addBotton(const QString& name, const QIcon& ico, bool checkable = false, int position = -1);
 
     private:
         Ui::TableToolBar *ui;
+        QMap<QString,QToolButton*> m_bottons;
 
     public slots:
         void onHierarchyState(bool state);

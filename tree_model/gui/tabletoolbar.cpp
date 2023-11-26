@@ -28,6 +28,13 @@ TableToolBar::TableToolBar(QWidget *parent) :
     connect(ui->btnMoveUp, &QToolButton::clicked, this, &TableToolBar::onButtonClicked);
     connect(ui->btnMoveTo, &QToolButton::clicked, this, &TableToolBar::onButtonClicked);
 
+    m_bottons.insert("add_item", ui->btnAdd);
+    m_bottons.insert("add_group", ui->btnAddGroup);
+    m_bottons.insert("delete_item", ui->btnDelete);
+    m_bottons.insert("edit_item", ui->btnEdit);
+    m_bottons.insert("move_down_item", ui->btnMoveDown);
+    m_bottons.insert("move_up_item", ui->btnMoveUp);
+    m_bottons.insert("move_to_item", ui->btnMoveTo);
 }
 
 TableToolBar::~TableToolBar()
@@ -74,6 +81,40 @@ void TableToolBar::setButtonVisible(const QString &name, bool value)
         ui->btnMoveUp->setVisible(value);
     else if(name == "move_to_item")
         ui->btnMoveTo->setVisible(value);
+}
+
+void TableToolBar::setSeparatorVisible(int index, bool value)
+{
+    if(index == 0){
+        ui->separator1->setVisible(value);
+    }else if(index == 1){
+        ui->separator2->setVisible(value);
+    }
+}
+
+QToolButton *TableToolBar::botton(const QString &name)
+{
+    auto itr = m_bottons.find(name);
+    if(itr != m_bottons.end())
+        return itr.value();
+
+    return nullptr;
+}
+
+void TableToolBar::addBotton(const QString &name, const QIcon &ico, bool checkable, int position)
+{
+    auto btn = new QToolButton(this);
+    btn->setIcon(ico);
+    btn->setCheckable(checkable);
+    btn->setObjectName(name);
+    btn->setAutoRaise(true);
+    btn->setProperty("itemName", name);
+    m_bottons.insert(name, btn);
+    int pos = ui->horizontalLayout->count() - 1;
+    if(position != -1)
+        pos = position;
+    ui->horizontalLayout->insertWidget( pos, btn);
+    connect(btn, &QToolButton::clicked, this, &TableToolBar::onButtonClicked);
 }
 
 void arcirk::tree_widget::TableToolBar::onHierarchyState(bool state)

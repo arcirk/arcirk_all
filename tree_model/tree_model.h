@@ -76,6 +76,7 @@ namespace arcirk::tree_model {
         void move_to(const QModelIndex &index, const QModelIndex &new_parent);
 
         bool remove(const QModelIndex &index, bool upgrade_database = false);
+        void remove_childs(const QModelIndex &parent);
         QModelIndex add(const json& object, const QModelIndex &parent = QModelIndex(), bool upgrade_database = false);
         void add_array(const json& arr, const QModelIndex &parent = QModelIndex(), bool upgrade_database = false);
         void set_table(const json& table, const QModelIndex &parent = QModelIndex(), bool upgrade_database = false);
@@ -114,6 +115,9 @@ namespace arcirk::tree_model {
 
         void set_user_role_data(const QString& column, tree::user_role role, const QVariant& value);
         QVariant user_role_data(const QString& column, tree::user_role role) const;
+        QMap<tree::user_role, QMap<QString, QVariant>> user_data_values() const{
+            return m_conf->user_data_values();
+        }
 
         void set_fetch_expand(bool value){m_conf->set_fetch_expand(value);};
 
@@ -127,6 +131,8 @@ namespace arcirk::tree_model {
         QList<QString> columnNames() const {return m_conf->columns();};
 
         void reset_columns(const json& cols){m_conf->reset_columns(cols);};
+
+        const QMap<QString, QString> columns_aliases(){return m_conf->columns_aliases();}
 
 #ifdef BADMIN_APPLICATION
         arcirk::server::server_objects server_object() const {return m_server_object;};
@@ -145,16 +151,16 @@ namespace arcirk::tree_model {
 
         QMap<QString, QString> column_aliases_default() const{ return m_conf->column_aliases_default();};
 
-        QList<QString> not_null_fields(){
-            QList<QString> m_lst{};
-            foreach (auto itr, m_conf->columns()) {
-                auto ext = user_role_data(itr, tree::NotNullRole);
-                if(ext.isValid() && ext.toBool()){
-                    m_lst.append(itr);
-                }
-            }
-            return m_lst;
-        }
+//        QList<QString> not_null_fields(){
+//            QList<QString> m_lst{};
+//            foreach (auto itr, m_conf->columns()) {
+//                auto ext = user_role_data(itr, tree::NotNullRole);
+//                if(ext.isValid() && ext.toBool()){
+//                    m_lst.append(itr);
+//                }
+//            }
+//            return m_lst;
+//        }
 
     protected:
         QSqlDatabase m_db;

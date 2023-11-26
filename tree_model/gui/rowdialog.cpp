@@ -12,6 +12,7 @@
 #include <QPushButton>
 #include <QMessageBox>
 #include "treeitemtextline.h"
+#include "treeitemtextedit.h"
 
 using namespace arcirk::tree_widget;
 using namespace arcirk::tree::widgets;
@@ -20,7 +21,6 @@ RowDialog::RowDialog(const json& data, const User_Data& user_data, QWidget *pare
                      const QMap<QString, QString>& aliases,
                      const QList<QString>& invisible,
                      const QList<QString>& order,
-                     const QList<QString>& not_null,
                      const QString& parentSynonim) :
     QDialog(parent),
     ui(new Ui::RowDialog)
@@ -30,7 +30,6 @@ RowDialog::RowDialog(const json& data, const User_Data& user_data, QWidget *pare
     m_data = data;
     m_user_data = user_data;
     m_aliases = aliases;
-    m_not_null = not_null;
     m_parentSynonim = parentSynonim;
     m_parentRef = "";
     is_new_element = false;
@@ -83,7 +82,7 @@ void RowDialog::accept()
         auto w =  layout->itemAtPosition(i,1)->widget();
         if(w){
             auto cls = w->property("class").toString();
-            if(cls == "QLineEdit"){
+            if(cls == "QLineEdit" || cls == "QTextEdit"){
                 auto ln = (TreeItemTextLine*)w;
                 if(ln->autoMarkIncomplete() && ln->text().isEmpty()){
                     cancel = true;
@@ -118,10 +117,16 @@ void RowDialog::createControls(const QList<QString>& invisible, const QList<QStr
     foreach (auto itr, m_columns) {
         bool visible = invisible.indexOf(itr) ==-1;
         auto value = m_data[itr.toStdString()];
-        auto param = m_user_data.find(itr.toStdString());
-        item_editor_widget_roles role = item_editor_widget_roles::widgetINVALID;
-        if(param != m_user_data.end())
-            role = (item_editor_widget_roles)param->first.toInt();
+        auto role = widgetRole(itr);
+        if(visible){
+           auto useRole = widgetUseRole(itr);
+           if(useRole != forFolderAndItem){
+                if(is_group && useRole == forItem)
+                    visible = false;
+                else if(!is_group && useRole == forFolder)
+                    visible = false;
+           }
+        }
         if(role != item_editor_widget_roles::widgetINVALID){
             auto control = createEditor(itr, role, value);
             addWidget(itr, row, control, visible);
@@ -233,7 +238,7 @@ QList<QWidget *> RowDialog::createLineEdit(const QString &key, const json &value
     QString val;
     if(value.is_string())
         val = value.get<std::string>().c_str();
-    auto control = new TreeItemTextLine(0,0, this); QLineEdit(this);
+    auto control = new TreeItemTextLine(0,0, this);
     control->setText(val);
     if(key == "ref" || key == "parent"){
         control->setDefaultValue(NIL_STRING_UUID);
@@ -246,12 +251,14 @@ QList<QWidget *> RowDialog::createLineEdit(const QString &key, const json &value
            control->enableClearBottom(!is_new_element);
         }
     }
+
+    control->setExtValue(widgetExtRole(key));
     control->setProperty("class", "QLineEdit");
     control->setObjectName(key);
     control->isBorder(true);
     control->setSpacing(1);
-    if(m_not_null.indexOf(key) !=-1)
-        control->setAutoMarkIncomplete(true);
+    control->setAutoMarkIncomplete(widgetNotNull(key));
+    control->setRole(widgetInnerRole(key));
 
     auto lbl = new QLabel(this);
     lbl->setText(fieldAlias(key) + ":");
@@ -266,11 +273,11 @@ QList<QWidget *> RowDialog::createLineEdit(const QString &key, const json &value
 QList<QWidget *> RowDialog::createComboBox(const QString &key, const json &value)
 {
     auto control = new QComboBox(this);
-    auto param = m_user_data.find(key.toStdString());
+    auto ext = widgetExtRole(key);
 
-    if(param != m_user_data.end()){
+    //if(param != m_user_data.end()){
         QStringList lst;
-        auto ext = param->second;
+        //auto ext = param->second;
         if(ext.isValid()){
             lst = ext.toStringList();
             control->addItems(lst);
@@ -281,7 +288,7 @@ QList<QWidget *> RowDialog::createComboBox(const QString &key, const json &value
                 }
             }
         }
-    }
+    //}
 
     control->setProperty("class", "QComboBox");
     control->setObjectName(key);
@@ -295,10 +302,76 @@ QList<QWidget *> RowDialog::createComboBox(const QString &key, const json &value
     return QList<QWidget*>{control, lbl};
 }
 
+item_editor_widget_roles RowDialog::widgetRole(const QString &key)
+{
+    auto itr = m_user_data.find(tree::user_role::WidgetRole);
+    if(itr != m_user_data.end()){
+        auto it = itr.value().find(key);
+        if(it != itr.value().end()){
+            if(it.value().isValid())
+                return (item_editor_widget_roles)it.value().toInt();
+        }
+    }
+
+    return item_editor_widget_roles::widgetINVALID;
+}
+
+bool RowDialog::widgetNotNull(const QString &key)
+{
+    auto itr = m_user_data.find(tree::user_role::NotNullRole);
+    if(itr != m_user_data.end()){
+        auto it = itr.value().find(key);
+        if(it != itr.value().end()){
+            return it.value().toBool();
+        }
+    }
+
+    return false;
+}
+
+QVariant RowDialog::widgetExtRole(const QString &key)
+{
+    auto itr = m_user_data.find(tree::user_role::UserRoleExt);
+    if(itr != m_user_data.end()){
+        auto it = itr.value().find(key);
+        if(it != itr.value().end()){
+            return it.value();
+        }
+    }
+
+    return QVariant();
+}
+
+tree_editor_inneer_role RowDialog::widgetInnerRole(const QString &key)
+{
+    auto itr = m_user_data.find(tree::user_role::WidgetInnerRole);
+    if(itr != m_user_data.end()){
+        auto it = itr.value().find(key);
+        if(it != itr.value().end()){
+            if(it.value().isValid())
+                return (tree_editor_inneer_role)it.value().toInt();
+        }
+    }
+
+    return tree_editor_inneer_role::widgetText;
+}
+
+attribute_use RowDialog::widgetUseRole(const QString &key)
+{
+    auto itr = m_user_data.find(tree::user_role::UseRole);
+    if(itr != m_user_data.end()){
+        auto it = itr.value().find(key);
+        if(it != itr.value().end()){
+            if(it.value().isValid())
+                return (attribute_use)it.value().toInt();
+        }
+    }
+
+    return attribute_use::forFolderAndItem;
+}
+
 void RowDialog::addWidget(const QString& key, int row, QList<QWidget *> control, bool visible)
 {
-//    if(!visible)
-//        return;
 
     QGridLayout * layout = ui->gridLayout;
     bool enabled = true;
@@ -325,24 +398,34 @@ QList<QWidget *> RowDialog::createTextEdit(const QString &key, const json &value
     QString val;
     if(value.is_string())
         val = value.get<std::string>().c_str();
-    auto control = new QTextEdit(this);
-//    if(key != "parent")
-        control->setText(val);
-//    else{
-//        m_parentRef = val;
-//        if(!m_parentSynonim.isEmpty())
-//            control->setText(m_parentSynonim);
-//        else
-//            control->setText(val);
- //   }
+    auto control = new TreeItemTextEdit(0,0, this);
+    control->setText(val);
+    if(key == "ref" || key == "parent"){
+        control->setDefaultValue(NIL_STRING_UUID);
+        if(key == "parent"){
+            control->isClearButton(true);
+            control->isReadOnly(true);
+            m_parentRef = val;
+            control->setValue(m_parentRef);
+            control->setSynonim(m_parentSynonim);
+            control->enableClearBottom(!is_new_element);
+        }
+    }
+
+    control->setExtValue(widgetExtRole(key));
     control->setProperty("class", "QTextEdit");
     control->setObjectName(key);
+    control->isBorder(true);
+    control->setSpacing(1);
+    control->setAutoMarkIncomplete(widgetNotNull(key));
+    control->setRole(widgetInnerRole(key));
 
     auto lbl = new QLabel(this);
     lbl->setText(fieldAlias(key) + ":");
     lbl->setObjectName(QString(key) + "_LBL");
 
-    //connect(control, &QTextEdit::textChanged, this, &RowDialog::onControlDataChanged);
+    connect(control, &TreeItemTextEdit::textChanged, this, &RowDialog::onTextControlDataChanged);
+    connect(control, &TreeItemTextEdit::valueChanged, this, &RowDialog::onValueChanged);
 
     return QList<QWidget*>{control, lbl};
 }
@@ -375,6 +458,14 @@ void RowDialog::onControlDataChanged(const QVariant& value)
                 }
             }else
                 m_data["parent"] = m_parentRef.toStdString();
+        }else if(cls == "QTextEdit"){
+            if(obj_name != "parent"){
+                auto ctrl = qobject_cast<TreeItemTextEdit*>(w);
+                if(ctrl!=0 && m_data.find(obj_name.toStdString()) != m_data.end()){
+                    m_data[obj_name.toStdString()] = ctrl->text().toStdString();
+                }
+            }else
+                m_data["parent"] = m_parentRef.toStdString();
         }else if(cls == "QComboBox"){
             auto ctrl = qobject_cast<QComboBox*>(w);
             if(ctrl!=0 && m_data.find(obj_name.toStdString()) != m_data.end()){
@@ -391,6 +482,50 @@ void RowDialog::onValueChanged(const QVariant &value)
         auto obj_name = w->objectName();
         if(obj_name == "parent")
             m_parentRef = value.toString();
+    }
+}
+
+void RowDialog::onTextControlDataChanged()
+{
+    auto w = sender();
+    if(w){
+        auto obj_name = w->objectName();
+        QString cls = w->property("class").toString();
+        if(cls == "QCheckBox"){
+            auto ctrl = qobject_cast<QCheckBox*>(w);
+            if(ctrl!=0 && m_data.find(obj_name.toStdString()) != m_data.end()){
+                if(m_data[obj_name.toStdString()].is_boolean())
+                    m_data[obj_name.toStdString()] = ctrl->isChecked();
+                else
+                    m_data[obj_name.toStdString()] = ctrl->isChecked() ? 1:0;
+            }
+        }else if(cls == "QSpinBox"){
+            auto ctrl = qobject_cast<QSpinBox*>(w);
+            if(ctrl!=0 && m_data.find(obj_name.toStdString()) != m_data.end()){
+                m_data[obj_name.toStdString()] = ctrl->value();
+            }
+        }else if(cls == "QLineEdit"){
+            if(obj_name != "parent"){
+                auto ctrl = qobject_cast<TreeItemTextLine*>(w);
+                if(ctrl!=0 && m_data.find(obj_name.toStdString()) != m_data.end()){
+                    m_data[obj_name.toStdString()] = ctrl->text().toStdString();
+                }
+            }else
+                m_data["parent"] = m_parentRef.toStdString();
+        }else if(cls == "QTextEdit"){
+            if(obj_name != "parent"){
+                auto ctrl = qobject_cast<TreeItemTextEdit*>(w);
+                if(ctrl!=0 && m_data.find(obj_name.toStdString()) != m_data.end()){
+                    m_data[obj_name.toStdString()] = ctrl->text().toStdString();
+                }
+            }else
+                m_data["parent"] = m_parentRef.toStdString();
+        }else if(cls == "QComboBox"){
+            auto ctrl = qobject_cast<QComboBox*>(w);
+            if(ctrl!=0 && m_data.find(obj_name.toStdString()) != m_data.end()){
+                m_data[obj_name.toStdString()] = ctrl->currentText().toStdString();
+            }
+        }
     }
 }
 #endif

@@ -196,5 +196,14 @@
         <file>img/select_type.png</file>
         <file>img/format-letter-case-upper.svg</file>
         <file>img/open_from_disk.png</file>
+        <file>img/database_online.png</file>
+        <file>img/database_reload.png</file>
+        <file>img/database_offline.png</file>
+        <file>img/database.png</file>
+        <file>img/database_connect.png</file>
+        <file>img/database_disconnect.png</file>
+        <file>img/database_online1.png</file>
+        <file>img/database_offline1.png</file>
+        <file>img/database_new.png</file>
     </qresource>
 </RCC>

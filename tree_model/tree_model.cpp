@@ -476,6 +476,14 @@ bool TreeItemModel::remove(const QModelIndex &index, bool upgrade_database)
     return removeRow(index.row(), index.parent());
 }
 
+void TreeItemModel::remove_childs(const QModelIndex &parent)
+{
+    while (rowCount(parent) > 0) {
+        auto index = this->index(0, 0, parent);
+        remove(index);
+    }
+}
+
 bool TreeItemModel::remove_sql_data(const QModelIndex &index)
 {
     if((m_conf->type_connection() == root_tree_conf::sqlIteMemoryConnection ||

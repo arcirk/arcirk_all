@@ -65,6 +65,9 @@ using json = nlohmann::json;
 //typedef IP_ADAPTER_UNICAST_ADDRESS_LH Addr;
 //typedef IP_ADAPTER_ADDRESSES *AddrList;
 
+typedef unsigned char BYTE;
+typedef std::vector<BYTE> ByteArray;
+
 BOOST_FUSION_DEFINE_STRUCT(
     (arcirk::http), http_param,
     (std::string, command)
@@ -90,11 +93,46 @@ BOOST_FUSION_DEFINE_STRUCT(
     (std::string, query_type)
     )
 
+BOOST_FUSION_DEFINE_STRUCT(
+    (arcirk::query_builder_ui), query_builder_main,
+    (int, _id)
+    (std::string, name)
+    (std::string, ref)
+    (std::string, path)
+    (std::string, parent)
+    (std::string, data_type)
+    (int, is_group)
+)
+
+BOOST_FUSION_DEFINE_STRUCT(
+    (arcirk::database), table_info_sqlite,
+    (int, cid)
+    (std::string, name)
+    (std::string, type)
+    (int, notnull)
+    (std::string, dflt_value)
+    (int, bk)
+    );
+//BOOST_FUSION_DEFINE_STRUCT(
+//    (arcirk::query_builder_ui), query_builder_databases,
+//    (int, _id)
+//    (std::string, name)
+//    (std::string, ref)
+//    (std::string, path)
+//    (std::string, parent)
+//    (int, is_group)
+//)
+
+BOOST_FUSION_DEFINE_STRUCT(
+    (arcirk::query_builder_ui), query_builder_querias,
+    (int, _id)
+    (std::string, ref)
+    (std::string, parent)
+    (ByteArray, data)
+    (std::string, query_ref)
+    (int, is_group)
+    )
 namespace arcirk {
-
-
-typedef unsigned char BYTE;
-typedef std::vector<BYTE> ByteArray;
 
 typedef std::string T_str;
 typedef std::vector<T_str> T_vec;
@@ -348,10 +386,44 @@ inline std::string str_sample(const std::string& format_string, const Arguments&
 inline std::string left(const std::string &source, const std::string::size_type& count){
     return  source.substr(0, count);
 }
-inline std::string right(const std::string &source, const std::string::size_type& start){
-    return  source.substr(start, source.length());
+inline std::string right(const std::string &source, const int& count){
+    return  source.substr((int)source.length() - count, count);
 }
+inline void only_one_space(const std::string& source, std::string& out){
+    boost::regex regular("\\s+");
+    std::ostringstream res(std::ios::out);
+    std::ostream_iterator<char> ores(res);
 
+    boost::regex_replace( ores, source.begin(), source.end(), regular,
+                         " ", boost::match_default | boost::format_all );
+    out = res.str();
+}
+inline int index_of(const std::string& original_string, const std::string& source, int start = 0){
+    auto find = original_string.find(source, start);
+    if(find == std::string::npos)
+        return - 1;
+    else
+        return (int)find;
+}
+inline std::vector<int> find_all_occurrences(const std::string& source, const std::string& find_str){
+    std::vector<int> result{};
+    std::string expr = str_sample("(?i)(%1%)", find_str);
+    boost::regex regular(expr);
+    std::string::const_iterator start, end;
+    start = source.begin();
+    end = source.end();
+    boost::match_results<std::string::const_iterator> what;
+    boost::match_flag_type flags = boost::match_default;
+    while(boost::regex_search(start, end, what, regular, flags))
+    {
+        start = what[0].second;
+        int m = 0;
+        if(result.size() > 0)
+            m = result[result.size() - 1];
+        result.push_back((int)what.position() + 1 + m);
+    }
+    return result;
+}
 
 inline void* crypt_t(void* data, unsigned data_size, void* key, unsigned key_size)
 {

@@ -283,7 +283,7 @@ QString QueryBuilderPackageDialog::query_text(const std::string &ref)
 //            if(itr.user_query == 0){
 //                vals.push_back(sql_value(itr.name, itr.alias, ""));
 //            }else{
-                vals.push_back(sql_value(itr.query, itr.alias, ""));
+            vals.push_back(sql_value(itr.query, itr.alias, "", (sql_value_type)0));
             //}
             m_tables.insert(itr.parent_name);
         }

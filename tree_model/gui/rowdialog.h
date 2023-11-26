@@ -7,7 +7,7 @@
 
 using namespace arcirk::tree;
 
-typedef QMap<std::string, QPair<QVariant, QVariant>> User_Data;
+typedef QMap<tree::user_role, QMap<QString, QVariant>> User_Data;
 
 namespace Ui {
 class RowDialog;
@@ -21,7 +21,6 @@ namespace arcirk::tree_widget {
         explicit RowDialog(const json& data, const User_Data& user_data = {},
                            QWidget *parent = nullptr, const QMap<QString, QString>& aliases = {},
                            const QList<QString>& invisible = {}, const QList<QString>& order = {},
-                           const QList<QString>& not_null = {},
                            const QString& parentSynonim = "");
         ~RowDialog();
 
@@ -36,7 +35,6 @@ namespace arcirk::tree_widget {
         User_Data m_user_data;
         QMap<QString, QString> m_aliases;
         QList<QString> m_disable{"_id", "ref", "parent", "is_group"};
-        QList<QString> m_not_null;
         QMap<QString, QList<QWidget*>> m_widgets;
         bool is_group;
         QString m_parentSynonim;
@@ -53,12 +51,18 @@ namespace arcirk::tree_widget {
         QList<QWidget*> createLineEdit(const QString& key, const json& value);
         QList<QWidget*> createTextEdit(const QString& key, const json& value);
         QList<QWidget*> createComboBox(const QString& key, const json& value);
+        item_editor_widget_roles widgetRole(const QString& key);
+        bool widgetNotNull(const QString& key);
+        QVariant widgetExtRole(const QString& key);
+        tree_editor_inneer_role widgetInnerRole(const QString& key);
+        attribute_use widgetUseRole(const QString& key);
 
         void addWidget(const QString& key, int row, QList<QWidget*> control, bool visible);
 
     private slots:
         void onControlDataChanged(const QVariant& value = false);
         void onValueChanged(const QVariant& value);
+        void onTextControlDataChanged();
     signals:
         void onError(const QString& what, const QString& desc);
 

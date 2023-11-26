@@ -1,12 +1,12 @@
 #ifndef IS_OS_ANDROID
-#include "treeitemtextline.h"
+#include "treeitemtextedit.h"
 #include "texteditdialog.h"
 #include <QHBoxLayout>
 #include <QFileDialog>
 
 using namespace arcirk::tree::widgets;
 
-TreeItemTextLine::TreeItemTextLine(int row, int column, QWidget *parent) :
+TreeItemTextEdit::TreeItemTextEdit(int row, int column, QWidget *parent) :
     TreeItemWidget(row, column, parent)
 {
 
@@ -19,8 +19,8 @@ TreeItemTextLine::TreeItemTextLine(int row, int column, QWidget *parent) :
     hbox = new QHBoxLayout(this);
     hbox->setContentsMargins(0,0,0,0);
     hbox->setSpacing(0);
-    m_text_line = new TextBox(this);
-    //m_text_line->setStyleSheet("border: 1px  solid rgb(255, 255, 255); border-radius: 0px;");
+    m_text_line = new TextEditBox(this);
+
     m_button = new QToolButton(this);
     m_button->setText("...");
     m_button->setObjectName("SelectButton");
@@ -30,72 +30,72 @@ TreeItemTextLine::TreeItemTextLine(int row, int column, QWidget *parent) :
     m_clear_button->setIcon(QIcon(":/img/clear.ico"));
     m_clear_button->setVisible(is_clear);
     hbox->addWidget(m_text_line);
-    hbox->addWidget(m_button);
-    hbox->addWidget(m_clear_button);
+    hbox->addWidget(m_button, 0, Qt::AlignTop);
+    hbox->addWidget(m_clear_button, 0, Qt::AlignTop);
 
     setLayout(hbox);
 
-    connect(m_button, &QToolButton::clicked, this, &TreeItemTextLine::onButtonClicked);
-    connect(m_clear_button, &QToolButton::clicked, this, &TreeItemTextLine::onButtonClicked);
-    connect(m_text_line, &TextBox::textChanged, this, &TreeItemTextLine::onTextChanged);
+    connect(m_button, &QToolButton::clicked, this, &TreeItemTextEdit::onButtonClicked);
+    connect(m_clear_button, &QToolButton::clicked, this, &TreeItemTextEdit::onButtonClicked);
+    connect(m_text_line, &TextEditBox::textChanged, this, &TreeItemTextEdit::onTextChanged);
 }
 
-void TreeItemTextLine::setSynonim(const QString &value)
+void TreeItemTextEdit::setSynonim(const QString &value)
 {
     m_synonim = value;
     is_synonim = true;
     m_text_line->setText(value);
 }
 
-void TreeItemTextLine::setValue(const QString &value)
+void TreeItemTextEdit::setValue(const QString &value)
 {
     m_value = value;
 }
 
-QString TreeItemTextLine::synonim() const
+QString TreeItemTextEdit::synonim() const
 {
     return m_synonim;
 }
 
-QString TreeItemTextLine::value() const
+QString TreeItemTextEdit::value() const
 {
     return m_value;
 }
 
-void TreeItemTextLine::enableClearBottom(bool value)
+void TreeItemTextEdit::enableClearBottom(bool value)
 {
     m_clear_button->setEnabled(value);
 }
 
-void TreeItemTextLine::setText(const QString &text)
+void TreeItemTextEdit::setText(const QString &text)
 {
     m_text_line->setText(text);
     m_value = text;
 }
 
-QString TreeItemTextLine::text() const
+QString TreeItemTextEdit::text() const
 {
-    return m_text_line->text();
+    return m_text_line->toPlainText();
 }
 
-void TreeItemTextLine::isSelectButton(bool value)
+void TreeItemTextEdit::isSelectButton(bool value)
 {
     is_select = value;
     m_button->setVisible(is_select);
 }
 
-void TreeItemTextLine::isClearButton(bool value)
+void TreeItemTextEdit::isClearButton(bool value)
 {
     is_clear = value;
     m_clear_button->setVisible(is_clear);
 }
 
-void TreeItemTextLine::setDefaultValue(const QString &value)
+void TreeItemTextEdit::setDefaultValue(const QString &value)
 {
     m_default = value;
 }
 
-void TreeItemTextLine::isBorder(bool value)
+void TreeItemTextEdit::isBorder(bool value)
 {
     is_border = value;
     if(!value)
@@ -104,25 +104,23 @@ void TreeItemTextLine::isBorder(bool value)
         m_text_line->setStyleSheet("");
 }
 
-void TreeItemTextLine::isReadOnly(bool value)
+void TreeItemTextEdit::isReadOnly(bool value)
 {
     m_text_line->setReadOnly(value);
 }
 
-void TreeItemTextLine::setSpacing(int value)
+void TreeItemTextEdit::setSpacing(int value)
 {
     hbox->setSpacing(value);
 }
 
-void TreeItemTextLine::setAutoMarkIncomplete(bool value)
+void TreeItemTextEdit::setAutoMarkIncomplete(bool value)
 {
     m_autoMarkIncomplete = value;
     if(!value)
         isBorder(is_border);
     else{
-        if(m_text_line->text().isEmpty()){
-//           m_text_line->setStyleSheet("border-top: 1px;"
-//                "border-bottom: 1px solid red");
+        if(m_text_line->toPlainText().isEmpty()){
             m_text_line->setAutoMarkIncomplete(value);
         }else{
            isBorder(is_border);
@@ -130,7 +128,7 @@ void TreeItemTextLine::setAutoMarkIncomplete(bool value)
     }
 }
 
-void TreeItemTextLine::onButtonClicked()
+void TreeItemTextEdit::onButtonClicked()
 {
     auto btn = qobject_cast<QToolButton*>(sender());
 
@@ -138,7 +136,7 @@ void TreeItemTextLine::onButtonClicked()
         if(btn->objectName() == "SelectButton"){
            if(m_role == widgetText){
                 auto dlg = TextEditDialog(this);
-                dlg.setText(m_text_line->text());
+                dlg.setText(m_text_line->toPlainText());
                 if(dlg.exec() == QDialog::Accepted){
                     m_text_line->setText(dlg.text());
                 }
@@ -147,13 +145,13 @@ void TreeItemTextLine::onButtonClicked()
                 if(m_ext_value.isValid()){
                     filter = m_ext_value.toString();
                 }
-                auto result = QFileDialog::getOpenFileName(this, "Выбор файла", m_text_line->text(), filter);
+                auto result = QFileDialog::getOpenFileName(this, "Выбор файла", m_text_line->toPlainText(), filter);
                 if(!result.isEmpty()){
                     m_text_line->setText(result);
                     m_value = result;
                 }
            }else if(m_role == widgetDirectoryPath){
-                auto result = QFileDialog::getExistingDirectory(this, "Выбор каталога", m_text_line->text());
+                auto result = QFileDialog::getExistingDirectory(this, "Выбор каталога", m_text_line->toPlainText());
                 if(!result.isEmpty()){
                     m_text_line->setText(result);
                     m_value = result;
@@ -174,24 +172,8 @@ void TreeItemTextLine::onButtonClicked()
 
 }
 
-void TreeItemTextLine::onTextChanged(const QVariant &value)
+void TreeItemTextEdit::onTextChanged()
 {
-//    if(m_autoMarkIncomplete){
-//        if(m_text_line->text().isEmpty()){
-////            m_text_line->setStyleSheet("");
-////            m_text_line->setStyleSheet("border: 1px solid blue; border-radius: 2px;"
-////                                       "border-bottom: 1px solid red");
-////            QPainter* painter = m_text_line->paintEngine()->painter();
-////            //painter.drawText(QPoint(rect().center().x() - 10, rect().center().y()), "Label");
-
-////            painter->setPen(QPen(QBrush(Qt::red), 5));
-////            painter->drawLine(rect().topLeft(), rect().bottomRight());
-
-//        }else{
-//            isBorder(is_border);
-//        }
-//    }
-
-    emit textChanged(value);
+    emit textChanged();
 }
 #endif

@@ -20,6 +20,7 @@ SOURCES += \
     $$PWD/mainwindow.cpp \
     $$PWD/querybuilderadditionallywidget.cpp \
     $$PWD/querybuilderarbitraryexpressiondialog.cpp \
+    $$PWD/querybuilderdatabaseswidget.cpp \
     $$PWD/querybuilderfieldexdialog.cpp \
     $$PWD/querybuilderfieldswidget.cpp \
     $$PWD/querybuilderforeginkeydialog.cpp \
@@ -48,6 +49,7 @@ HEADERS += \
     $$PWD/mainwindow.h \
     $$PWD/querybuilderadditionallywidget.h \
     $$PWD/querybuilderarbitraryexpressiondialog.h \
+    $$PWD/querybuilderdatabaseswidget.h \
     $$PWD/querybuilderfieldexdialog.h \
     $$PWD/querybuilderfieldswidget.h \
     $$PWD/querybuilderforeginkeydialog.h \
@@ -94,6 +96,7 @@ FORMS += \
     $$PWD/mainwindow.ui \
     $$PWD/querybuilderadditionallywidget.ui \
     $$PWD/querybuilderarbitraryexpressiondialog.ui \
+    $$PWD/querybuilderdatabaseswidget.ui \
     $$PWD/querybuilderfieldexdialog.ui \
     $$PWD/querybuilderfieldswidget.ui \
     $$PWD/querybuilderforeginkeydialog.ui \

@@ -118,7 +118,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="label">
+      <widget class="QLabel" name="separator1">
        <property name="frameShape">
         <enum>QFrame::VLine</enum>
        </property>
@@ -182,7 +182,7 @@
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="label_2">
+      <widget class="QLabel" name="separator2">
        <property name="frameShape">
         <enum>QFrame::VLine</enum>
        </property>
@@ -212,7 +212,6 @@
   </layout>
  </widget>
  <resources>
-  <include location="../../query_builder_ui/resurses.qrc"/>
   <include location="../../query_builder_ui/resurses.qrc"/>
  </resources>
  <connections/>

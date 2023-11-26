@@ -1,4 +1,4 @@
-#ifndef TREEVIEWWIDGET_H
+﻿#ifndef TREEVIEWWIDGET_H
 #define TREEVIEWWIDGET_H
 
 #ifndef IS_OS_ANDROID
@@ -85,6 +85,8 @@ namespace arcirk::tree_widget {
 
         void currentChanged(const QModelIndex &current, const QModelIndex &previous) override;
 
+        void add_group_in_root_only(bool value){m_add_group_in_root_only = value;};;
+
     protected:
         void mousePressEvent(QMouseEvent *event) override;
         void mouseMoveEvent(QMouseEvent *event) override;
@@ -106,11 +108,18 @@ namespace arcirk::tree_widget {
         bool m_not_sort;
         TableToolBar* m_toolBar;
         bool m_inners_dialogs;
-        bool m_only_groups_in_root;
+        bool m_only_groups_in_root; //
+        bool m_add_group_in_root_only;
             //
         void set_hierarchy_list(bool value);
         void performDrag();
         int text_width(int column, const QModelIndex& parent, const int& result = 0);
+
+        void openNewItemDialog();
+        void openNewGroupDialog();
+        void openOpenEditDialog();
+        void openOpenMoveToDialog();
+        void deleteItemCommand();
 
     signals:
         void doDropEvent(const QModelIndex& index, const QString& sender);

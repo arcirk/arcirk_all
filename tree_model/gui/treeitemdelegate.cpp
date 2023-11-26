@@ -74,6 +74,8 @@ void TreeItemDelegate::setEditorData(QWidget *editor, const QModelIndex &index) 
     model->set_widget_address(qMakePair(index.row(), index.column()));
 
     auto editorType = index.data(tree::WidgetRole);
+    auto editorInnerRole = index.data(tree::WidgetInnerRole);
+
     if(editorType.isValid()){
         tree::item_editor_widget_roles t_editor = (tree::item_editor_widget_roles)editorType.toInt();//json(editorType.toInt()).get<item_editor_widget_roles>();
         if(t_editor == tree::widgetComboBoxRole){
@@ -90,6 +92,9 @@ void TreeItemDelegate::setEditorData(QWidget *editor, const QModelIndex &index) 
                 if (current > -1) {
                     comboBox->setCurrentIndex(current);
                 }
+            }
+            if(editorInnerRole.isValid()){
+                comboBox->setRole((tree_editor_inneer_role)editorInnerRole.toInt());
             }
             connect(comboBox, &TreeItemComboBox::currentIndexChanged, this, &TreeItemDelegate::onComboBoxCurrentIndexChanged);
         }else if(t_editor == tree::widgetTextLineRole){
@@ -113,6 +118,9 @@ void TreeItemDelegate::setEditorData(QWidget *editor, const QModelIndex &index) 
                 edit->setStyleSheet(style);
                 delete validator;
             }
+            if(editorInnerRole.isValid()){
+                edit->setRole((tree_editor_inneer_role)editorInnerRole.toInt());
+            }
         }else if(t_editor == tree::widgetCheckBoxRole){
             TreeItemCheckBox* checkBox = qobject_cast<TreeItemCheckBox*>(editor);
             if (!checkBox) {
@@ -120,6 +128,9 @@ void TreeItemDelegate::setEditorData(QWidget *editor, const QModelIndex &index) 
             }
             bool value = index.data().toBool();
             checkBox->setChecked(value);
+            if(editorInnerRole.isValid()){
+                checkBox->setRole((tree_editor_inneer_role)editorInnerRole.toInt());
+            }
             connect(checkBox, &TreeItemCheckBox::checkBoxClicked, this, &TreeItemDelegate::onCheckBoxStateChanged);
         }else if(t_editor == tree::widgetCompareRole){
             CompareWidget* compare = qobject_cast<CompareWidget*>(editor);
@@ -169,6 +180,9 @@ void TreeItemDelegate::setEditorData(QWidget *editor, const QModelIndex &index) 
                 return QStyledItemDelegate::setEditorData(editor, index);
             }
             int value = index.data().toInt();
+            if(editorInnerRole.isValid()){
+                spin->setRole((tree_editor_inneer_role)editorInnerRole.toInt());
+            }
             spin->setValue(value);
         }else if(t_editor == tree::widgetVariantRole){
             TreeItemVariant* ctrl = qobject_cast<TreeItemVariant*>(editor);
@@ -177,6 +191,9 @@ void TreeItemDelegate::setEditorData(QWidget *editor, const QModelIndex &index) 
             }
             ctrl->setData(index.data());
             ctrl->setCurrentState(index.data(tree::WidgetStateRole));
+            if(editorInnerRole.isValid()){
+                ctrl->setRole((tree_editor_inneer_role)editorInnerRole.toInt());
+            }
         }else
             return QStyledItemDelegate::setEditorData(editor, index);
     }else

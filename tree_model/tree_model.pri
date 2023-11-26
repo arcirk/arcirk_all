@@ -15,6 +15,7 @@ SOURCES += \
     $$PWD/gui/treeitemcombobox.cpp \
     $$PWD/gui/treeitemdelegate.cpp \
     $$PWD/gui/treeitemnumber.cpp \
+    $$PWD/gui/treeitemtextedit.cpp \
     $$PWD/gui/treeitemtextline.cpp \
     $$PWD/gui/treeitemvariant.cpp \
     $$PWD/gui/treeitemwidget.cpp \
@@ -35,6 +36,7 @@ HEADERS += \
     $$PWD/gui/treeitemcombobox.h \
     $$PWD/gui/treeitemdelegate.h \
     $$PWD/gui/treeitemnumber.h \
+    $$PWD/gui/treeitemtextedit.h \
     $$PWD/gui/treeitemtextline.h \
     $$PWD/gui/treeitemvariant.h \
     $$PWD/gui/treeitemwidget.h \

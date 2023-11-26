@@ -58,6 +58,14 @@ namespace arcirk::tree::widgets {
         void setChecked(bool value) override {Q_UNUSED(value);};
         QVariant currentState() const override{return QVariant();};
         void setCurrentState(const QVariant& state) override {Q_UNUSED(state);};
+        void setRole(tree_editor_inneer_role role) override {
+            m_role = role;
+            if(role == tree_editor_inneer_role::widgetColor ||
+                role == tree_editor_inneer_role::widgetDirectoryPath ||
+                role == tree_editor_inneer_role::widgetFilePath){
+                isSelectButton(true);
+            }
+        };
 
         void isSelectButton(bool value);
         void isClearButton(bool value);

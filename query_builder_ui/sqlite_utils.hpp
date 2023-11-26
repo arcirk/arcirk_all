@@ -6,6 +6,8 @@
 #include <QSqlDriver>
 #include <QSqlQuery>
 #include <QVariant>
+#include "query_builder.hpp"
+#include "global/arcirk_qt.hpp"
 
 namespace arcirk::database {
 /*
@@ -112,6 +114,146 @@ static inline QList<QString> get_database_views(QSqlDatabase& sql){
 
     return result;
 }
+
+static inline std::map<std::string, arcirk::database::table_info_sqlite>  table_info(QSqlDatabase& sql, const std::string& table, builder::sql_database_type type, const std::string& database_name = "") {
+
+    std::map<std::string, table_info_sqlite> result{};
+    std::string  query = arcirk::str_sample("PRAGMA table_info(\"%1%\");", table);
+    std::string c_name = "name";
+    std::string c_type = "type";
+    if(type == builder::sql_database_type::type_ODBC){
+        QSqlQuery rc(arcirk::str_sample("USE %1%;", database_name).c_str(), sql);
+        rc.exec();
+        query = arcirk::str_sample("SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '%1%'", table);
+        c_name = "COLUMN_NAME";
+        c_type = "DATA_TYPE";
+    }
+
+    QSqlQuery rs(query.c_str(), sql);
+
+    while (rs.next()) {
+        auto info = table_info_sqlite();
+        info.name = rs.value(c_name.c_str()).toString().toStdString();
+        info.type = rs.value(c_type.c_str()).toString().toStdString();
+        result.emplace(info.name, info);
+    }
+    return result;
+}
+
+inline nlohmann::json get_database_structure(QSqlDatabase& sql, const std::string& parent = NIL_STRING_UUID)
+{
+    using json = nlohmann::json;
+
+    //using query_builder = arcirk::database::builder::query_builder;
+    using namespace arcirk::database;
+    using namespace arcirk::tree_model;
+
+    if(!sql.isOpen())
+        return {};
+
+    auto database_tables = get_database_tables(sql);
+    auto database_views = get_database_views(sql);
+
+    std::vector<json> m_groups;
+    std::vector<json> m_childs;
+
+    auto res = json::object();
+    auto m_tables= ibase_object_structure();
+    m_tables.name = "Таблицы";
+    m_tables.alias = "Таблицы";
+    m_tables.full_name = "Таблицы";
+    m_tables.object_type = "tablesRoot";
+    m_tables.ref = boost::to_string(arcirk::uuids::md5_to_uuid(arcirk::uuids::to_md5(m_tables.name + m_tables.object_type)));
+    m_tables.parent = parent;
+    m_tables.is_group = 1;
+    m_groups.push_back(pre::json::to_json(m_tables));
+    auto m_views= ibase_object_structure();
+    m_views.name = "Представления";
+    m_views.alias = "Представления";
+    m_views.alias = "Представления";
+    m_views.object_type = "viewsRoot";
+    m_views.ref = boost::to_string(arcirk::uuids::md5_to_uuid(arcirk::uuids::to_md5(m_views.name + m_views.object_type)));
+    m_views.parent = parent;
+    m_views.is_group = 1;
+    m_groups.push_back(pre::json::to_json(m_views));
+
+    for (auto const& table: database_tables) {
+        //int count = 0;
+        if(table == "sqlite_sequence")
+            continue;
+
+        auto m_struct = ibase_object_structure();
+        m_struct.name = table.toStdString();
+        m_struct.alias = table.toStdString();
+        m_struct.full_name = table.toStdString();
+        m_struct.data_type = "";
+        m_struct.ref = boost::to_string(arcirk::uuids::md5_to_uuid(arcirk::uuids::to_md5(m_struct.name + m_struct.object_type))); //
+        m_struct.parent = m_tables.ref;
+        m_struct.is_group = 1;
+        m_struct.object_type = "table";
+        m_struct.base_ref = m_struct.ref; //arcirk::uuids::random_uuid());
+        m_struct.base_parent = m_tables.ref;
+
+        m_groups.push_back(pre::json::to_json(m_struct));
+
+
+        auto details = table_info(sql, table.toStdString(), builder::sql_database_type::type_Sqlite3);
+
+        for (auto const& itr : details) {
+            auto m_details = ibase_object_structure();
+            m_details.data_type = itr.second.type;
+            m_details.name = itr.second.name;
+            m_details.alias = itr.second.name;
+            m_details.full_name = table.toStdString() + "." + itr.second.name;
+            m_details.query = table.toStdString() + "." + itr.second.name;
+            m_details.ref = boost::to_string(arcirk::uuids::md5_to_uuid(arcirk::uuids::to_md5(m_details.name + m_details.object_type))); //arcirk::uuids::random_uuid());
+            m_details.parent = m_struct.ref;
+            m_details.base_ref = m_details.ref; //arcirk::uuids::random_uuid());
+            m_details.base_parent = m_struct.ref;
+            m_details.is_group = 0;
+            m_details.object_type = "field";
+            m_details.parent_alias = m_struct.name;
+            m_details.parent_name = m_struct.name;
+            m_childs.push_back(pre::json::to_json(m_details));
+        }
+    }
+
+    for (auto const& view: database_views) {
+        auto m_struct = ibase_object_structure();
+        m_struct.name = view.toStdString();
+        m_struct.alias = view.toStdString();
+        m_struct.full_name = view.toStdString();
+        m_struct.object_type = "view";
+        m_struct.ref = boost::to_string(arcirk::uuids::md5_to_uuid(arcirk::uuids::to_md5(m_struct.name + m_struct.object_type))); //arcirk::uuids::random_uuid());
+        m_struct.parent = m_views.ref;
+        m_struct.is_group = 0;
+        m_struct.base_ref = m_struct.ref; //arcirk::uuids::random_uuid());
+        m_struct.base_parent = m_views.ref;
+        m_childs.push_back(pre::json::to_json(m_struct));
+    }
+
+    auto m_empty = pre::json::to_json(ibase_object_structure());
+
+    auto columns = json::array();
+
+    for (auto itr = m_empty.items().begin(); itr != m_empty.items().end(); ++itr) {
+        columns += itr.key();
+    }
+    res["columns"] = columns;
+
+    auto rows = json::array();
+    for (auto gr : m_groups) {
+        rows += gr;
+    }
+    for (auto gr : m_childs) {
+        rows += gr;
+    }
+    res["rows"] = rows;
+
+    return res;
+}
+
+
 }
 
 #endif // SQLITE_UTILS_HPP

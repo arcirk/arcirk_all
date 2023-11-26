@@ -155,7 +155,9 @@ namespace arcirk::tree {
         WidgetStateRole = Qt::UserRole + 10,
         FormatTextRole = Qt::UserRole + 11,
         NotNullRole = Qt::UserRole + 12,
-        EmptyRole = Qt::UserRole + 13
+        WidgetInnerRole = Qt::UserRole + 13,
+        UseRole = Qt::UserRole + 14,
+        EmptyRole = Qt::UserRole + 15
     };
 
     inline int user_roles_max(){
@@ -172,6 +174,19 @@ namespace arcirk::tree {
         widgetSpinBoxRole,
         widgetVariantRole,
         widgetINVALID= -1
+    };
+
+    enum tree_editor_inneer_role{
+        widgetFilePath,
+        widgetDirectoryPath,
+        widgetColor,
+        widgetText
+    };
+
+    enum attribute_use{
+        forFolder,
+        forFolderAndItem,
+        forItem
     };
 
     NLOHMANN_JSON_SERIALIZE_ENUM(item_editor_widget_roles, {
@@ -643,6 +658,10 @@ namespace arcirk::tree_model{
                 return QVariant();
             }
 
+            QMap<tree::user_role, QMap<QString, QVariant>> user_data_values() const{
+                return m_user_data;
+            }
+
             void set_http_conf(const QString& host, const QString& token, const QString& table){m_http_conf = http::http_conf(host.toStdString(), token.toStdString(), table.toStdString());}
 
             http::http_conf http_conf() const {return m_http_conf;};
@@ -650,6 +669,11 @@ namespace arcirk::tree_model{
             void set_column_aliases(const QMap<QString, QString> &aliases)
             {
                 m_column_aliases = aliases;
+            }
+
+            const QMap<QString, QString> columns_aliases()
+            {
+                return m_column_aliases;
             }
 
             std::string id_column() const {return "ref";};

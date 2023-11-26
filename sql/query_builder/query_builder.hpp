@@ -152,14 +152,22 @@ namespace arcirk::database::builder {
         {math_partial,"MATCH PARTIAL"},
     });
 
+    enum sql_value_type{
+        valTypeField,
+        valTypeFunction,
+        valTypeInnerQuery
+    };
 }
+
+
 
 BOOST_FUSION_DEFINE_STRUCT(
     (arcirk::database::builder), sql_value,
     (std::string, field_name)
     (std::string, alias)
     (nlohmann::json, value)
-    );
+    (arcirk::database::builder::sql_value_type, type)
+);
 
 BOOST_FUSION_DEFINE_STRUCT(
     (arcirk::database::builder), sql_foreign_key,
@@ -177,7 +185,7 @@ typedef std::vector<arcirk::database::builder::sql_foreign_key> foreign_keys_arr
 
 BOOST_FUSION_DEFINE_STRUCT(
     (arcirk::database::builder), sql_field,
-    (std::string, name)
+    (std::string, name)    
     (arcirk::database::builder::sqlite_types, type)
     (nlohmann::json, default_value)
     (int, size)
@@ -186,7 +194,7 @@ BOOST_FUSION_DEFINE_STRUCT(
     (bool, not_null)
     (bool, unique)
     (arcirk::database::builder::sql_foreign_key, foreign_keys)
-    );
+);
 
 BOOST_FUSION_DEFINE_STRUCT(
     (arcirk::database::builder), sql_index,
@@ -265,7 +273,7 @@ inline json sql_value_to_json(const sql_value val){
 }
 
 inline sql_value sql_value_from_json(const json& value){
-    sql_value result(value["field_name"].get<std::string>(), value["alias"].get<std::string>(), json{});
+    sql_value result(value["field_name"].get<std::string>(), value["alias"].get<std::string>(), json{}, valTypeField);
     auto ba = value["value"].get<ByteArray>();
     auto str = arcirk::byte_array_to_string(ba);
     if(json::accept(str))
@@ -274,11 +282,21 @@ inline sql_value sql_value_from_json(const json& value){
 }
 
 enum sql_query_type{
-    Insert = 0,
+    Insert,
     Update,
     Delete,
-    Select
+    Select,
+    Create,
+    query_type_INVALID = -1
 };
+NLOHMANN_JSON_SERIALIZE_ENUM(sql_query_type, {
+    {query_type_INVALID, nullptr},
+    {Insert, "insert"},
+    {Update, "update"},
+    {Delete, "delete"},
+    {Select, "select"},
+    {Create, "create"}
+});
 
 enum sql_database_type{
     type_Sqlite3 = 0,
@@ -754,7 +772,7 @@ public:
         return *this;
     }
 
-    query_builder& where(const json& values, bool use_values, bool use_table_name = true){
+    query_builder& where(const json& values, bool use_values = true, bool use_table_name = true){
 
         if(values.is_null() || values.empty())
             return *this;
@@ -850,7 +868,7 @@ public:
         return *this;
     }
 
-    void use(const json& source){
+    query_builder& use(const json& source){
         m_list.clear();
         if(source.is_object()){
             auto items_ = source.items();
@@ -890,12 +908,15 @@ public:
             }
         }
 
+        return *this;
+
     }
 
-    void use(const std::vector<sql_value>& values){
+    query_builder& use(const std::vector<sql_value>& values){
         m_list.clear();
         m_list =std::vector<sql_value>(values.size());
         std::copy(values.begin(),values.end(), m_list.begin());
+        return *this;
     }
 
     [[nodiscard]] std::string ref() const{
@@ -969,7 +990,7 @@ public:
         return *this;
     }
 
-    query_builder& update(const std::string& table_name, bool use_values, bool skip_id = true){
+    query_builder& update(const std::string& table_name, bool use_values = true, bool skip_id = true){
         queryType = Update;
         table_name_ = table_name;
         result = str_sample("update %1% set ", table_name);
@@ -1001,7 +1022,7 @@ public:
         return *this;
     }
 
-    query_builder& insert(const std::string& table_name, bool use_values, bool skip_id = true){
+    query_builder& insert(const std::string& table_name, bool use_values = true, bool skip_id = true){
         queryType = Insert;
         table_name_ = table_name;
         result = str_sample("insert into %1% (", table_name);

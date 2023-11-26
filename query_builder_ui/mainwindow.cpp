@@ -14,9 +14,16 @@
 #include <QFile>
 
 #include <QMessageBox>
+#include <QToolButton>
 
 #include "iface/iface.hpp"
+#include "query_parser.h"
 
+#include <memory>
+#include <QTabWidget>
+#include "qsourcehighliter.h"
+
+using namespace source_highlite;
 using namespace arcirk::database::builder;
 using namespace arcirk::tree_model;
 
@@ -30,6 +37,16 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    auto dir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    if(!QDir(dir).exists())
+        QDir().mkdir(dir);
+    auto fileName = dir + QDir::separator() + "main.sqlite";
+    m_connection = QSqlDatabase::addDatabase("QSQLITE", "main.sqlite");
+    m_connection.setDatabaseName(fileName);
+    if (!m_connection.open()) {
+        qDebug() << m_connection.lastError().text();
+    }
 
     m_queryasToolbar = new TableToolBar(ui->dockWidget);
     m_queryasToolbar->setButtonEnabled("add_group", true);
@@ -52,8 +69,11 @@ MainWindow::MainWindow(QWidget *parent) :
         }
     }
 
-    ui->dockVerticalLayout->addWidget(m_queryasToolbar);
-    ui->dockVerticalLayout->addWidget(m_treeQueryas);
+    ui->layoutQuerias->addWidget(m_queryasToolbar);
+    ui->layoutQuerias->addWidget(m_treeQueryas);
+
+    m_databases = new QueryBuilderDatabasesWidget(m_connection, this);
+    ui->layoutDatabases->addWidget(m_databases);
 
     ui->dockWidget->setWindowTitle("Запросы");
 
@@ -73,18 +93,8 @@ MainWindow::MainWindow(QWidget *parent) :
     m_statusBarText = new QLabel(this);
     ui->statusbar->addWidget(m_statusBarText);
 
-    auto dir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
-    if(!QDir(dir).exists())
-        QDir().mkdir(dir);
-    auto fileName = dir + QDir::separator() + "main.sqlite";
-    m_connection = QSqlDatabase::addDatabase("QSQLITE", "main.sqlite");
-    m_connection.setDatabaseName(fileName);
-    if (!m_connection.open()) {
-        qDebug() << m_connection.lastError().text();
-    }else{
-        initDatabase();
-    }
-
+    initDatabase();
+    openDatabase();
 
     m_statusBarText->setText("Готово");
 
@@ -95,6 +105,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_treeQueryas, &TreeViewWidget::addTreeItem, this, &MainWindow::onAddTreeItem);
     connect(m_treeQueryas, &TreeViewWidget::editTreeItem, this, &MainWindow::onEditTreeItem);
     connect(m_treeQueryas, &TreeViewWidget::deleteTreeItem, this, &MainWindow::onDeleteTreeItem);
+    connect(ui->btnOpenQueryBuilder, &QToolButton::clicked, this, &MainWindow::onOpenQueryBuilder);
+
+    connect(ui->tabWidget, &QTabWidget::tabBarClicked, this, &MainWindow::onTabSelected);
 
 //    //test
 //    const data_ref struct_d(generate_uuid().toStdString(), "test_synonim", "test_table");
@@ -127,6 +140,7 @@ void MainWindow::initDatabase()
     QList<QString> m_tables{
         "qbQueryas",
         "qbData",
+        "qbDatabases",
     };
 
     bool is_ex = true;
@@ -158,6 +172,8 @@ void MainWindow::initDatabase()
 
     m_query.push_back(query_builder().create_index(sql_index(std::string("qbData") + "_REF_", "qbData", sql_order_type::dbASC, sql_index_compare::compareBINARY, true, std::vector<std::string>{"ref"})));
 
+    m_query.push_back(std::move(query_builder().create_table("qbDatabases", from_structure<ibase_object_structure>(ibase_object_structure()))));
+
     QString result = "PRAGMA foreign_keys = 0;";
 
     foreach (auto itr, m_query) {
@@ -177,6 +193,15 @@ void MainWindow::initDatabase()
 void MainWindow::openDatabase()
 {
 
+    if(!m_connection.isOpen())
+        return;
+
+    auto query = query_builder();
+    auto table = query.select().from("qbQueryas").to_table(m_connection);
+    auto model = m_treeQueryas->get_model();
+    model->set_table(table);
+
+
 }
 
 void MainWindow::onMnuOpenDatabaseTriggered()
@@ -192,6 +217,23 @@ void MainWindow::mnMnuClose()
 void MainWindow::onTreeQueryasRowSelected(const QModelIndex &index)
 {
     qDebug() << __FUNCTION__ << index.row() << index.column();
+    if(!index.isValid())
+        return;
+    auto index_ = m_treeQueryas->get_index(index);
+    auto model = (ITree<query_builder_main>)m_treeQueryas->get_model();
+    if(model.is_group(index_)){
+        m_codeEdit->setParent(QUuid());
+        m_codeEdit->setPlainText("");
+        m_codeEdit->setEnabled(false);
+    }else{
+        if(!m_codeEdit->ref().isNull()){
+            m_codeEdit->save(m_connection);
+        }
+        m_codeEdit->setPlainText("");
+        m_codeEdit->setEnabled(true);
+        m_codeEdit->setParent(model.ref(index_));
+        m_codeEdit->read(m_connection);
+    }
 }
 
 void MainWindow::onAddTreeItem(const QModelIndex &index, const json &data)
@@ -229,4 +271,39 @@ void MainWindow::onDeleteTreeItem(const json &data)
     auto query = query_builder();
     QSqlQuery rc(query.remove().from("qbQueryas").where(json{{"ref", data["ref"]}}, true).prepare().c_str(), m_connection);
     rc.exec();
+}
+
+//void MainWindow::onTreeQueryasItemSelected(const QModelIndex &index, const QString &item_name)
+//{
+
+
+
+//}
+
+void MainWindow::onOpenQueryBuilder()
+{
+    auto parser = std::make_shared<query_parser>();
+    auto text = m_codeEdit->textCursor().selectedText();
+    if(text.isEmpty()){
+        text = m_codeEdit->toPlainText();
+    }
+
+    QString queryStr(text);
+    queryStr = queryStr.replace(QRegularExpression("(\\/\\*(.|\\n)*?\\*\\/|^--.*\\n|\\t|\\n)", QRegularExpression::CaseInsensitiveOption|QRegularExpression::MultilineOption), " ");
+    queryStr = queryStr.trimmed().toLower();
+    //queryStr.replace('\n', ' ');
+
+    auto result = parser->parse(queryStr.toStdString());
+
+    if(!result)
+        QMessageBox::critical(this, "Ошибка парсера", parser->last_error().c_str());
+}
+
+void MainWindow::onTabSelected(int index)
+{
+    if(index == 0){
+        ui->dockWidget->setWindowTitle("Запросы");
+    }else if(index == 1){
+        ui->dockWidget->setWindowTitle("Базы данных");
+    }
 }

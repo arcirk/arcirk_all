@@ -6,8 +6,12 @@
 #include <QApplication>
 #include <QDrag>
 #include <QPoint>
+#include "query_builder.hpp"
+#include "global/arcirk_qt.hpp"
+#include <QSqlQuery>
 
 using namespace arcirk::query_builder_ui;
+using namespace arcirk::database::builder;
 
 CodeEditorWidget::CodeEditorWidget(QWidget *parent) : QPlainTextEdit(parent)
 {
@@ -15,6 +19,8 @@ CodeEditorWidget::CodeEditorWidget(QWidget *parent) : QPlainTextEdit(parent)
     auto font = QFont("Source Code Pro", 10);
     this->setFont(font);
     currentLine = 0;
+
+    setLineWrapMode(QPlainTextEdit::NoWrap);
 
     lineNumberArea = new LineNumberArea(this);
 
@@ -38,6 +44,67 @@ int CodeEditorWidget::lineNumberAreaWidth()
     int space = 3 + fontMetrics().horizontalAdvance(QLatin1Char('9')) * digits;
 
     return std::max(space, 30);
+}
+
+void CodeEditorWidget::save(const QSqlDatabase &db)
+{
+    if(!db.isOpen())
+        return;
+
+    if(m_parent.isNull())
+        return;
+
+    auto query = query_builder();
+    //auto item = query_builder_querias();
+
+    QString q = query.use(json{"data"}).update("qbData", false).where(json{{"ref", tree::quuid_to_string(m_ref).toStdString()}}).prepare().c_str();
+    //qDebug() << q;
+    QSqlQuery rc(q, db);
+    if(!this->toPlainText().isEmpty()){
+        auto text = arcirk::string_to_byte_array(this->toPlainText().toUtf8().toBase64().toStdString());
+        QByteArray* q_data = new QByteArray(reinterpret_cast<const char*>(text.data()), text.size());
+        rc.bindValue(0, *q_data);
+    }else{
+        rc.bindValue(0, QByteArray());
+    }
+
+    if( !rc.exec() )
+        qCritical() << "Ошибка сохранения blob!" << rc.lastError();
+
+}
+
+void CodeEditorWidget::read(const QSqlDatabase &db)
+{
+    if(!db.isOpen())
+        return;
+
+    if(m_parent.isNull())
+        return;
+
+    auto query = query_builder();
+    QSqlQuery rc(query.select(json::array({"ref", "parent", "data"})).from("qbData").where(json{{"parent", tree::quuid_to_string(m_parent).toStdString()}}).prepare().c_str(), db);
+    rc.exec();
+    bool is_empty = true;
+    QByteArray m_data;
+    while (rc.next()) {
+        m_ref = tree::to_qt_uuid(rc.value(0).toString().toStdString());
+        m_parent = tree::to_qt_uuid(rc.value(1).toString().toStdString());
+        m_data = rc.value(2).toByteArray();
+        is_empty = false;
+    }
+
+    if(is_empty){
+        query.clear();
+        auto item = query_builder_querias();
+        item.ref = boost::to_string(uuids::random_uuid());
+        item.parent = tree::quuid_to_string(m_parent).toStdString();
+        query.use(pre::json::to_json(item));
+        rc.exec(query.insert("qbData").prepare().c_str());
+    }
+
+    if(!m_data.isEmpty()){
+        this->setPlainText(QByteArray::fromBase64(m_data));
+    }
 }
 
 void CodeEditorWidget::updateLineNumberAreaWidth(int /* newBlockCount */)

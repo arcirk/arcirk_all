@@ -12,6 +12,7 @@ TreeItemWidget::TreeItemWidget(int row, int column, QWidget *parent) :
 
     m_row = row;
     m_column = column;
+    m_role = widgetText;
 
     setContentsMargins(0,0,0,0);
 }

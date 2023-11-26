@@ -22,6 +22,7 @@ namespace arcirk::tree::widgets {
         QString text() const override;
         QVariant currentState() const override{return m_current_state;};
         void setCurrentState(const QVariant& state) override;
+        void setRole(tree_editor_inneer_role role) override {m_role = role;};
 
         void setData(const QVariant& data);
         QVariant data();
