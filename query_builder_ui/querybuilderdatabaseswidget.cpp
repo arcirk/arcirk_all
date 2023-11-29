@@ -1,12 +1,15 @@
 #include "querybuilderdatabaseswidget.h"
 #include "ui_querybuilderdatabaseswidget.h"
 #include <QToolButton>
+#include <QMessageBox>
 #include "query_builder.hpp"
 #include <QSqlQuery>
 #include "sqlite_utils.hpp"
 
+
 using namespace arcirk::query_builder_ui;
 using namespace arcirk::database::builder;
+
 
 QueryBuilderDatabasesWidget::QueryBuilderDatabasesWidget(QSqlDatabase& connection, QWidget *parent) :
     QWidget(parent),
@@ -14,6 +17,8 @@ QueryBuilderDatabasesWidget::QueryBuilderDatabasesWidget(QSqlDatabase& connectio
     m_connection(connection)
 {
     ui->setupUi(this);
+
+    m_database_t = QMap<QUuid, object_t>();
 
     m_databasesToolbar = new TableToolBar(this);
     m_databasesToolbar->setButtonEnabled("add_group", true);
@@ -86,6 +91,40 @@ QueryBuilderDatabasesWidget::~QueryBuilderDatabasesWidget()
     delete ui;
 }
 
+QList<QPair<QVariant, QVariant>> QueryBuilderDatabasesWidget::databasesList() const
+{
+    auto model = (ITree<ibase_object_structure>*)m_treeDatabases->get_model();
+    auto arr = model->array(QModelIndex());
+    QList<QPair<QVariant, QVariant>> lst{};
+    for (auto itr = arr.begin(); itr != arr.end(); ++itr) {
+        lst.append(qMakePair(itr->name.c_str(), itr->ref.c_str()));
+    }
+    return lst;
+}
+
+json QueryBuilderDatabasesWidget::database_structure(const QUuid &ref) const
+{
+    auto model = (ITree<ibase_object_structure>*)m_treeDatabases->get_model();
+    auto index = model->find(ref);
+    if(index.isValid()){
+        if(model->rowCount(index) > 0){
+            auto object = model->object(index);
+            if(object.object_type == "Database"){
+                return model->to_table_model(index, true);
+            }
+        }
+    }
+    return {};
+}
+
+object_t QueryBuilderDatabasesWidget::database_structure_t(const QUuid &ref) const
+{
+    if(m_database_t.find(ref) != m_database_t.end())
+        return m_database_t[ref];
+    else
+        return {};
+}
+
 void QueryBuilderDatabasesWidget::updateIcons(const QModelIndex &parent)
 {
     auto model = m_treeDatabases->get_model();
@@ -125,6 +164,7 @@ void QueryBuilderDatabasesWidget::onToolbarDatabasesClicked(const QString &botto
     if(bottonName == "connect"){
         auto model = (ITree<ibase_object_structure>*)m_treeDatabases->get_model();
         if(model){
+
             auto index = m_treeDatabases->current_index();
             if(!index.isValid())
                 return;
@@ -139,10 +179,15 @@ void QueryBuilderDatabasesWidget::onToolbarDatabasesClicked(const QString &botto
             if(!db.isOpen())
                 db.open();
             if(db.isOpen()){
-                auto table = database::get_database_structure(db, object.ref);
+                emit startDatabaseScanned();
+
+                m_database_t.remove(QUuid::fromString(object.ref.c_str()));
+                object_t vec;
+                auto table = database::get_database_structure(db, vec, object.ref);
+
                 if(!table.empty()){
-                    //model->add_array(table["rows"], index);
                     model->set_table(table, index);
+                    m_database_t.insert(QUuid::fromString(object.ref.c_str()), vec);
                 }
                 m_databasesToolbar->botton("connect")->setEnabled(false);
                 m_databasesToolbar->botton("disconnect")->setEnabled(true);
@@ -150,6 +195,7 @@ void QueryBuilderDatabasesWidget::onToolbarDatabasesClicked(const QString &botto
                 model->set_row_image(index, QIcon("://img/serverOnline.png"));
                 updateIcons(index);
                 model->reset();
+                emit endDatabaseScanned();
             }
 
         }
@@ -221,7 +267,7 @@ void QueryBuilderDatabasesWidget::onAddTreeItem(const QModelIndex &index, const 
     auto query = query_builder();
     QSqlQuery rc(query.use(pre::json::to_json(object)).insert("qbDatabases").prepare().c_str(), m_connection);
     rc.exec();
-
+    emit databaseListChanged();
 }
 
 void QueryBuilderDatabasesWidget::onEditTreeItem(const QModelIndex &index, const json &data)
@@ -233,6 +279,7 @@ void QueryBuilderDatabasesWidget::onEditTreeItem(const QModelIndex &index, const
     rc.exec();
     if(rc.lastError().isValid())
         qCritical() << rc.lastError().text();
+    emit databaseListChanged();
 }
 
 void QueryBuilderDatabasesWidget::onDeleteTreeItem(const json &data)
@@ -242,5 +289,6 @@ void QueryBuilderDatabasesWidget::onDeleteTreeItem(const json &data)
     auto query = query_builder();
     QSqlQuery rc(query.remove().from("qbDatabases").where(json{{"ref", data["ref"]}}).prepare().c_str(), m_connection);
     rc.exec();
+    emit databaseListChanged();
 }
 

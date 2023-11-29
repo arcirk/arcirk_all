@@ -7,7 +7,6 @@
 #include <QDrag>
 #include <QPoint>
 #include "query_builder.hpp"
-#include "global/arcirk_qt.hpp"
 #include <QSqlQuery>
 
 using namespace arcirk::query_builder_ui;
@@ -46,6 +45,26 @@ int CodeEditorWidget::lineNumberAreaWidth()
     return std::max(space, 30);
 }
 
+void CodeEditorWidget::setDatabaseRef(const QString &ref, const QSqlDatabase &db)
+{
+    m_database_ref = ref;
+
+    if(!db.isOpen())
+        return;
+
+    if(m_parent.isNull())
+        return;
+
+    auto query = query_builder();
+
+    QString q = query.use(json{{"database_ref", m_database_ref.toStdString()}}).update("qbData", true).where(json{{"ref", tree::quuid_to_string(m_ref).toStdString()}}).prepare().c_str();
+    QSqlQuery rc(q, db);
+
+    if( !rc.exec() )
+        qCritical() << rc.lastError();
+
+}
+
 void CodeEditorWidget::save(const QSqlDatabase &db)
 {
     if(!db.isOpen())
@@ -73,7 +92,7 @@ void CodeEditorWidget::save(const QSqlDatabase &db)
 
 }
 
-void CodeEditorWidget::read(const QSqlDatabase &db)
+void CodeEditorWidget::read(const QSqlDatabase &db, const QString& dbRefDefault)
 {
     if(!db.isOpen())
         return;
@@ -82,7 +101,7 @@ void CodeEditorWidget::read(const QSqlDatabase &db)
         return;
 
     auto query = query_builder();
-    QSqlQuery rc(query.select(json::array({"ref", "parent", "data"})).from("qbData").where(json{{"parent", tree::quuid_to_string(m_parent).toStdString()}}).prepare().c_str(), db);
+    QSqlQuery rc(query.select(json::array({"ref", "parent", "data", "database_ref"})).from("qbData").where(json{{"parent", tree::quuid_to_string(m_parent).toStdString()}}).prepare().c_str(), db);
     rc.exec();
     bool is_empty = true;
     QByteArray m_data;
@@ -91,6 +110,7 @@ void CodeEditorWidget::read(const QSqlDatabase &db)
         m_parent = tree::to_qt_uuid(rc.value(1).toString().toStdString());
         m_data = rc.value(2).toByteArray();
         is_empty = false;
+        m_database_ref = rc.value(3).toString();
     }
 
     if(is_empty){
@@ -98,8 +118,16 @@ void CodeEditorWidget::read(const QSqlDatabase &db)
         auto item = query_builder_querias();
         item.ref = boost::to_string(uuids::random_uuid());
         item.parent = tree::quuid_to_string(m_parent).toStdString();
+        item.database_ref = dbRefDefault.toStdString();
+        m_database_ref = dbRefDefault;
         query.use(pre::json::to_json(item));
         rc.exec(query.insert("qbData").prepare().c_str());
+    }else{
+        auto item = query_builder_querias();
+        item.ref = tree::quuid_to_string(m_ref).toStdString();
+        item.parent = tree::quuid_to_string(m_parent).toStdString();
+        item.database_ref = m_database_ref.toStdString();
+        emit readData(item);
     }
 
     if(!m_data.isEmpty()){
@@ -151,6 +179,14 @@ void CodeEditorWidget::dropEvent(QDropEvent *event)
     }
 
     event->acceptProposedAction();
+}
+
+void CodeEditorWidget::focusOutEvent(QFocusEvent *event)
+{
+    //qDebug() << __FUNCTION__;
+    emit focusOut();
+
+    return QPlainTextEdit::focusOutEvent(event);
 }
 
 void CodeEditorWidget::highlightCurrentLine()

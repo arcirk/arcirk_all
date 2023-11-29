@@ -37,17 +37,25 @@ private slots:
     void onDeleteTreeItem(const json& data);
     void onOpenQueryBuilder();
     void onTabSelected(int index);
+    void onEditorFocusOut();
+    void onDatabaseListChanged();
+    void onDatabasesSelectItem(int index);
+    void onCodeEditReadData(const query_builder_querias& data);
+    void onStartDatabaseScanned();
+    void onEndDatabaseScanned();
 
 private:
     Ui::MainWindow *ui;
 
     TreeViewWidget * m_treeQueryas;
     TreeViewWidget * m_treeQuery;
+    TreeViewWidget * m_treeParam;
     CodeEditorWidget * m_codeEdit;
     TableToolBar* m_queryasToolbar;
     QueryBuilderDatabasesWidget* m_databases;
 
     QLabel * m_statusBarText;
+    QLabel * m_statusBarIco;
 
     QSqlDatabase m_connection;
     QMap<QString, TreeItemModel*> m_data_models;
@@ -55,6 +63,7 @@ private:
 
     void initDatabase();
     void openDatabase();
+    void updateDatabasesList();
 };
 
 #endif // MAINWINDOW_H

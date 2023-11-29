@@ -3,16 +3,20 @@
 #include <boost/regex.h>
 #include <iostream>
 using namespace arcirk::database::builder;
+using namespace arcirk::query_builder_ui;
 
 
-query_parser::query_parser()
+query_parser::query_parser(const object_t& dataStruct)
+    : data_struct(dataStruct)
 {
-
+    m_is_valid = false;
 }
 
 bool query_parser::parse(const std::string &text)
 {
     //qDebug() << text.c_str();
+
+    m_is_valid = false;
 
     if(text.empty()){
         m_last_error = "Пустой текст запроса!";
@@ -20,18 +24,17 @@ bool query_parser::parse(const std::string &text)
     }
 
     std::string query_text;
+
     //оставим только одни пробел
     only_one_space(text, query_text);
     //определим тип запроса
-    auto query_t = type_query(query_text);
-    if(query_t == query_type_INVALID){
+    query_type = type_query(query_text);
+    if(query_type == query_type_INVALID){
         m_last_error = "Тип запроса не определен!";
         return false;
-    }else if(query_t == Select){
+    }else if(query_type == Select){
         return parse_select(query_text);
     }
-
-
 
 //    std::string::const_iterator start, end;
 //    start = query_text.begin();
@@ -89,6 +92,39 @@ bool query_parser::parse(const std::string &text)
 std::string query_parser::last_error() const
 {
     return m_last_error;
+}
+
+json query_parser::to_json() const
+{
+    if(!m_is_valid)
+        return {};
+
+    auto result = json::object();
+
+    auto packet = query_builder_packet();
+    packet.name = "Запрос 1";
+    packet.parent = NIL_STRING_UUID;
+    packet.ref = boost::to_string(arcirk::uuids::random_uuid());
+    packet.type = (int)query_type;
+    result["qbPackets"] = json::array({pre::json::to_json(packet)});
+
+    auto fields_arr = json::array();
+    if(query_type == sql_query_type::Select){
+
+        for (int i = 0; i < m_qb_fileds.size(); ++i) {
+            auto item = m_qb_fileds[i];
+            item.package_ref = packet.ref;
+            if(item.alias.empty())
+                item.alias = item.name;
+
+            fields_arr += pre::json::to_json(item);
+        }
+    }
+
+    result["qbFields"] = fields_arr;
+
+    return result;
+
 }
 
 void database::builder::query_parser::to_vector(T_vec &vec, const std::string &source, const std::string &sep)
@@ -152,7 +188,9 @@ bool query_parser::parse_select(const std::string &query_text)
     std::string fields_str = query_text.substr(6, index - 6);
     arcirk::trim(fields_str);
     verify_functions(fields_str);
-    auto fields = set_fields(fields_str);
+    m_qb_fileds = set_fields(fields_str);
+
+    m_is_valid = true;
 
     return true;
 }
@@ -178,10 +216,10 @@ void query_parser::verify_functions(std::string &query_text)
 
 }
 
-std::vector<tree_model::ibase_object_structure> query_parser::set_fields(std::string &query_text)
+object_array query_parser::set_fields(std::string &query_text)
 {
     T_vec m_fields = arcirk::split(query_text, ",");
-    std::vector<tree_model::ibase_object_structure> m_result{};
+    object_array m_result{};
 
     for (int i = 0; i < m_fields.size(); ++i) {
         auto text = m_fields[i];
@@ -193,6 +231,7 @@ std::vector<tree_model::ibase_object_structure> query_parser::set_fields(std::st
         }
 
         auto rc = tree_model::ibase_object_structure();
+        rc.ref = boost::to_string(arcirk::uuids::random_uuid());
         rc.object_type = "field";
         auto m_alias = arcirk::find_all_occurrences(text, " as ");
         if(m_alias.size() > 0){
@@ -205,8 +244,11 @@ std::vector<tree_model::ibase_object_structure> query_parser::set_fields(std::st
                     rc.name = arcirk::right(rc.full_name, rc.full_name.length() - index_f - 1);
                 }else
                     rc.name = rc.full_name;
+                rc.user_query = 0;
+                rc.parent_name = arcirk::left(rc.full_name, index_f);
             }else{
                 rc.query = rc.full_name;
+                rc.user_query = 1;
             }
         }else{
             rc.full_name = text;
@@ -217,6 +259,8 @@ std::vector<tree_model::ibase_object_structure> query_parser::set_fields(std::st
             }else
                 rc.name = rc.full_name;
             rc.alias = rc.name;
+            rc.user_query = 0;
+            rc.parent_name = arcirk::left(rc.full_name, index_f);
         }
         m_result.push_back(rc);
     }

@@ -6,6 +6,7 @@ CONFIG += c++20
 
 SOURCES += \
     $$PWD/gui/comparewidget.cpp \
+    $$PWD/gui/pairmodel.cpp \
     $$PWD/gui/rowdialog.cpp \
     $$PWD/gui/selectgroupdialog.cpp \
     $$PWD/gui/selectitemdialog.cpp \
@@ -27,6 +28,7 @@ SOURCES += \
 HEADERS += \
     $$PWD/global/arcirk_qt.hpp \
     $$PWD/gui/comparewidget.h \
+    $$PWD/gui/pairmodel.h \
     $$PWD/gui/rowdialog.h \
     $$PWD/gui/selectgroupdialog.h \
     $$PWD/gui/selectitemdialog.h \

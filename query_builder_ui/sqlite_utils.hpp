@@ -140,9 +140,15 @@ static inline std::map<std::string, arcirk::database::table_info_sqlite>  table_
     return result;
 }
 
-inline nlohmann::json get_database_structure(QSqlDatabase& sql, const std::string& parent = NIL_STRING_UUID)
+inline nlohmann::json get_database_structure(QSqlDatabase& sql,
+                                             std::map<std::string, std::map<std::string, tree_model::ibase_object_structure>>& vec,
+                                             const std::string& parent = NIL_STRING_UUID)
 {
     using json = nlohmann::json;
+
+    typedef std::map<std::string, tree_model::ibase_object_structure> details_t;
+    typedef std::pair<std::string, tree_model::ibase_object_structure> details_pair;
+    typedef std::pair<std::string, details_t> object_pair;
 
     //using query_builder = arcirk::database::builder::query_builder;
     using namespace arcirk::database;
@@ -199,6 +205,8 @@ inline nlohmann::json get_database_structure(QSqlDatabase& sql, const std::strin
 
         auto details = table_info(sql, table.toStdString(), builder::sql_database_type::type_Sqlite3);
 
+        auto details_vec = details_t();
+
         for (auto const& itr : details) {
             auto m_details = ibase_object_structure();
             m_details.data_type = itr.second.type;
@@ -215,7 +223,10 @@ inline nlohmann::json get_database_structure(QSqlDatabase& sql, const std::strin
             m_details.parent_alias = m_struct.name;
             m_details.parent_name = m_struct.name;
             m_childs.push_back(pre::json::to_json(m_details));
+            details_vec.insert(details_pair(m_details.name, m_details));
         }
+
+        vec.insert(object_pair(table.toStdString(), details_vec));
     }
 
     for (auto const& view: database_views) {
@@ -230,6 +241,7 @@ inline nlohmann::json get_database_structure(QSqlDatabase& sql, const std::strin
         m_struct.base_ref = m_struct.ref; //arcirk::uuids::random_uuid());
         m_struct.base_parent = m_views.ref;
         m_childs.push_back(pre::json::to_json(m_struct));
+        vec.insert(object_pair(view.toStdString(), {}));
     }
 
     auto m_empty = pre::json::to_json(ibase_object_structure());

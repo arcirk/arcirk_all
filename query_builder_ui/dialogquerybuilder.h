@@ -40,6 +40,7 @@ namespace arcirk::query_builder_ui {
 
     public:
         explicit DialogQueryBuilder(WebSocketClient* client, const query_builder_packet& packade, QWidget *parent = nullptr);
+        explicit DialogQueryBuilder(const json& data, const query_builder_packet& packade, QWidget *parent = nullptr);
         ~DialogQueryBuilder();
 
         void accept() override;
@@ -48,8 +49,6 @@ namespace arcirk::query_builder_ui {
         QString queryName() const{return m_query_name;};
 
         void set_data(const query_builder_packet& data);
-
-        //void set_query_package_uuid(const QUuid& value){m_uuid = value;};
 
     private:
         Ui::DialogQueryBuilder *ui;
@@ -69,9 +68,13 @@ namespace arcirk::query_builder_ui {
         QUuid m_packade_uuid;
         QString m_query_name;
         query_builder_packet m_packade;
+        json m_database_structure;
 
         void reset_filer();
         QVector<ibase_object_structure> for_arbitrary_table(bool selected_fields = true);
+
+        template<class T>
+        void init_class(T& dataCl, const query_builder_packet& packade, QWidget *parent);
 
     public slots:
         void onChangeTableList(int count);

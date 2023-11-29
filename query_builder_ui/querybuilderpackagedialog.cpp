@@ -69,6 +69,62 @@ QueryBuilderPackageDialog::QueryBuilderPackageDialog(WebSocketClient* client, QW
     }
 }
 
+QueryBuilderPackageDialog::QueryBuilderPackageDialog(const json &sql_struct, QWidget *parent):
+    QDialog(parent),
+    ui(new Ui::QueryBuilderPackageDialog)
+{
+    ui->setupUi(this);
+
+    m_database_structure = sql_struct;
+
+    treeView = new TreeViewWidget(this);
+    treeView->enable_sort(false);
+    ui->verticalLayout->addWidget(treeView);
+
+    m_client = nullptr;
+
+    connect(ui->btnAdd, &QToolButton::clicked, this, &QueryBuilderPackageDialog::onBtnAddClicked);
+    connect(ui->btnDelete, &QToolButton::clicked, this, &QueryBuilderPackageDialog::onBtnDeleteClicked);
+    connect(ui->btnEdit, &QToolButton::clicked, this, &QueryBuilderPackageDialog::onBtnEditClicked);
+    connect(ui->btnQuery, &QPushButton::clicked, this, &QueryBuilderPackageDialog::onBtnQueryClicked);
+    connect(ui->btnOpenDataBase, &QPushButton::clicked, this, &QueryBuilderPackageDialog::onOpenDataBaseClicked);
+    connect(ui->btnSaveDatabase, &QPushButton::clicked, this, &QueryBuilderPackageDialog::onSaveDataBaseClicked);
+
+    m_connection = QSqlDatabase::addDatabase("QSQLITE", "private.sqlite");
+    m_connection.setDatabaseName(":memory:");
+    if (!m_connection.open()) {
+        qDebug() << m_connection.lastError().text();
+    }
+
+    initDatabase();
+
+    auto order = QList<QString>({"line_num", "name"});
+    auto model = new ITreeSQlPacketModel(order, this);
+    model->enable_message_question();
+
+    model->set_connection(root_tree_conf::sqlIteMemoryConnection, QString(), "qbPackets");
+    model->enable_database_changed();
+
+    model->set_hierarchical_list(false);
+    model->set_user_role_data("line_num", tree::RowCountRole, true);
+    model->set_enable_rows_icons(false);
+    auto aliases = QMap<QString, QString>({qMakePair("line_num", "№"), qMakePair("name", "Наименование")});
+    model->set_column_aliases(aliases);
+
+    treeView->setModel(model);
+    for (int i = 0; i < model->columnCount(); ++i) {
+        if(order.indexOf(model->column_name(i)) == -1)
+            treeView->hideColumn(i);
+    }
+    auto header = treeView->header();
+    header->resizeSection(0, 20);
+    header->setSectionResizeMode(0, QHeaderView::Fixed);
+
+//    if(!query_text.isEmpty()){
+//        parse(query_text);
+//    }
+}
+
 QueryBuilderPackageDialog::~QueryBuilderPackageDialog()
 {
     if(m_connection.isOpen()){
@@ -94,10 +150,18 @@ void QueryBuilderPackageDialog::onBtnAddClicked()
     if(index.isValid()){
         treeView->set_current_index(index);
     }
-    auto dlg = DialogQueryBuilder(m_client, packet, this);
-    if(dlg.exec() == QDialog::Accepted){
-        reset();
+    if(m_client!=0){
+        auto dlg = DialogQueryBuilder(m_client, packet, this);
+        if(dlg.exec() == QDialog::Accepted){
+            reset();
+        }
+    }else{
+        auto dlg = DialogQueryBuilder(m_database_structure, packet, this);
+        if(dlg.exec() == QDialog::Accepted){
+            reset();
+        }
     }
+
 }
 
 void QueryBuilderPackageDialog::onBtnDeleteClicked()
@@ -125,10 +189,18 @@ void QueryBuilderPackageDialog::onBtnEditClicked()
 
     auto object = model->object(index);
 
-    auto dlg = DialogQueryBuilder(m_client, object, this);
-    if(dlg.exec() == QDialog::Accepted){
-        reset();
+    if(m_client){
+        auto dlg = DialogQueryBuilder(m_client, object, this);
+        if(dlg.exec() == QDialog::Accepted){
+            reset();
+        }
+    }else{
+        auto dlg = DialogQueryBuilder(m_database_structure, object, this);
+        if(dlg.exec() == QDialog::Accepted){
+            reset();
+        }
     }
+
 }
 
 void QueryBuilderPackageDialog::initDatabase()
@@ -368,6 +440,51 @@ void QueryBuilderPackageDialog::accept()
 QString QueryBuilderPackageDialog::result() const
 {
     return m_result;
+}
+
+bool QueryBuilderPackageDialog::setData(const json &data)
+{
+    if(data.empty())
+        return false;
+    auto query = builder::query_builder();
+    QSqlQuery rc(query.remove().from("qbPackets").prepare().c_str(), m_connection);
+    if(!rc.exec()){
+        qCritical() << rc.lastError().text();
+    }
+
+    QString packet_text;
+
+    auto packets = data["qbPackets"];
+
+    if(!packets.is_array()){
+        return false;
+    }
+
+    for (auto itr = packets.begin(); itr != packets.end(); ++itr) {
+        auto object = *itr;
+        query.clear();
+        packet_text.append(query.use(object).insert("qbPackets").prepare());
+        packet_text.append(";");
+    }
+
+    auto fields = data["qbFields"];
+    if(fields.is_array()){
+        for (auto itr = fields.begin(); itr != fields.end(); ++itr) {
+            auto object = *itr;
+            query.clear();
+            packet_text.append(query.use(object).insert("qbFields").prepare());
+            packet_text.append(";");
+        }
+    }
+
+    return executeQueryPackade(packet_text.toUtf8(), m_connection);
+
+}
+
+void QueryBuilderPackageDialog::readData()
+{
+    auto model = (ITreeSQlPacketModel*)treeView->get_model();
+    model->set_connection(root_tree_conf::sqlIteMemoryConnection, QString(), "qbPackets");
 }
 
 void QueryBuilderPackageDialog::onBtnQueryClicked()

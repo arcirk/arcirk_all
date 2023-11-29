@@ -21,112 +21,23 @@ DialogQueryBuilder::DialogQueryBuilder(WebSocketClient* client, const query_buil
     ui->setupUi(this);
 
     m_client = client;
-    m_packade_uuid = QUuid::fromString(packade.ref.c_str());
-    m_packade = packade;
 
-    m_tab = new QTabWidget(this);
-    m_structure = new DatabaseStructureWidget(m_client, this, m_packade_uuid);
-    m_query_tables = new QueryBuilderTablesWidget(m_structure, this, m_packade_uuid);
-    m_query_fields = new QueryBuilderFieldsWidget( this, m_packade_uuid);
+    init_class(m_client, packade, parent);
+
     m_query_fields->set_http_conf(http_conf(m_client->http_url().toString().toStdString() + "/api/info", m_client->conf().hash, "SQliteFunctionsInfo"));
-    m_table_inners = new QueryBuilderTableInnersWidget(m_query_tables, this, m_packade_uuid);
-    m_group_by_fields = new QueryBuilderGroupByFieldsListWidget(this, m_packade_uuid);
-    m_group_by_function = new QueryBuilderGroupByFunWidget(this, m_packade_uuid);
-    m_addionall_widget = new QueryBuilderAdditionallyWidget(this, m_packade_uuid);
-    m_inners_aliases_widget = new QueryBuilderInnersAliasesWidget(this);
-    m_sort_widget = new QueryBuilderSortWidget(this);
-    m_total_widget = new QueryBuilderTotalByHierarchy(this);
-    m_where_widget = new QueryBuilderWhereWidget(this, m_packade_uuid);
-
-    auto splitter = new QSplitter(Qt::Orientation::Horizontal, m_tab);
-    auto splitter1 = new QSplitter(Qt::Orientation::Horizontal, m_tab);
-
-    m_tab->addTab(m_addionall_widget, "Настройка");
-    splitter->addWidget(m_structure);
-    splitter->addWidget(m_query_tables);
-    splitter->addWidget(m_query_fields);
-    m_tab->addTab(splitter, "Таблицы и поля");
-    m_tab->addTab(m_table_inners, "Связи");
-    m_tab->setTabVisible(TAB_INNERS, false);
-    splitter1->addWidget(m_group_by_fields);
-    splitter1->addWidget(m_group_by_function);
-    set_splitter_size(splitter1, parent, 30);
-
-    m_tab->addTab(splitter1, "Группировка");
-    m_tab->addTab(m_where_widget, "Условия");
-    //m_tab->addTab(m_addionall_widget, "Дополнительно");
-    m_tab->addTab(m_inners_aliases_widget, "Объединения/Псевдонимы");
-    m_tab->addTab(m_sort_widget, "Порядок");
-    m_tab->addTab(m_total_widget, "Итоги");
-
-    ui->gridLayout->addWidget(m_tab);
-
-    connect(m_tab, &QTabWidget::tabBarClicked, this, &DialogQueryBuilder::onTabBarClicked);
-
-    connect(m_structure, &DatabaseStructureWidget::selectRow, m_query_tables, &QueryBuilderTablesWidget::onSetData);
-    connect(m_structure, &DatabaseStructureWidget::selectRows, m_query_tables, &QueryBuilderTablesWidget::onSetArray);
-    connect(m_structure, &DatabaseStructureWidget::selectItem, m_query_tables, &QueryBuilderTablesWidget::onSetDataEx);
-    connect(m_structure, &DatabaseStructureWidget::dropNode, m_query_tables, &QueryBuilderTablesWidget::onStructureDropNode);
-    connect(m_structure, &DatabaseStructureWidget::removeRightItem, m_query_tables, &QueryBuilderTablesWidget::onRemoveRightItem);
-    connect(m_structure, &DatabaseStructureWidget::removeRightItems, m_query_tables, &QueryBuilderTablesWidget::onRemoveRightItems);
-    connect(m_query_tables, &QueryBuilderTablesWidget::changeTableList, this, &DialogQueryBuilder::onChangeTableList);
-    connect(m_query_tables, &QueryBuilderTablesWidget::objectStructure, m_structure, &DatabaseStructureWidget::doObjectStructure);
 
 
-    connect(this, &DialogQueryBuilder::changeTablesList, m_table_inners, &QueryBuilderTableInnersWidget::onChangeTablesList);
-    connect(m_query_tables, &QueryBuilderTablesWidget::renameTable, m_table_inners, &QueryBuilderTableInnersWidget::onRenameTable);
+}
 
-    connect(m_query_tables, &QueryBuilderTablesWidget::selectField, m_query_fields, &QueryBuilderFieldsWidget::onSetData);
-    connect(m_query_tables, &QueryBuilderTablesWidget::dropObject, m_query_fields, &QueryBuilderFieldsWidget::onDragResult);
+DialogQueryBuilder::DialogQueryBuilder(const json &data, const query_builder_packet &packade, QWidget *parent):
+    QDialog(parent),
+    ui(new Ui::DialogQueryBuilder)
+{
 
-    connect(m_query_fields, &QueryBuilderFieldsWidget::changeListFields, m_group_by_fields, &QueryBuilderGroupByFieldsListWidget::onSetData);
-    connect(m_query_tables,  &QueryBuilderTablesWidget::changeTables, m_where_widget, &QueryBuilderWhereWidget::onTablesChanged);
+    ui->setupUi(this);
+    m_database_structure = data;
 
-    connect(m_query_fields, &QueryBuilderFieldsWidget::changeFields, m_group_by_function, &QueryBuilderGroupByFunWidget::onChangeFieldsList);
-    connect(m_query_fields, &QueryBuilderFieldsWidget::openUserQueryDialog, this, &DialogQueryBuilder::onOpenArbitraryFunctionsDialog);
-    connect(m_query_fields, &QueryBuilderFieldsWidget::doSetData, m_query_tables, &QueryBuilderTablesWidget::doFiledsSetData);
-    connect(m_query_fields, &QueryBuilderFieldsWidget::selectItem, m_query_tables, &QueryBuilderTablesWidget::onRightSetItem);
-    connect(m_query_fields, &QueryBuilderFieldsWidget::selectItems, m_query_tables, &QueryBuilderTablesWidget::onRightSetItems);
-
-    connect(m_group_by_fields, &QueryBuilderGroupByFieldsListWidget::selectData, m_group_by_function, &QueryBuilderGroupByFunWidget::onSetData);
-
-    connect(m_group_by_fields, &QueryBuilderGroupByFieldsListWidget::doTreeDropEvent, this, &DialogQueryBuilder::onGroupByFieldsDropEvent);
-    connect(m_group_by_function, &QueryBuilderGroupByFunWidget::doTreeGropsDropEvent, this, &DialogQueryBuilder::onGroupByGroupsDropEvent);
-    connect(m_group_by_function, &QueryBuilderGroupByFunWidget::doTreeAgregateDropEvent, this, &DialogQueryBuilder::onGroupByFunctionsDropEvent);
-
-    connect(this, &DialogQueryBuilder::setFieldsFilter, m_group_by_fields, &QueryBuilderGroupByFieldsListWidget::onSetFilter);
-
-    connect(m_query_tables,  &QueryBuilderTablesWidget::changeTables, m_query_fields, &QueryBuilderFieldsWidget::onChangeTablesList);
-
-    connect(m_query_tables, &QueryBuilderTablesWidget::fieldChanged, m_query_fields, &QueryBuilderFieldsWidget::onFieldChanged);
-    connect(m_query_fields, &QueryBuilderFieldsWidget::fieldChanged, m_group_by_fields, &QueryBuilderGroupByFieldsListWidget::onFieldChanged);
-    connect(m_query_fields, &QueryBuilderFieldsWidget::remove, m_group_by_fields, &QueryBuilderGroupByFieldsListWidget::onRemove);
-
-
-
-    connect(m_group_by_fields, &QueryBuilderGroupByFieldsListWidget::fieldChanged, m_group_by_function, &QueryBuilderGroupByFunWidget::onFieldChanged);
-    connect(m_group_by_fields, &QueryBuilderGroupByFieldsListWidget::remove_, m_group_by_function, &QueryBuilderGroupByFunWidget::onRemove);
-
-
-    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &DialogQueryBuilder::onButtonBoxAccepted);
-    connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &DialogQueryBuilder::onButtonBoxRejected);
-
-    connect(m_addionall_widget, &QueryBuilderAdditionallyWidget::selectedQueryType, this, &DialogQueryBuilder::onSelectedQueryType);
-
-    connect(ui->btnQuery, &QPushButton::clicked, this, &DialogQueryBuilder::onButtonGenerateQuery);
-
-    m_query_name = "Запрос пакета";
-
-    if(m_query_tables->count() > 0){
-        onChangeTableList(m_query_tables->count());
-    }
-
-    onSelectedQueryType((sql_global_query_type)m_packade.type);
-
-    reset_filer();
-
-    m_addionall_widget->set_database_structure(m_structure->model());
-
+    init_class(data, packade, parent);
 }
 
 DialogQueryBuilder::~DialogQueryBuilder()
@@ -314,3 +225,112 @@ void DialogQueryBuilder::onButtonGenerateQuery()
 
 }
 
+
+template<class T>
+void DialogQueryBuilder::init_class(T& dataCl, const query_builder_packet &packade, QWidget *parent)
+{
+    m_packade_uuid = QUuid::fromString(packade.ref.c_str());
+    m_packade = packade;
+
+    m_tab = new QTabWidget(this);
+    m_structure = new DatabaseStructureWidget(dataCl, this, m_packade_uuid);
+    m_query_tables = new QueryBuilderTablesWidget(m_structure, this, m_packade_uuid);
+    m_query_fields = new QueryBuilderFieldsWidget( this, m_packade_uuid);
+    m_table_inners = new QueryBuilderTableInnersWidget(m_query_tables, this, m_packade_uuid);
+    m_group_by_fields = new QueryBuilderGroupByFieldsListWidget(this, m_packade_uuid);
+    m_group_by_function = new QueryBuilderGroupByFunWidget(this, m_packade_uuid);
+    m_addionall_widget = new QueryBuilderAdditionallyWidget(this, m_packade_uuid);
+    m_inners_aliases_widget = new QueryBuilderInnersAliasesWidget(this);
+    m_sort_widget = new QueryBuilderSortWidget(this);
+    m_total_widget = new QueryBuilderTotalByHierarchy(this);
+    m_where_widget = new QueryBuilderWhereWidget(this, m_packade_uuid);
+
+    auto splitter = new QSplitter(Qt::Orientation::Horizontal, m_tab);
+    auto splitter1 = new QSplitter(Qt::Orientation::Horizontal, m_tab);
+
+    m_tab->addTab(m_addionall_widget, "Настройка");
+    splitter->addWidget(m_structure);
+    splitter->addWidget(m_query_tables);
+    splitter->addWidget(m_query_fields);
+    m_tab->addTab(splitter, "Таблицы и поля");
+    m_tab->addTab(m_table_inners, "Связи");
+    m_tab->setTabVisible(TAB_INNERS, false);
+    splitter1->addWidget(m_group_by_fields);
+    splitter1->addWidget(m_group_by_function);
+    set_splitter_size(splitter1, parent, 30);
+
+    m_tab->addTab(splitter1, "Группировка");
+    m_tab->addTab(m_where_widget, "Условия");
+    //m_tab->addTab(m_addionall_widget, "Дополнительно");
+    m_tab->addTab(m_inners_aliases_widget, "Объединения/Псевдонимы");
+    m_tab->addTab(m_sort_widget, "Порядок");
+    m_tab->addTab(m_total_widget, "Итоги");
+
+    ui->gridLayout->addWidget(m_tab);
+
+    connect(m_tab, &QTabWidget::tabBarClicked, this, &DialogQueryBuilder::onTabBarClicked);
+
+    connect(m_structure, &DatabaseStructureWidget::selectRow, m_query_tables, &QueryBuilderTablesWidget::onSetData);
+    connect(m_structure, &DatabaseStructureWidget::selectRows, m_query_tables, &QueryBuilderTablesWidget::onSetArray);
+    connect(m_structure, &DatabaseStructureWidget::selectItem, m_query_tables, &QueryBuilderTablesWidget::onSetDataEx);
+    connect(m_structure, &DatabaseStructureWidget::dropNode, m_query_tables, &QueryBuilderTablesWidget::onStructureDropNode);
+    connect(m_structure, &DatabaseStructureWidget::removeRightItem, m_query_tables, &QueryBuilderTablesWidget::onRemoveRightItem);
+    connect(m_structure, &DatabaseStructureWidget::removeRightItems, m_query_tables, &QueryBuilderTablesWidget::onRemoveRightItems);
+    connect(m_query_tables, &QueryBuilderTablesWidget::changeTableList, this, &DialogQueryBuilder::onChangeTableList);
+    connect(m_query_tables, &QueryBuilderTablesWidget::objectStructure, m_structure, &DatabaseStructureWidget::doObjectStructure);
+
+
+    connect(this, &DialogQueryBuilder::changeTablesList, m_table_inners, &QueryBuilderTableInnersWidget::onChangeTablesList);
+    connect(m_query_tables, &QueryBuilderTablesWidget::renameTable, m_table_inners, &QueryBuilderTableInnersWidget::onRenameTable);
+
+    connect(m_query_tables, &QueryBuilderTablesWidget::selectField, m_query_fields, &QueryBuilderFieldsWidget::onSetData);
+    connect(m_query_tables, &QueryBuilderTablesWidget::dropObject, m_query_fields, &QueryBuilderFieldsWidget::onDragResult);
+
+    connect(m_query_fields, &QueryBuilderFieldsWidget::changeListFields, m_group_by_fields, &QueryBuilderGroupByFieldsListWidget::onSetData);
+    connect(m_query_tables,  &QueryBuilderTablesWidget::changeTables, m_where_widget, &QueryBuilderWhereWidget::onTablesChanged);
+
+    connect(m_query_fields, &QueryBuilderFieldsWidget::changeFields, m_group_by_function, &QueryBuilderGroupByFunWidget::onChangeFieldsList);
+    connect(m_query_fields, &QueryBuilderFieldsWidget::openUserQueryDialog, this, &DialogQueryBuilder::onOpenArbitraryFunctionsDialog);
+    connect(m_query_fields, &QueryBuilderFieldsWidget::doSetData, m_query_tables, &QueryBuilderTablesWidget::doFiledsSetData);
+    connect(m_query_fields, &QueryBuilderFieldsWidget::selectItem, m_query_tables, &QueryBuilderTablesWidget::onRightSetItem);
+    connect(m_query_fields, &QueryBuilderFieldsWidget::selectItems, m_query_tables, &QueryBuilderTablesWidget::onRightSetItems);
+
+    connect(m_group_by_fields, &QueryBuilderGroupByFieldsListWidget::selectData, m_group_by_function, &QueryBuilderGroupByFunWidget::onSetData);
+
+    connect(m_group_by_fields, &QueryBuilderGroupByFieldsListWidget::doTreeDropEvent, this, &DialogQueryBuilder::onGroupByFieldsDropEvent);
+    connect(m_group_by_function, &QueryBuilderGroupByFunWidget::doTreeGropsDropEvent, this, &DialogQueryBuilder::onGroupByGroupsDropEvent);
+    connect(m_group_by_function, &QueryBuilderGroupByFunWidget::doTreeAgregateDropEvent, this, &DialogQueryBuilder::onGroupByFunctionsDropEvent);
+
+    connect(this, &DialogQueryBuilder::setFieldsFilter, m_group_by_fields, &QueryBuilderGroupByFieldsListWidget::onSetFilter);
+
+    connect(m_query_tables,  &QueryBuilderTablesWidget::changeTables, m_query_fields, &QueryBuilderFieldsWidget::onChangeTablesList);
+
+    connect(m_query_tables, &QueryBuilderTablesWidget::fieldChanged, m_query_fields, &QueryBuilderFieldsWidget::onFieldChanged);
+    connect(m_query_fields, &QueryBuilderFieldsWidget::fieldChanged, m_group_by_fields, &QueryBuilderGroupByFieldsListWidget::onFieldChanged);
+    connect(m_query_fields, &QueryBuilderFieldsWidget::remove, m_group_by_fields, &QueryBuilderGroupByFieldsListWidget::onRemove);
+
+
+
+    connect(m_group_by_fields, &QueryBuilderGroupByFieldsListWidget::fieldChanged, m_group_by_function, &QueryBuilderGroupByFunWidget::onFieldChanged);
+    connect(m_group_by_fields, &QueryBuilderGroupByFieldsListWidget::remove_, m_group_by_function, &QueryBuilderGroupByFunWidget::onRemove);
+
+
+    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &DialogQueryBuilder::onButtonBoxAccepted);
+    connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &DialogQueryBuilder::onButtonBoxRejected);
+
+    connect(m_addionall_widget, &QueryBuilderAdditionallyWidget::selectedQueryType, this, &DialogQueryBuilder::onSelectedQueryType);
+
+    connect(ui->btnQuery, &QPushButton::clicked, this, &DialogQueryBuilder::onButtonGenerateQuery);
+
+    m_query_name = "Запрос пакета";
+
+    if(m_query_tables->count() > 0){
+        onChangeTableList(m_query_tables->count());
+    }
+
+    onSelectedQueryType((sql_global_query_type)m_packade.type);
+
+    reset_filer();
+
+    m_addionall_widget->set_database_structure(m_structure->model());
+}

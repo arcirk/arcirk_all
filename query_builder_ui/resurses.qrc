@@ -205,5 +205,6 @@
         <file>img/database_online1.png</file>
         <file>img/database_offline1.png</file>
         <file>img/database_new.png</file>
+        <file>img/animation_loaded.gif</file>
     </qresource>
 </RCC>

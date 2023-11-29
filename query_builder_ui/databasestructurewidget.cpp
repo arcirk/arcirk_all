@@ -1,7 +1,7 @@
 #include "databasestructurewidget.h"
 #include "ui_databasestructurewidget.h"
 #include <QToolButton>
-
+#include "sqlite_utils.hpp"
 
 using namespace arcirk::query_builder_ui;
 using namespace arcirk::tree_model;
@@ -17,7 +17,30 @@ DatabaseStructureWidget::DatabaseStructureWidget(WebSocketClient* client, QWidge
     m_client = client;
     m_packade_uuid = packade_uuid;
 
-    load_structure();
+    load_structure_from_ws();
+    connect(treeView, &TreeViewWidget::doDropEventJson, this,  &DatabaseStructureWidget::onDropEvent);
+    connect(ui->btnType, &QToolButton::toggled, this, &DatabaseStructureWidget::onBtnTypeToggled);
+    connect(ui->btnSetItem, &QToolButton::clicked, this, &DatabaseStructureWidget::onBtnSetItemClicked);
+    connect(ui->btnSetItems, &QToolButton::clicked, this, &DatabaseStructureWidget::onBtnSetItemsClicked);
+    connect(ui->btnRemoveItem, &QToolButton::clicked, this, &DatabaseStructureWidget::onBtnRemoveItemClicked);
+    connect(ui->btnRemoveItems, &QToolButton::clicked, this, &DatabaseStructureWidget::onBtnRemoveItemsClicked);
+
+    setProperty("typeName", "DatabaseStructureWidget");
+}
+
+DatabaseStructureWidget::DatabaseStructureWidget(const json& data, QWidget *parent, const QUuid &packade_uuid) :
+    QWidget(parent),
+    ui(new Ui::DatabaseStructureWidget)
+{
+    ui->setupUi(this);
+
+    treeView = new TreeViewWidget(this, "DatabaseStructureWidget");
+    ui->horizontalLayoutTree->addWidget(treeView);
+    m_client = nullptr;
+
+    m_packade_uuid = packade_uuid;
+
+    load_structure_from_json(data);
     connect(treeView, &TreeViewWidget::doDropEventJson, this,  &DatabaseStructureWidget::onDropEvent);
     connect(ui->btnType, &QToolButton::toggled, this, &DatabaseStructureWidget::onBtnTypeToggled);
     connect(ui->btnSetItem, &QToolButton::clicked, this, &DatabaseStructureWidget::onBtnSetItemClicked);
@@ -47,8 +70,11 @@ json DatabaseStructureWidget::objectStructure(const QUuid &uuid) const
     return result;
 }
 
-void DatabaseStructureWidget::load_structure()
+void DatabaseStructureWidget::load_structure_from_ws()
 {
+    if(!m_client)
+        return;
+
     if(!m_client->isConnected())
         return;
 
@@ -88,6 +114,29 @@ void DatabaseStructureWidget::load_structure()
 
     connect(treeView, &QTreeView::doubleClicked, this, &DatabaseStructureWidget::onTreeViewOnDoubleClick);
 
+}
+
+void DatabaseStructureWidget::load_structure_from_json(const json& data)
+{
+    auto model = ibase_objects_init(treeView, this);
+    model->set_table(data);
+    auto tablesRoot = model->find(model->column_index("object_type"), "tablesRoot",  QModelIndex());
+    if(tablesRoot.isValid()){
+        model->set_row_image(tablesRoot, QIcon(":/img/tables.png"));
+    }
+    auto tviewsRoot = model->find(model->column_index("object_type"), "viewsRoot", QModelIndex());
+    if(tviewsRoot.isValid()){
+        model->set_row_image(tviewsRoot, QIcon(":/img/views.png"));
+        for (int i = 0 ; i < model->rowCount(tviewsRoot); ++i) {
+            model->set_row_image(model->index(i,0, tviewsRoot), QIcon(":/img/view.png"));
+        }
+    }
+
+    model->set_enable_drag(true);
+    model->set_enable_drop(true);
+    treeView->set_drag_group(true);
+    treeView->set_drag_drop_behavior(drag_drop_behavior::behaviorEmit);
+    treeView->hideColumn(model->column_index("data_type"));
 }
 
 void DatabaseStructureWidget::onTreeViewOnDoubleClick(const QModelIndex &index)

@@ -2,6 +2,7 @@
 #define QUERYBUILDERPACKAGEDIALOG_H
 
 #include <QDialog>
+#include "global/arcirk_qt.hpp"
 #include "query_builder.hpp"
 //#include "shared_struct_qt.hpp"
 //#include "global/arcirk_qt.hpp""
@@ -26,10 +27,14 @@ namespace arcirk::query_builder_ui {
 
     public:
         explicit QueryBuilderPackageDialog(WebSocketClient* client, QWidget *parent = nullptr, const QString& query_text = "");
+        explicit QueryBuilderPackageDialog(const json& sql_struct, QWidget *parent = nullptr);
         ~QueryBuilderPackageDialog();
 
         void accept() override;
         QString result() const;
+
+        bool setData(const json& data);
+        void readData();
 
     private slots:
         void onBtnAddClicked();
@@ -50,6 +55,7 @@ namespace arcirk::query_builder_ui {
         QString m_result;
         TreeViewWidget* treeView;
         QFile m_database_file;
+        json m_database_structure;
 
         void generate_query();
         QString query_text(const std::string& ref);

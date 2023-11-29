@@ -94,7 +94,6 @@ BOOST_FUSION_DEFINE_STRUCT(
     (int, row_limit)
     (bool, use_distinct)
     (int, is_group)
-    //(ByteArray, tmp_table)
 )
 
 BOOST_FUSION_DEFINE_STRUCT(

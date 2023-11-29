@@ -9,6 +9,7 @@
 #include "tree_model.h"
 #include "gui/treeviewwidget.h"
 #include "iface/iface.hpp"
+#include "QSqlDatabase"
 
 using namespace arcirk::database;
 using namespace arcirk::tree_model;
@@ -24,6 +25,7 @@ namespace arcirk::query_builder_ui {
 
     public:
         explicit DatabaseStructureWidget(WebSocketClient* client, QWidget *parent = nullptr, const QUuid& packade_uuid = {});
+        explicit DatabaseStructureWidget(const json& data, QWidget *parent = nullptr, const QUuid& packade_uuid = {});
         ~DatabaseStructureWidget();
 
         json objectStructure(const QUuid& uuid) const;
@@ -38,7 +40,8 @@ namespace arcirk::query_builder_ui {
         TreeViewWidget* treeView;
         QUuid m_packade_uuid;
 
-        void load_structure();
+        void load_structure_from_ws();
+        void load_structure_from_json(const json& data);
 
     signals:
         void selectRow(const ibase_object_structure& table, const QVector<ibase_object_structure>& fields);

@@ -130,6 +130,7 @@ BOOST_FUSION_DEFINE_STRUCT(
     (std::string, parent)
     (ByteArray, data)
     (std::string, query_ref)
+    (std::string, database_ref)
     (int, is_group)
     )
 namespace arcirk {

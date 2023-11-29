@@ -282,10 +282,10 @@ inline sql_value sql_value_from_json(const json& value){
 }
 
 enum sql_query_type{
-    Insert,
+    Select,
     Update,
     Delete,
-    Select,
+    Insert,
     Create,
     query_type_INVALID = -1
 };
