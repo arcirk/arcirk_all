@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>DialogMessagesList</class>
+ <widget class="QDialog" name="DialogMessagesList">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>840</width>
+    <height>602</height>
+   </rect>
+  </property>
+  <property name="acceptDrops">
+   <bool>false</bool>
+  </property>
+  <property name="windowTitle">
+   <string>Чат</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="resurses.qrc">
+    <normaloff>:/img/messaneger.svg</normaloff>:/img/messaneger.svg</iconset>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: #424242;</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <property name="leftMargin">
+    <number>2</number>
+   </property>
+   <property name="topMargin">
+    <number>2</number>
+   </property>
+   <property name="rightMargin">
+    <number>2</number>
+   </property>
+   <property name="bottomMargin">
+    <number>2</number>
+   </property>
+   <property name="spacing">
+    <number>3</number>
+   </property>
+  </layout>
+ </widget>
+ <resources>
+  <include location="resurses.qrc"/>
+ </resources>
+ <connections/>
+</ui>

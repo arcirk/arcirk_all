@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
+ <class>QBMainWindow</class>
+ <widget class="QMainWindow" name="QBMainWindow">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -81,7 +81,7 @@
          <string>...</string>
         </property>
         <property name="icon">
-         <iconset resource="resurses.qrc">
+         <iconset resource="../bAdmin/resurses.qrc">
           <normaloff>:/img/save.png</normaloff>:/img/save.png</iconset>
         </property>
        </widget>
@@ -92,7 +92,7 @@
          <string>Открыть конструктор запроса</string>
         </property>
         <property name="icon">
-         <iconset resource="resurses.qrc">
+         <iconset resource="../bAdmin/resurses.qrc">
           <normaloff>:/img/query_builder.png</normaloff>:/img/query_builder.png</iconset>
         </property>
        </widget>
@@ -140,6 +140,7 @@
     <property name="title">
      <string>Помощь</string>
     </property>
+    <addaction name="action"/>
    </widget>
    <addaction name="menu"/>
    <addaction name="menu_2"/>
@@ -212,7 +213,7 @@
   </widget>
   <action name="mnuOpen">
    <property name="icon">
-    <iconset resource="resurses.qrc">
+    <iconset resource="../bAdmin/resurses.qrc">
      <normaloff>:/img/addGroup_24.png</normaloff>:/img/addGroup_24.png</iconset>
    </property>
    <property name="text">
@@ -229,9 +230,14 @@
     <string>Открыть базу данных</string>
    </property>
   </action>
+  <action name="action">
+   <property name="text">
+    <string>О программе ...</string>
+   </property>
+  </action>
  </widget>
  <resources>
-  <include location="resurses.qrc"/>
+  <include location="../bAdmin/resurses.qrc"/>
  </resources>
  <connections/>
 </ui>

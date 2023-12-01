@@ -17,7 +17,7 @@ SOURCES += \
     $$PWD/dialogquerybuilder.cpp \
     $$PWD/dialogqueryconsole.cpp \
     $$PWD/dialogtemptable.cpp \
-    $$PWD/mainwindow.cpp \
+    $$PWD/qbmainwindow.cpp \
     $$PWD/querybuilderadditionallywidget.cpp \
     $$PWD/querybuilderarbitraryexpressiondialog.cpp \
     $$PWD/querybuilderdatabaseswidget.cpp \
@@ -46,7 +46,7 @@ HEADERS += \
     $$PWD/dialogquerybuilder.h \
     $$PWD/dialogqueryconsole.h \
     $$PWD/dialogtemptable.h \
-    $$PWD/mainwindow.h \
+    $$PWD/qbmainwindow.h \
     $$PWD/querybuilderadditionallywidget.h \
     $$PWD/querybuilderarbitraryexpressiondialog.h \
     $$PWD/querybuilderdatabaseswidget.h \
@@ -93,7 +93,7 @@ FORMS += \
     $$PWD/dialogquerybuilder.ui \
     $$PWD/dialogqueryconsole.ui \
     $$PWD/dialogtemptable.ui \
-    $$PWD/mainwindow.ui \
+    $$PWD/qbmainwindow.ui \
     $$PWD/querybuilderadditionallywidget.ui \
     $$PWD/querybuilderarbitraryexpressiondialog.ui \
     $$PWD/querybuilderdatabaseswidget.ui \

@@ -50,3 +50,5 @@
 /build-PriceChecker-Desktop_Qt_6_5_2_MSVC2019_64bit-Release/
 /build-qbConsole-Desktop_Qt_6_5_2_MSVC2019_64bit-Debug/
 /qbConsole/qbConsole.pro.user
+/build-bAdmin-Desktop_Qt_6_5_2_MSVC2019_64bit-Debug/
+/.idea/

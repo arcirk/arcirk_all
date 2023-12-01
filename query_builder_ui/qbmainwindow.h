@@ -1,5 +1,5 @@
-﻿#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#ifndef QBMAINWINDOW_H
+#define QBMAINWINDOW_H
 
 #include <QMainWindow>
 #include <QSplitter>
@@ -12,7 +12,7 @@
 #include "querybuilderdatabaseswidget.h"
 
 QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
+namespace Ui { class QBMainWindow; }
 QT_END_NAMESPACE
 
 
@@ -20,13 +20,13 @@ using namespace arcirk::tree_model;
 using namespace arcirk::tree_widget;
 using namespace arcirk::query_builder_ui;
 
-class MainWindow : public QMainWindow
+class QBMainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+    QBMainWindow(QWidget *parent = nullptr);
+    ~QBMainWindow();
 
 private slots:
     void onMnuOpenDatabaseTriggered();
@@ -45,7 +45,7 @@ private slots:
     void onEndDatabaseScanned();
 
 private:
-    Ui::MainWindow *ui;
+    Ui::QBMainWindow *ui;
 
     TreeViewWidget * m_treeQueryas;
     TreeViewWidget * m_treeQuery;
@@ -66,4 +66,4 @@ private:
     void updateDatabasesList();
 };
 
-#endif // MAINWINDOW_H
+#endif // QBMAINWINDOW_H

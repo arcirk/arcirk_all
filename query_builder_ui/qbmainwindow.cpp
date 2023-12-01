@@ -1,6 +1,6 @@
 #include "global/arcirk_qt.hpp"
-#include "mainwindow.h"
-#include "ui_mainwindow.h"
+#include "qbmainwindow.h"
+#include "ui_qbmainwindow.h"
 #include "QHBoxLayout"
 #include "QVBoxLayout"
 #include "query_builder.hpp"
@@ -37,9 +37,9 @@ BOOST_FUSION_DEFINE_STRUCT(
     (char, ref)
 )
 
-MainWindow::MainWindow(QWidget *parent) :
+QBMainWindow::QBMainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow)
+    ui(new Ui::QBMainWindow)
 {
     ui->setupUi(this);
 
@@ -114,22 +114,22 @@ MainWindow::MainWindow(QWidget *parent) :
 
     m_statusBarText->setText("Готово");
 
-    connect(ui->mnuOpenDatabase, &QAction::triggered, this, &MainWindow::onMnuOpenDatabaseTriggered);
-    connect(ui->mnuClose, &QAction::triggered, this, &MainWindow::mnMnuClose);
-    connect(m_treeQueryas, &TreeViewWidget::treeItemClicked, this, &MainWindow::onTreeQueryasRowSelected);
-    connect(m_treeQueryas, &TreeViewWidget::addTreeItem, this, &MainWindow::onAddTreeItem);
-    connect(m_treeQueryas, &TreeViewWidget::editTreeItem, this, &MainWindow::onEditTreeItem);
-    connect(m_treeQueryas, &TreeViewWidget::deleteTreeItem, this, &MainWindow::onDeleteTreeItem);
-    connect(ui->btnOpenQueryBuilder, &QToolButton::clicked, this, &MainWindow::onOpenQueryBuilder);
+    connect(ui->mnuOpenDatabase, &QAction::triggered, this, &QBMainWindow::onMnuOpenDatabaseTriggered);
+    connect(ui->mnuClose, &QAction::triggered, this, &QBMainWindow::mnMnuClose);
+    connect(m_treeQueryas, &TreeViewWidget::treeItemClicked, this, &QBMainWindow::onTreeQueryasRowSelected);
+    connect(m_treeQueryas, &TreeViewWidget::addTreeItem, this, &QBMainWindow::onAddTreeItem);
+    connect(m_treeQueryas, &TreeViewWidget::editTreeItem, this, &QBMainWindow::onEditTreeItem);
+    connect(m_treeQueryas, &TreeViewWidget::deleteTreeItem, this, &QBMainWindow::onDeleteTreeItem);
+    connect(ui->btnOpenQueryBuilder, &QToolButton::clicked, this, &QBMainWindow::onOpenQueryBuilder);
 
-    connect(ui->tabWidget, &QTabWidget::tabBarClicked, this, &MainWindow::onTabSelected);
-    connect(m_codeEdit, &CodeEditorWidget::focusOut, this, &MainWindow::onEditorFocusOut);
-    connect(m_codeEdit, &CodeEditorWidget::readData, this, &MainWindow::onCodeEditReadData);
+    connect(ui->tabWidget, &QTabWidget::tabBarClicked, this, &QBMainWindow::onTabSelected);
+    connect(m_codeEdit, &CodeEditorWidget::focusOut, this, &QBMainWindow::onEditorFocusOut);
+    connect(m_codeEdit, &CodeEditorWidget::readData, this, &QBMainWindow::onCodeEditReadData);
 
-    connect(m_databases, &QueryBuilderDatabasesWidget::databaseListChanged, this, &MainWindow::onDatabaseListChanged);
-    connect(m_databases, &QueryBuilderDatabasesWidget::startDatabaseScanned, this, &MainWindow::onStartDatabaseScanned);
-    connect(m_databases, &QueryBuilderDatabasesWidget::endDatabaseScanned, this, &MainWindow::onEndDatabaseScanned);
-    connect(ui->cmbDatabases, &QComboBox::currentIndexChanged, this, &MainWindow::onDatabasesSelectItem);
+    connect(m_databases, &QueryBuilderDatabasesWidget::databaseListChanged, this, &QBMainWindow::onDatabaseListChanged);
+    connect(m_databases, &QueryBuilderDatabasesWidget::startDatabaseScanned, this, &QBMainWindow::onStartDatabaseScanned);
+    connect(m_databases, &QueryBuilderDatabasesWidget::endDatabaseScanned, this, &QBMainWindow::onEndDatabaseScanned);
+    connect(ui->cmbDatabases, &QComboBox::currentIndexChanged, this, &QBMainWindow::onDatabasesSelectItem);
 
     updateDatabasesList();
 
@@ -147,7 +147,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 }
 
-MainWindow::~MainWindow()
+QBMainWindow::~QBMainWindow()
 {
     if(m_connection.isOpen()){
         m_connection.close();
@@ -155,7 +155,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::initDatabase()
+void QBMainWindow::initDatabase()
 {
     if(!m_connection.isOpen())
         return;
@@ -214,7 +214,7 @@ void MainWindow::initDatabase()
 
 }
 
-void MainWindow::openDatabase()
+void QBMainWindow::openDatabase()
 {
 
     if(!m_connection.isOpen())
@@ -228,7 +228,7 @@ void MainWindow::openDatabase()
 
 }
 
-void MainWindow::updateDatabasesList()
+void QBMainWindow::updateDatabasesList()
 {
     auto list_model = new PairModel(this);
 ;
@@ -249,17 +249,17 @@ void MainWindow::updateDatabasesList()
     ui->cmbDatabases->setCurrentIndex(current);
 }
 
-void MainWindow::onMnuOpenDatabaseTriggered()
+void QBMainWindow::onMnuOpenDatabaseTriggered()
 {
 
 }
 
-void MainWindow::mnMnuClose()
+void QBMainWindow::mnMnuClose()
 {
     QApplication::quit();
 }
 
-void MainWindow::onTreeQueryasRowSelected(const QModelIndex &index)
+void QBMainWindow::onTreeQueryasRowSelected(const QModelIndex &index)
 {
     qDebug() << __FUNCTION__ << index.row() << index.column();
     if(!index.isValid())
@@ -283,7 +283,7 @@ void MainWindow::onTreeQueryasRowSelected(const QModelIndex &index)
     }
 }
 
-void MainWindow::onAddTreeItem(const QModelIndex &index, const json &data)
+void QBMainWindow::onAddTreeItem(const QModelIndex &index, const json &data)
 {
     qDebug() << __FUNCTION__;
 
@@ -296,7 +296,7 @@ void MainWindow::onAddTreeItem(const QModelIndex &index, const json &data)
     rc.exec();
 
 }
-void MainWindow::onEditTreeItem(const QModelIndex &index, const json &data)
+void QBMainWindow::onEditTreeItem(const QModelIndex &index, const json &data)
 {
     qDebug() << __FUNCTION__;
     if(!m_connection.isOpen())
@@ -308,7 +308,7 @@ void MainWindow::onEditTreeItem(const QModelIndex &index, const json &data)
     rc.exec();
 
 }
-void MainWindow::onDeleteTreeItem(const json &data)
+void QBMainWindow::onDeleteTreeItem(const json &data)
 {
     qDebug() << __FUNCTION__;
 
@@ -320,7 +320,7 @@ void MainWindow::onDeleteTreeItem(const json &data)
     rc.exec();
 }
 
-void MainWindow::onOpenQueryBuilder()
+void QBMainWindow::onOpenQueryBuilder()
 {
     auto parser = std::make_shared<query_parser>(m_databases->database_structure_t(QUuid::fromString(m_codeEdit->databaseRef())));
     auto text = m_codeEdit->textCursor().selectedText();
@@ -357,7 +357,7 @@ void MainWindow::onOpenQueryBuilder()
     }
 }
 
-void MainWindow::onTabSelected(int index)
+void QBMainWindow::onTabSelected(int index)
 {
     if(index == 0){
         ui->dockWidget->setWindowTitle("Запросы");
@@ -366,17 +366,17 @@ void MainWindow::onTabSelected(int index)
     }
 }
 
-void MainWindow::onEditorFocusOut()
+void QBMainWindow::onEditorFocusOut()
 {
     m_codeEdit->save(m_connection);
 }
 
-void MainWindow::onDatabaseListChanged()
+void QBMainWindow::onDatabaseListChanged()
 {
     updateDatabasesList();
 }
 
-void MainWindow::onDatabasesSelectItem(int index)
+void QBMainWindow::onDatabasesSelectItem(int index)
 {
     auto cb_model = (PairModel*)ui->cmbDatabases->model();
     auto d_ref = cb_model->data(cb_model->index(index, 0), Qt::UserRole).toString();
@@ -384,7 +384,7 @@ void MainWindow::onDatabasesSelectItem(int index)
 
 }
 
-void MainWindow::onCodeEditReadData(const query_builder_querias &data)
+void QBMainWindow::onCodeEditReadData(const query_builder_querias &data)
 {
     if(!data.database_ref.empty()){
         auto model = (PairModel*)ui->cmbDatabases->model();
@@ -395,14 +395,14 @@ void MainWindow::onCodeEditReadData(const query_builder_querias &data)
     }
 }
 
-void MainWindow::onStartDatabaseScanned()
+void QBMainWindow::onStartDatabaseScanned()
 {
     m_statusBarIco->setVisible(true);
     m_statusBarIco->movie()->start();
     m_statusBarText->setText("Чтение базы данных ...");
 }
 
-void MainWindow::onEndDatabaseScanned()
+void QBMainWindow::onEndDatabaseScanned()
 {
     m_statusBarIco->setVisible(false);
     m_statusBarIco->movie()->stop();

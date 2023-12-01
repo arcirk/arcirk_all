@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 11.0.1, 2023-11-29T11:58:13. -->
+<!-- Written by QtCreator 11.0.1, 2023-12-01T16:22:50. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -8,7 +8,7 @@
  </data>
  <data>
   <variable>ProjectExplorer.Project.ActiveTarget</variable>
-  <value type="qlonglong">1</value>
+  <value type="qlonglong">0</value>
  </data>
  <data>
   <variable>ProjectExplorer.Project.EditorSettings</variable>
@@ -463,7 +463,6 @@
     <value type="int" key="PE.EnvironmentAspect.Base">0</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="bool" key="PE.EnvironmentAspect.PrintOnRun">false</value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">PriceChecker</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.AndroidRunConfiguration:D:/src_arcirk/arcirk_all/arcirk_all/PriceChecker/PriceChecker.pro</value>
     <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">D:/src_arcirk/arcirk_all/arcirk_all/PriceChecker/PriceChecker.pro</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>

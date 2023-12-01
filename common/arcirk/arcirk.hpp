@@ -151,10 +151,10 @@ inline std::string to_local(const std::string& source){
     return source;
 #endif
 }
-inline std::string to_utf(const std::string& source){
+inline std::string to_utf(const std::string& source, const std::string def_charset = "Windows-1251"){
 #ifdef BOOST_LOCALE
 #ifdef _WINDOWS
-    return boost::locale::conv::to_utf<char>(source, "Windows-1251");
+    return boost::locale::conv::to_utf<char>(source, def_charset);
 #else
     return source;
 #endif
@@ -226,6 +226,20 @@ inline tm current_date() {
 #endif
     return current;
 }
+
+inline tm seconds_to_date(const long int& dt){
+    using namespace std;
+    time_t t = (time_t)dt;
+    tm current{};
+#ifdef _WINDOWS
+    localtime_s(&current, &t);
+#else
+    localtime_r(&t, &current);
+#endif
+
+    return current;
+}
+
 inline long int date_to_seconds(const tm& dt, bool offset) {
 
     tm current = dt;
@@ -636,6 +650,22 @@ inline std::string byte_array_to_string(const ByteArray& data){
 
 inline ByteArray string_to_byte_array(const std::string& str){
     return ByteArray(str.begin(), str.end());
+}
+
+inline json table_from_row(const json& row){
+    if(!row.is_object())
+        return {};
+
+    auto columns = json::array();
+    auto rows = json::array();
+    rows += row;
+    for (auto it = row.items().begin(); it != row.items().end(); ++it) {
+        columns += it.key();
+    }
+    json table = json::object();
+    table["columns"]  = columns;
+    table["rows"] = rows;
+    return table;
 }
 
 namespace uuids{
