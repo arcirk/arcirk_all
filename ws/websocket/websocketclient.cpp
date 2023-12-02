@@ -114,6 +114,10 @@ server::server_config &WebSocketClient::server_conf()
     return server_conf_;
 }
 
+client::client_param &WebSocketClient::client_server_param()
+{
+    return client_param_;
+}
 
 bool WebSocketClient::isConnected()
 {
@@ -252,12 +256,14 @@ void WebSocketClient::parse_response(const QString &resp)
             if(msg.message == "OK"){
                 get_server_configuration_sync();
                 QString result = QByteArray::fromBase64(msg.param.data());
-                //auto param = pre::json::from_json<arcirk::client::client_param>(result.toStdString());
-                auto param = parse_client_param(result.toStdString());
-                m_currentSession = QUuid::fromString(QString::fromStdString(param.session_uuid));
-                m_currentUserUuid = QUuid::fromString(QString::fromStdString(param.user_uuid));
+                QString usr_info = QByteArray::fromBase64(msg.result.data());
+                client_param_ = parse_client_param(result.toStdString());
+                auto user_info_ = json::parse(usr_info.toStdString());
+                m_currentSession = QUuid::fromString(QString::fromStdString(client_param_.session_uuid));
+                m_currentUserUuid = QUuid::fromString(QString::fromStdString(client_param_.user_uuid));
                 doConnectionSuccess();
-                doConnectionChanged(true);;
+                doConnectionChanged(true);
+                emit userInfo(user_info_);
             }else{
                 doDisplayError("SetClientParam", "Ошибка авторизации");
             }
@@ -733,4 +739,23 @@ QUuid WebSocketClient::currentSession() const
 QUuid WebSocketClient::currentUserUuid() const
 {
     return m_currentUserUuid;
+}
+
+void WebSocketClient::set_client_conf(const json& value)
+{
+    conf_ = arcirk::secure_serialization<client::client_conf>(value, __FUNCTION__);
+}
+
+void WebSocketClient::set_client_param(const json& value){
+    qDebug() << value.dump().c_str();
+    client_param_ = arcirk::secure_serialization<client::client_param>(value, __FUNCTION__);
+}
+
+void WebSocketClient::set_server_conf(const json& value){
+    auto name = server_conf_.ServerName;
+    auto addr = server_conf_.ServerHost;
+    server_conf_ = arcirk::secure_serialization<server::server_config>(value, __FUNCTION__);
+    if(server_conf_.ServerName.empty() && server_conf_.ServerHost == addr){
+        server_conf_.ServerName = name;
+    }
 }

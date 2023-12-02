@@ -12,6 +12,7 @@
       <excludeFolder url="file://$MODULE_DIR$/build-PriceChecker-Desktop_Qt_6_5_2_MSVC2019_64bit-Debug" />
       <excludeFolder url="file://$MODULE_DIR$/build-PriceChecker-Desktop_Qt_6_5_2_MSVC2019_64bit-Release" />
       <excludeFolder url="file://$MODULE_DIR$/build-qbConsole-Desktop_Qt_6_5_2_MSVC2019_64bit-Debug" />
+      <excludeFolder url="file://$MODULE_DIR$/build-ProfileManager-Desktop_Qt_6_5_2_MSVC2019_64bit-Debug" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

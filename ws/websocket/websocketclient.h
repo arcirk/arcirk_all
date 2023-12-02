@@ -5,7 +5,6 @@
 #include <QObject>
 #include <QtWebSockets/QWebSocket>
 #include <QUuid>
-//#include <nlohmann/json.hpp>
 #include <QQueue>
 #include <functional>
 #include <QTimer>
@@ -28,6 +27,7 @@ BOOST_FUSION_DEFINE_STRUCT(
     (ByteArray, servers)
     (std::string, price_checker_repo)
     (std::string, server_repo)
+    (std::string, system_user)
     (bool, use_sid)
     );
 
@@ -281,6 +281,10 @@ public:
 
     client::client_conf& conf();
     server::server_config& server_conf();
+    client::client_param &client_server_param();
+    void set_client_conf(const json& value);
+    void set_server_conf(const json& value);
+    void set_client_param(const json& value);
 
     bool isConnected();
 
@@ -294,16 +298,16 @@ public:
     void write_conf();
     void set_conf(const client::client_conf& value);
 
-    void send_command(arcirk::server::server_commands cmd, const nlohmann::json& param = {});
+    void send_command(arcirk::server::server_commands cmd, const json& param = {});
     void command_to_client(const std::string &receiver, const std::string &command,
-                                       const nlohmann::json &param = {});
+                                       const json &param = {});
     void send_message(const std::string &receiver, const std::string &message,
-                      const nlohmann::json &param = {});
+                      const json &param = {});
 
-    nlohmann::json exec_http_query(const std::string& command, const nlohmann::json& param, const ByteArray& data = {});
-    static nlohmann::json http_query(const QUrl& ws, const QString& token, const std::string& command, const nlohmann::json& param, const ByteArray& data = {});
+    json exec_http_query(const std::string& command, const json& param, const ByteArray& data = {});
+    static json http_query(const QUrl& ws, const QString& token, const std::string& command, const json& param, const ByteArray& data = {});
 
-    QByteArray exec_http_query_get(const std::string& command, const nlohmann::json& param);
+    QByteArray exec_http_query_get(const std::string& command, const json& param);
 
     static std::string crypt(const QString &source, const QString &key);
 
@@ -326,6 +330,7 @@ public:
 protected:
     QWebSocket* m_client;
     client::client_conf conf_;
+    client::client_param client_param_;
 
 private:
 
@@ -362,7 +367,7 @@ signals:
     void notify(const QString& message);
     void commandToClientResponse(const arcirk::server::server_response& message);
     void userMessage(const arcirk::server::server_response& message);
-
+    void userInfo(const json& info);
     void urlChanged();
 
     void syncGetDiscrepancyInData(const arcirk::server::server_response& resp);
@@ -380,13 +385,63 @@ private slots:
 
 #define PATH_TO_RELEASE "arcirk_server/update/"
 
-//class QmlWebSocketClient : public WebSocketClient{
+typedef std::function<void()> async_await_;
 
-//    Q_OBJECT
-//    Q_PROPERTY(QUrl url READ getUrl WRITE setUrl NOTIFY urlChanged)
+class IWClient : public WebSocketClient{
 
-//public:
+    Q_OBJECT
 
-//};
+public:
+    explicit IWClient(QObject *parent = nullptr): WebSocketClient{parent}{
+        m_reconnect = new QTimer(this);
+        connect(m_reconnect,SIGNAL(timeout()),this,SLOT(onReconnect()));
+    };
+
+    ~IWClient(){m_reconnect->stop();};
+
+    Q_INVOKABLE void checkConnection(){
+        if(!m_reconnect->isActive())
+            startReconnect();
+    }
+    Q_INVOKABLE void openConnection(){
+        this->open();
+    }
+    Q_INVOKABLE void startReconnect(){
+        m_reconnect->start(1000 * 60);
+    };
+
+    QString token() const{
+        return conf_.hash.c_str();
+    }
+
+private:
+    QTimer * m_reconnect;
+    QTimer * m_tmr_synchronize;
+    QQueue<async_await_> m_async_await;
+
+    void asyncAwait(){
+        if(m_async_await.size() > 0){
+            auto f = m_async_await.dequeue();
+            f();
+        }
+    };
+
+    void reconnect(){
+        open();
+    }
+
+private slots:
+    void onReconnect(){
+        //qDebug() << QDateTime::currentDateTime().toString("hh:mm:ss") << __FUNCTION__;
+        if(isStarted()){
+            if(m_reconnect->isActive())
+                m_reconnect->stop();
+        }else{
+            m_async_await.append(std::bind(&IWClient::reconnect, this));
+            asyncAwait();
+        }
+    }
+
+};
 
 #endif // WEBSOCKETCLIENT_H

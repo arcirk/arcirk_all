@@ -1,0 +1,129 @@
+QT += core gui sql svg
+QT += websockets network
+QT += core5compat
+
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+
+CONFIG += c++20
+#CONFIG += c++17
+# You can make your code fail to compile if it uses deprecated APIs.
+# In order to do so, uncomment the following line.
+#DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
+
+SOURCES += \
+    certuser.cpp \
+    commandline.cpp \
+    commandlineparser.cpp \
+    cryptcertificate.cpp \
+    cryptcontainer.cpp \
+    dialoginfo.cpp \
+    dialogmplitem.cpp \
+    dialogmstsc.cpp \
+    dialogremoteusers.cpp \
+    dialogselectauth.cpp \
+    dialogselectintree.cpp \
+    dialogtask.cpp \
+    main.cpp \
+    dialogmain.cpp \
+    taskparamdialog.cpp \
+#    tree_model/comparewidget.cpp \
+#    tree_model/lineedit.cpp \
+#    tree_model/textlinewidget.cpp \
+#    tree_model/treecheckboxwidget.cpp \
+#    tree_model/treeitem.cpp \
+#    tree_model/treeitemdelegate.cpp \
+#    tree_model/treeitemmodel.cpp \
+#    tree_model/treesortmodel.cpp \
+#    tree_model/treecomboboxwidget.cpp \
+    websocketclient.cpp \
+    winreg/WinReg.cpp
+
+HEADERS += \
+    certuser.h \
+    commandline.h \
+    commandlineparser.h \
+    cryptcertificate.h \
+    cryptcontainer.h \
+    dialoginfo.h \
+    dialogmain.h \
+    dialogmplitem.h \
+    dialogmstsc.h \
+    dialogremoteusers.h \
+    dialogselectauth.h \
+    dialogselectintree.h \
+    dialogtask.h \
+    query_builder/ui/query_builder.hpp \
+    shared_struct.hpp \
+#    shared_struct_qt.hpp \
+    task.hpp \
+    taskparamdialog.h \
+    thread_pool.hpp \
+#    tree_model/comparewidget.h \
+#    tree_model/lineedit.h \
+#    tree_model/textlinewidget.h \
+#    tree_model/treecheckboxwidget.h \
+#    tree_model/treeitem.h \
+#    tree_model/treeitemdelegate.h \
+#    tree_model/treeitemmodel.h \
+#    tree_model/treesortmodel.h \
+#    tree_model/treecomboboxwidget.h \
+    websocketclient.h \
+    winreg/WinReg.hpp
+
+FORMS += \
+    dialoginfo.ui \
+    dialogmain.ui \
+    dialogmplitem.ui \
+    dialogmstsc.ui \
+    dialogremoteusers.ui \
+    dialogselectauth.ui \
+    dialogselectintree.ui \
+    dialogtask.ui \
+    taskparamdialog.ui
+#    tree_model/textlinewidget.ui \
+#    tree_model/treecheckboxwidget.ui \
+#    tree_model/treecomboboxwidget.ui \
+#    tree_model/comparewidget.ui
+
+
+include(singleapplication/singleapplication.pri)
+DEFINES += QAPPLICATION_CLASS=QApplication
+
+include(tree_model/arcirk_tree/arcirk_tree/tree_model/tree_model.pri)
+
+# Default rules for deployment.
+qnx: target.path = /tmp/$${TARGET}/bin
+else: unix:!android: target.path = /opt/$${TARGET}/bin
+!isEmpty(target.path): INSTALLS += target
+
+windows:DEFINES += _CRT_SECURE_NO_WARNINGS
+windows:DEFINES += _WINDOWS
+
+Boost_USE_STATIC_LIBS = ON
+#windows:LIBS += -lbcrypt
+
+INCLUDEPATH += $(BOOST_INCLDUE)
+INCLUDEPATH += $$PWD/tree_model/arcirk_tree/arcirk_tree/tree_model
+
+CONFIG(debug, debug|release) {
+    LIBS += -LC:/lib/vcpkg/installed/x64-windows/debug/lib -lboost_locale-vc140-mt-gd -lfmtd
+#    -lcryptopp
+    LIBS += -LC:/lib/vcpkg/installed/x64-windows/debug/bin
+} else {
+    LIBS += -LC:/lib/vcpkg/installed/x64-windows/lib -lboost_locale-vc140-mt -lfmt
+#    -lcryptopp
+    LIBS += -LC:/lib/vcpkg/installed/x64-windows/bin
+}
+
+DEFINES += IS_USE_QT_LIB
+
+win32 {
+    QMAKE_TARGET_PRODUCT = "Manager Profile (arcirk)"
+    QMAKE_TARGET_DESCRIPTION = "Client arcirk WebSocket Server"
+}
+
+VERSION = 1.1.0
+QMAKE_TARGET_COPYRIGHT = (c)(arcirk) Arcady Borisoglebsky
+
+RESOURCES += \
+    resurses.qrc
