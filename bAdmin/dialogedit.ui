@@ -51,7 +51,7 @@
           <string>...</string>
          </property>
          <property name="icon">
-          <iconset resource="resurses.qrc">
+          <iconset resource="ba_resurses.qrc">
            <normaloff>:/img/clear.ico</normaloff>:/img/clear.ico</iconset>
          </property>
         </widget>
@@ -96,7 +96,7 @@
           <string>...</string>
          </property>
          <property name="icon">
-          <iconset resource="resurses.qrc">
+          <iconset resource="ba_resurses.qrc">
            <normaloff>:/img/link.png</normaloff>:/img/link.png</iconset>
          </property>
         </widget>
@@ -121,7 +121,7 @@
           <string>...</string>
          </property>
          <property name="icon">
-          <iconset resource="resurses.qrc">
+          <iconset resource="ba_resurses.qrc">
            <normaloff>:/img/link.png</normaloff>:/img/link.png</iconset>
          </property>
         </widget>
@@ -207,7 +207,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="resurses.qrc"/>
+  <include location="ba_resurses.qrc"/>
  </resources>
  <connections>
   <connection>

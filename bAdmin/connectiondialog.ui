@@ -70,7 +70,7 @@
           <string>...</string>
          </property>
          <property name="icon">
-          <iconset resource="resurses.qrc">
+          <iconset resource="ba_resurses.qrc">
            <normaloff>:/img/viewPwd1.png</normaloff>:/img/viewPwd1.png</iconset>
          </property>
          <property name="checkable">
@@ -87,7 +87,7 @@
           <string>...</string>
          </property>
          <property name="icon">
-          <iconset resource="resurses.qrc">
+          <iconset resource="ba_resurses.qrc">
            <normaloff>:/img/itemEdit.png</normaloff>:/img/itemEdit.png</iconset>
          </property>
          <property name="checkable">
@@ -136,7 +136,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="resurses.qrc"/>
+  <include location="ba_resurses.qrc"/>
  </resources>
  <connections>
   <connection>

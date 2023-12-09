@@ -152,7 +152,7 @@ CONFIG(debug, debug|release) {
 
 
 RESOURCES += \
-    resurses.qrc
+    ba_resurses.qrc
 
 DEFINES += IS_USE_QT_LIB
 DEFINES += BOOST_LOCALE

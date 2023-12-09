@@ -34,6 +34,9 @@ using namespace arcirk::tree_model;
 using namespace arcirk::tree_widget;
 using namespace arcirk::query_builder_ui;
 
+#define BANK_CLIENT_FILE "sslgate.url"
+#define BANK_CLIENT_USB_KEY "BankUsbKey"
+
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -115,6 +118,7 @@ private:
     QAction         *quitAction;
     QAction         *showAction;
 
+    QProcess * mozillaApp;
 
     TreeItemModel* get_model();
     QModelIndex get_index(const QModelIndex& proxy_index);

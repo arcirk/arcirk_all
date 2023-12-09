@@ -34,7 +34,7 @@
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="icon">
-       <iconset resource="resurses.qrc">
+       <iconset resource="ba_resurses.qrc">
         <normaloff>:/img/settings.svg</normaloff>:/img/settings.svg</iconset>
       </attribute>
       <attribute name="title">
@@ -91,7 +91,7 @@
               <string>...</string>
              </property>
              <property name="icon">
-              <iconset resource="resurses.qrc">
+              <iconset resource="ba_resurses.qrc">
                <normaloff>:/img/viewPwd1.png</normaloff>:/img/viewPwd1.png</iconset>
              </property>
              <property name="checkable">
@@ -111,7 +111,7 @@
               <string>...</string>
              </property>
              <property name="icon">
-              <iconset resource="resurses.qrc">
+              <iconset resource="ba_resurses.qrc">
                <normaloff>:/img/itemEdit.png</normaloff>:/img/itemEdit.png</iconset>
              </property>
              <property name="checkable">
@@ -152,7 +152,7 @@
               <string>...</string>
              </property>
              <property name="icon">
-              <iconset resource="resurses.qrc">
+              <iconset resource="ba_resurses.qrc">
                <normaloff>:/img/link.png</normaloff>:/img/link.png</iconset>
              </property>
              <property name="autoRaise">
@@ -183,7 +183,7 @@
               <string>...</string>
              </property>
              <property name="icon">
-              <iconset resource="resurses.qrc">
+              <iconset resource="ba_resurses.qrc">
                <normaloff>:/img/update.png</normaloff>:/img/update.png</iconset>
              </property>
              <property name="autoRaise">
@@ -256,7 +256,7 @@
      </widget>
      <widget class="QWidget" name="tab_2">
       <attribute name="icon">
-       <iconset resource="resurses.qrc">
+       <iconset resource="ba_resurses.qrc">
         <normaloff>:/img/mpl.ico</normaloff>:/img/mpl.ico</iconset>
       </attribute>
       <attribute name="title">
@@ -329,7 +329,7 @@
               <string>...</string>
              </property>
              <property name="icon">
-              <iconset resource="resurses.qrc">
+              <iconset resource="ba_resurses.qrc">
                <normaloff>:/img/add_24.png</normaloff>:/img/add_24.png</iconset>
              </property>
              <property name="autoRaise">
@@ -346,7 +346,7 @@
               <string>...</string>
              </property>
              <property name="icon">
-              <iconset resource="resurses.qrc">
+              <iconset resource="ba_resurses.qrc">
                <normaloff>:/img/copy_24.png</normaloff>:/img/copy_24.png</iconset>
              </property>
              <property name="autoRaise">
@@ -360,7 +360,7 @@
               <string>...</string>
              </property>
              <property name="icon">
-              <iconset resource="resurses.qrc">
+              <iconset resource="ba_resurses.qrc">
                <normaloff>:/img/itemEdit.png</normaloff>:/img/itemEdit.png</iconset>
              </property>
              <property name="autoRaise">
@@ -374,7 +374,7 @@
               <string>...</string>
              </property>
              <property name="icon">
-              <iconset resource="resurses.qrc">
+              <iconset resource="ba_resurses.qrc">
                <normaloff>:/img/itemDelete.png</normaloff>:/img/itemDelete.png</iconset>
              </property>
              <property name="autoRaise">
@@ -407,7 +407,7 @@
               <string>...</string>
              </property>
              <property name="icon">
-              <iconset resource="resurses.qrc">
+              <iconset resource="ba_resurses.qrc">
                <normaloff>:/img/moveup.png</normaloff>:/img/moveup.png</iconset>
              </property>
              <property name="autoRaise">
@@ -421,7 +421,7 @@
               <string>...</string>
              </property>
              <property name="icon">
-              <iconset resource="resurses.qrc">
+              <iconset resource="ba_resurses.qrc">
                <normaloff>:/img/movedown.png</normaloff>:/img/movedown.png</iconset>
              </property>
              <property name="autoRaise">
@@ -450,7 +450,7 @@
      </widget>
      <widget class="QWidget" name="tab_3">
       <attribute name="icon">
-       <iconset resource="resurses.qrc">
+       <iconset resource="ba_resurses.qrc">
         <normaloff>:/img/cryptopro.ico</normaloff>:/img/cryptopro.ico</iconset>
       </attribute>
       <attribute name="title">
@@ -510,7 +510,7 @@
          </property>
          <widget class="QWidget" name="tabCertificates">
           <attribute name="icon">
-           <iconset resource="resurses.qrc">
+           <iconset resource="ba_resurses.qrc">
             <normaloff>:/img/certmgr2.ico</normaloff>:/img/certmgr2.ico</iconset>
           </attribute>
           <attribute name="title">
@@ -524,7 +524,7 @@
          </widget>
          <widget class="QWidget" name="tabContainers">
           <attribute name="icon">
-           <iconset resource="resurses.qrc">
+           <iconset resource="ba_resurses.qrc">
             <normaloff>:/img/certmgr4.ico</normaloff>:/img/certmgr4.ico</iconset>
           </attribute>
           <attribute name="title">
@@ -559,7 +559,7 @@
             <string>...</string>
            </property>
            <property name="icon">
-            <iconset resource="resurses.qrc">
+            <iconset resource="ba_resurses.qrc">
              <normaloff>:/img/itemAdd.png</normaloff>:/img/itemAdd.png</iconset>
            </property>
            <property name="autoRaise">
@@ -573,7 +573,7 @@
             <string>...</string>
            </property>
            <property name="icon">
-            <iconset resource="resurses.qrc">
+            <iconset resource="ba_resurses.qrc">
              <normaloff>:/img/itemDelete.png</normaloff>:/img/itemDelete.png</iconset>
            </property>
            <property name="autoRaise">
@@ -609,7 +609,7 @@
             <string>...</string>
            </property>
            <property name="icon">
-            <iconset resource="resurses.qrc">
+            <iconset resource="ba_resurses.qrc">
              <normaloff>:/img/clear.ico</normaloff>:/img/clear.ico</iconset>
            </property>
            <property name="autoRaise">
@@ -645,7 +645,7 @@
             <string>...</string>
            </property>
            <property name="icon">
-            <iconset resource="resurses.qrc">
+            <iconset resource="ba_resurses.qrc">
              <normaloff>:/img/!.png</normaloff>:/img/!.png</iconset>
            </property>
            <property name="autoRaise">
@@ -675,7 +675,7 @@
             <string>...</string>
            </property>
            <property name="icon">
-            <iconset resource="resurses.qrc">
+            <iconset resource="ba_resurses.qrc">
              <normaloff>:/img/update.png</normaloff>:/img/update.png</iconset>
            </property>
            <property name="autoRaise">
@@ -689,7 +689,7 @@
      </widget>
      <widget class="QWidget" name="tab_4">
       <attribute name="icon">
-       <iconset resource="resurses.qrc">
+       <iconset resource="ba_resurses.qrc">
         <normaloff>:/img/mstsc.png</normaloff>:/img/mstsc.png</iconset>
       </attribute>
       <attribute name="title">
@@ -770,7 +770,7 @@
             <string>...</string>
            </property>
            <property name="icon">
-            <iconset resource="resurses.qrc">
+            <iconset resource="ba_resurses.qrc">
              <normaloff>:/img/add_24.png</normaloff>:/img/add_24.png</iconset>
            </property>
            <property name="autoRaise">
@@ -787,7 +787,7 @@
             <string>...</string>
            </property>
            <property name="icon">
-            <iconset resource="resurses.qrc">
+            <iconset resource="ba_resurses.qrc">
              <normaloff>:/img/copy_24.png</normaloff>:/img/copy_24.png</iconset>
            </property>
            <property name="autoRaise">
@@ -801,7 +801,7 @@
             <string>...</string>
            </property>
            <property name="icon">
-            <iconset resource="resurses.qrc">
+            <iconset resource="ba_resurses.qrc">
              <normaloff>:/img/itemEdit.png</normaloff>:/img/itemEdit.png</iconset>
            </property>
            <property name="autoRaise">
@@ -815,7 +815,7 @@
             <string>...</string>
            </property>
            <property name="icon">
-            <iconset resource="resurses.qrc">
+            <iconset resource="ba_resurses.qrc">
              <normaloff>:/img/itemDelete.png</normaloff>:/img/itemDelete.png</iconset>
            </property>
            <property name="autoRaise">
@@ -854,7 +854,7 @@
             <string>...</string>
            </property>
            <property name="icon">
-            <iconset resource="resurses.qrc">
+            <iconset resource="ba_resurses.qrc">
              <normaloff>:/img/moveup.png</normaloff>:/img/moveup.png</iconset>
            </property>
            <property name="autoRaise">
@@ -868,7 +868,7 @@
             <string>...</string>
            </property>
            <property name="icon">
-            <iconset resource="resurses.qrc">
+            <iconset resource="ba_resurses.qrc">
              <normaloff>:/img/movedown.png</normaloff>:/img/movedown.png</iconset>
            </property>
            <property name="autoRaise">
@@ -930,7 +930,7 @@
      </widget>
      <widget class="QWidget" name="tabTsks">
       <attribute name="icon">
-       <iconset resource="resurses.qrc">
+       <iconset resource="ba_resurses.qrc">
         <normaloff>:/img/task-process-2.svg</normaloff>:/img/task-process-2.svg</iconset>
       </attribute>
       <attribute name="title">
@@ -954,7 +954,7 @@
                   <string>...</string>
                  </property>
                  <property name="icon">
-                  <iconset resource="resurses.qrc">
+                  <iconset resource="ba_resurses.qrc">
                    <normaloff>:/img/itemAdd.png</normaloff>:/img/itemAdd.png</iconset>
                  </property>
                  <property name="autoRaise">
@@ -968,7 +968,7 @@
                   <string>...</string>
                  </property>
                  <property name="icon">
-                  <iconset resource="resurses.qrc">
+                  <iconset resource="ba_resurses.qrc">
                    <normaloff>:/img/itemEdit.png</normaloff>:/img/itemEdit.png</iconset>
                  </property>
                  <property name="autoRaise">
@@ -982,7 +982,7 @@
                   <string>...</string>
                  </property>
                  <property name="icon">
-                  <iconset resource="resurses.qrc">
+                  <iconset resource="ba_resurses.qrc">
                    <normaloff>:/img/delete.png</normaloff>:/img/delete.png</iconset>
                  </property>
                  <property name="autoRaise">
@@ -1015,7 +1015,7 @@
                   <string>...</string>
                  </property>
                  <property name="icon">
-                  <iconset resource="resurses.qrc">
+                  <iconset resource="ba_resurses.qrc">
                    <normaloff>:/img/startTask.png</normaloff>:/img/startTask.png</iconset>
                  </property>
                  <property name="autoRaise">
@@ -1048,7 +1048,7 @@
                   <string>...</string>
                  </property>
                  <property name="icon">
-                  <iconset resource="resurses.qrc">
+                  <iconset resource="ba_resurses.qrc">
                    <normaloff>:/img/services.svg</normaloff>:/img/services.svg</iconset>
                  </property>
                  <property name="autoRaise">
@@ -1084,7 +1084,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="resurses.qrc"/>
+  <include location="ba_resurses.qrc"/>
  </resources>
  <connections>
   <connection>

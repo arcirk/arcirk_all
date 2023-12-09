@@ -50,6 +50,7 @@ DialogSeverSettings::DialogSeverSettings(arcirk::server::server_config& conf, ar
     ui->edtPriceCheckerRepo->setText(conf_cl.price_checker_repo.c_str());
     ui->edtServerRepo->setText(conf_cl.server_repo.c_str());
     ui->chWriteLog->setCheckState(conf.WriteJournal == 0 ? Qt::CheckState::Unchecked : Qt::CheckState::Checked);
+    ui->txtFirefoxPath->setText(conf_cl.firefox.c_str());
 
     ui->chAllowIdentificationByWINSID->setChecked(conf.AllowIdentificationByWINSID);
     ui->chkAllowHistoryMessages->setChecked(conf.AllowHistoryMessages);
@@ -61,6 +62,15 @@ DialogSeverSettings::DialogSeverSettings(arcirk::server::server_config& conf, ar
         if(btn->text() == "Cancel")
             btn->setText("Отмена");
     }
+
+    connect(ui->btnEditHSPassword, &QToolButton::clicked, this, &DialogSeverSettings::onBtnEditHSPasswordToggled);
+    connect(ui->btnViewHSPassword, &QToolButton::clicked, this, &DialogSeverSettings::onBtnViewHSPasswordToggled);
+    connect(ui->btnEditWebDavPwd, &QToolButton::clicked, this, &DialogSeverSettings::onBtnEditWebDavPwdToggled);
+    connect(ui->btnViewWebDavPwd, &QToolButton::clicked, this, &DialogSeverSettings::onBtnViewWebDavPwdToggled);
+    connect(ui->btnEditSQLPassword, &QToolButton::clicked, this, &DialogSeverSettings::onBtnEditSQLPasswordToggled);
+    connect(ui->btnViewSQLPassword, &QToolButton::clicked, this, &DialogSeverSettings::onBtnViewSQLPasswordToggled);
+    connect(ui->btnSelPriceCheckerRepo, &QToolButton::clicked, this, &DialogSeverSettings::onBtnSelPriceCheckerRepoClicked);
+    connect(ui->btnSelectFireFoxPatch, &QToolButton::clicked, this, &DialogSeverSettings::onBtnSelFirefoxPath);
 }
 
 DialogSeverSettings::~DialogSeverSettings()
@@ -98,7 +108,7 @@ void DialogSeverSettings::accept()
 
     conf_cl_.server_repo = ui->edtServerRepo->text().toStdString();
     conf_cl_.price_checker_repo = ui->edtPriceCheckerRepo->text().toStdString();
-
+    conf_cl_.firefox = ui->txtFirefoxPath->text().toStdString();
 
     QDialog::accept();
 }
@@ -130,53 +140,61 @@ void DialogSeverSettings::onViewPwdToggled(bool checked, QToolButton* sender, QL
     pwd->setEchoMode(echoMode);
 }
 
-void DialogSeverSettings::on_btnEditHSPassword_toggled(bool checked)
+void DialogSeverSettings::onBtnEditHSPasswordToggled(bool checked)
 {
     auto btn = dynamic_cast<QToolButton*>(sender());
     onPwdEditToggled(checked, btn);
 }
 
 
-void DialogSeverSettings::on_btnViewHSPassword_toggled(bool checked)
+void DialogSeverSettings::onBtnViewHSPasswordToggled(bool checked)
 {
     auto btn = dynamic_cast<QToolButton*>(sender());
     onViewPwdToggled(checked, btn, ui->edtHSPassword);
 }
 
 
-void DialogSeverSettings::on_btnEditWebDavPwd_toggled(bool checked)
+void DialogSeverSettings::onBtnEditWebDavPwdToggled(bool checked)
 {
     auto btn = dynamic_cast<QToolButton*>(sender());
     onPwdEditToggled(checked, btn);
 }
 
 
-void DialogSeverSettings::on_btnViewWebDavPwd_toggled(bool checked)
+void DialogSeverSettings::onBtnViewWebDavPwdToggled(bool checked)
 {
     auto btn = dynamic_cast<QToolButton*>(sender());
     onViewPwdToggled(checked, btn, ui->edtWebDavPwd);
 }
 
 
-void DialogSeverSettings::on_btnEditSQLPassword_toggled(bool checked)
+void DialogSeverSettings::onBtnEditSQLPasswordToggled(bool checked)
 {
     auto btn = dynamic_cast<QToolButton*>(sender());
     onPwdEditToggled(checked, btn);
 }
 
 
-void DialogSeverSettings::on_btnViewSQLPassword_toggled(bool checked)
+void DialogSeverSettings::onBtnViewSQLPasswordToggled(bool checked)
 {
     auto btn = dynamic_cast<QToolButton*>(sender());
     onViewPwdToggled(checked, btn, ui->edtSQLPassword);
 }
 
 
-void DialogSeverSettings::on_btnSelPriceCheckerRepo_clicked()
+void DialogSeverSettings::onBtnSelPriceCheckerRepoClicked()
 {
     auto result = QFileDialog::getExistingDirectory(this, "Выбор каталога", ui->edtPriceCheckerRepo->text());
     if(!result.isEmpty()){
         ui->edtPriceCheckerRepo->setText(result);
+    }
+}
+
+void DialogSeverSettings::onBtnSelFirefoxPath()
+{
+    auto result = QFileDialog::getOpenFileName(this, "Выбор файла", ui->txtFirefoxPath->text(), "Файл приложения (*.exe)");
+    if(!result.isEmpty()){
+        ui->txtFirefoxPath->setText(result);
     }
 }
 

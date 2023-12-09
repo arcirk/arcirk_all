@@ -1151,6 +1151,9 @@ void DialogMain::serverResponse(const arcirk::server::server_response &message)
         }else if(message.result == WS_RESULT_ERROR){
 
         }
+    }else if(message.command == arcirk::enum_synonym(arcirk::server::server_commands::SendNotify)){
+        if(message.message != WS_RESULT_SUCCESS && !message.message.empty())
+            qDebug() << message.message.c_str();
     }
 }
 
@@ -2007,16 +2010,9 @@ void DialogMain::onBtnCertInfoClicked()
     auto currentTab = ui->tabCrypt->currentIndex();
 
     if(currentTab == 0){
-//        auto sort_model = (TreeSortModel*)treeCertificates->get_model();
-//        Q_ASSERT(sort_model != 0);
-//        auto model = (TreeItemModel*)sort_model->sourceModel();
-//        Q_ASSERT(model != 0);
-//        //auto model = (TreeItemModel*)treeCertificates->model();
-//        if(!model)
-//            return;
-//        auto proxy_index = treeCertificates->currentIndex();
+
         auto model = treeCertificates->get_model();
-        auto index = treeCertificates->current_index();//  model->find(proxy_index.column(), proxy_index.data().toString(), QModelIndex());
+        auto index = treeCertificates->current_index();
         if(!index.isValid()){
             QMessageBox::critical(this, "Ошибка", "Не выбран элемент!");
             return;
@@ -2035,16 +2031,11 @@ void DialogMain::onBtnCertInfoClicked()
             dlg.exec();
         }
     }else if(currentTab == 1){
-//        //auto model = (TreeItemModel*)ui->treeContainers->model();
-//        auto sort_model = (TreeSortModel*)ui->treeContainers->model();
-//        Q_ASSERT(sort_model != 0);
-//        auto model = (TreeItemModel*)sort_model->sourceModel();
         auto model = treeContainers->get_model();
         Q_ASSERT(model != 0);
         if(!model)
             return;
-//        auto proxy_index = ui->treeContainers->currentIndex();
-//        auto index = model->find(proxy_index.column(), proxy_index.data().toString(), QModelIndex());
+
         auto index = treeContainers->current_index();
 
         if(!index.isValid()){
@@ -2060,17 +2051,12 @@ void DialogMain::onBtnCertInfoClicked()
         dlg.exec();
 
     }else if(currentTab == 2){
-//        //auto model = (TreeItemModel*)ui->treeAvailableCerts->model();
-//        auto sort_model = (TreeSortModel*)ui->treeAvailableCerts->model();
-//        Q_ASSERT(sort_model != 0);
-//        auto model = (TreeItemModel*)sort_model->sourceModel();
+
         auto model = treeAvailableCerts->get_model();
         Q_ASSERT(model != 0);
         if(!model)
             return;
-//        //auto index = ui->treeAvailableCerts->currentIndex();
-//        auto proxy_index = ui->treeAvailableCerts->currentIndex();
-//        auto index = model->find(proxy_index.column(), proxy_index.data().toString(), QModelIndex());
+
         auto index = treeAvailableCerts->current_index();
         if(!index.isValid()){
             QMessageBox::critical(this, "Ошибка", "Не выбран элемент!");
@@ -2247,11 +2233,14 @@ void DialogMain::install_certificate(const std::string& sha1, const std::string&
     }
 
     result = cert.install(QString("\\\\.\\REGISTRY\\") + cnt.originalName(), this);
+
+    m_show_alerts = true;
     if(!result){
         displayError("Ошибка", "Ошибка установки сертификата!");
         return;
     }else
         trayShowMessage("Сертификат успешно установлен!");
+    m_show_alerts = false;
 }
 
 void DialogMain::verify_certificate(TreeItemModel *model)
@@ -2284,7 +2273,6 @@ void DialogMain::onBtnCertAddClicked()
 
     if(current_user->role() != arcirk::database::roles::dbAdministrator){
         auto dlg = DialogSelectAuth(this);
-        //dlg.setModal(true);
         dlg.setWindowTitle("Учетные данные администратора");
         if(dlg.exec() == QDialog::Accepted){
             auto query_param = dlg.get_result();
@@ -2302,9 +2290,7 @@ void DialogMain::onBtnCertAddClicked()
     if(tab == 0){
 
         using namespace arcirk::server;
-//        auto sort_model = (TreeSortModel*)ui->treeAvailableCerts->model();
-//        Q_ASSERT(sort_model != 0);
-//        auto model = (TreeItemModel*)sort_model->sourceModel();
+
         auto model = treeAvailableCerts->get_model();
         Q_ASSERT(model != 0);
         auto dlg = DialogSelectInTree(model, this);
@@ -2820,17 +2806,24 @@ void DialogMain::onInstallCertificate()
 {
     qDebug() << __FUNCTION__; // << cert.dump().c_str();
     using namespace arcirk::server;
-//    //auto model = (TreeItemModel*)ui->treeAvailableCerts->model();
-//    auto sort_model = (TreeSortModel*)ui->treeAvailableCerts->model();
-//    Q_ASSERT(sort_model != 0);
-//    auto model = (TreeItemModel*)sort_model->sourceModel();
-    auto model = treeAvailableCerts->get_model();
-    Q_ASSERT(model != 0);
-    auto dlg = DialogSelectInTree(model, this);
+
+    auto parent_model = treeAvailableCerts->get_model();
+    auto model = new TreeItemModel(this);
+    model->set_column_aliases(parent_model->columns_aliases());
+    model->set_columns_order(parent_model->columns_order());
+    model->set_hierarchical_list(false);
+    model->set_rows_icon(tree::item_icons_enum::Item, QIcon(":/img/cert16NoKey.png"));
+    QList<QString> m_hide;
+    for (int i = 0; i < parent_model->columnCount(); ++i) {
+       if(parent_model->column_name(i) == "first")
+            continue;
+       m_hide.append(parent_model->column_name(i));
+    }
+    model->set_table(parent_model->to_table_model(QModelIndex()));
+    auto dlg = DialogSelectInTree(model, m_hide, this);
     dlg.set_window_text("Выбор сетритификата");
     dlg.setModal(true);
-    dlg.exec();
-    if(dlg.result() == QDialog::Accepted){
+    if(dlg.exec()){
         auto obj = dlg.selectedObject();
         auto sha = obj.value("sha1", "");
         auto cnt = obj.value("private_key", "");

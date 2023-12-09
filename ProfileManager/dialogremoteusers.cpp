@@ -2,6 +2,8 @@
 #include "ui_dialogremoteusers.h"
 #include <QMessageBox>
 #include <QEventLoop>
+#include <QPushButton>
+#include <QDialogButtonBox>
 
 DialogRemoteUsers::DialogRemoteUsers(const nlohmann::json& jsonModel, QWidget *parent) :
     QDialog(parent),
@@ -9,18 +11,37 @@ DialogRemoteUsers::DialogRemoteUsers(const nlohmann::json& jsonModel, QWidget *p
 {
     ui->setupUi(this);
 
+    treeView = new TreeViewWidget(this);
+    ui->verticalLayout->addWidget(treeView);
+
     createColumnAliases();;
 
-    model = new TreeItemModel(this);
-    model->set_table(jsonModel);
+    auto model = new TreeItemModel(this);
+    model->set_hierarchical_list(false);
     model->set_column_aliases(m_colAliases);
-    ui->treeView->setModel(model);
-    ui->treeView->resizeColumnToContents(0);
+    model->set_columns_order(QList<QString>{
+            "ID",
+            "user",
+            "seanse",
+            "state",
+            "act",
+            "date",
+            "time"
+    });
+    model->set_table(jsonModel);
+    treeView->setModel(model);
+    treeView->hideColumn(model->column_index("ref"));
+    treeView->hideColumn(model->column_index("parent"));
+    //ui->treeView->resizeColumnToContents(0);
 
     m_result = -1;
     m_management = false;
 
     updateIcons();
+
+    auto btn = ui->buttonBox->button(QDialogButtonBox::Cancel);
+    if(btn)
+        btn->setText("Отмена");
 }
 
 DialogRemoteUsers::~DialogRemoteUsers()
@@ -30,14 +51,14 @@ DialogRemoteUsers::~DialogRemoteUsers()
 
 void DialogRemoteUsers::accept()
 {
-    auto table = ui->treeView;
-    auto index = table->currentIndex();
+    //auto table = ui->treeView;
+    auto index = treeView->current_index();
     if(!index.isValid()){
         QMessageBox::critical(this, "Ошибка", "Не выбрана строка!");
         return;
     }
 
-    auto object = model->to_object(index);
+    auto object = treeView->get_model()->to_object(index);
     if(QString(object["state"].get<std::string>().c_str()).trimmed() != "Активно"){
         QMessageBox::critical(this, "Ошибка", "К выбранному сеансу подключиться не возможно!");
         return;
@@ -86,6 +107,7 @@ void DialogRemoteUsers::createColumnAliases()
 void DialogRemoteUsers::updateIcons()
 {
 
+    auto model = treeView->get_model();
     for(int row = 0; row < model->rowCount(QModelIndex()); row++){
         auto index = model->index(row, 0, QModelIndex());
         auto object = model->to_object(index);

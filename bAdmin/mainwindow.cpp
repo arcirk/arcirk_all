@@ -73,6 +73,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    mozillaApp = new QProcess(this);
+
     treeView = new TreeViewWidget(this);
     ui->verticalLayoutTree->addWidget(treeView);
 
@@ -379,6 +381,8 @@ void MainWindow::serverResponse(const arcirk::server::server_response &message)
         resetModel(arcirk::server::Root, get_server_conf_table(message.result));
     }else if(command == server_commands::GetDatabaseTables){
         resetModel(arcirk::server::DatabaseTables, get_table(message.result));
+    }else if(command == server_commands::UpdateServerConfiguration){
+        //
     }else if(command == server_commands::ExecuteSqlQuery){
         if(message.result == WS_RESULT_ERROR){
             qCritical() << __FUNCTION__ << "error result ExecuteSqlQuery" << message.message.c_str();
@@ -3173,12 +3177,78 @@ void MainWindow::onTrayTriggered()
     auto *action = dynamic_cast<QAction*>( sender() );
     QString type_action = action->property("type").toString();
 
-    if(type_action == "mstsc"){
-        auto dt = action->property("data").toString().toStdString();
+    auto dt = action->property("data").toString().toStdString();
+
+    if(type_action == "mstsc"){        
         auto item = pre::json::from_json<arcirk::client::mstsc_options>(json::parse(dt));
         run_mstsc_link(item);
     }else if(type_action == "link"){
+        auto item = arcirk::secure_serialization<arcirk::client::mpl_item>(json::parse(dt), __FUNCTION__);
+        auto defPage = item.url;
+        auto profName = item.profile;
+        //открываем адрес указанный на флешке банка
+        if(defPage == BANK_CLIENT_USB_KEY){
+            foreach (const QStorageInfo &storage, QStorageInfo::mountedVolumes()) {
+                if (storage.isValid()) {
+                    qDebug() << storage.rootPath() + QDir::separator() + BANK_CLIENT_FILE;
+                    QFile file = QFile(storage.rootPath() + QDir::separator() + BANK_CLIENT_FILE);
+                    if(file.exists()){
+                        QSettings lnk(file.fileName(), QSettings::IniFormat);
+                        QStringList keys = lnk.allKeys();
+                        foreach(const QString& key, keys){
+                        if(key.compare("InternetShortcut")){
+                                if(key.endsWith("/URL")){
+                                    defPage = lnk.value(key).toString().toStdString();
+                                    break;
+                                }
 
+                        }
+                        }
+                    }
+                }
+            }
+        }
+
+        QStringList args;
+
+        //args.append("-new-instance");
+        if(!profName.empty()){
+            args.append("-P");
+            args.append(profName.c_str());
+            if(!defPage.empty()){
+                QFile file = QFile(defPage.c_str());
+                if(file.exists())
+                    defPage = "file:///" + defPage;
+                args.append("-URL");
+                args.append(defPage.c_str());
+            }
+        }
+
+//        QDir dir(mpl_.firefox_path.c_str());
+        QString exeFile = "firefox";
+#ifdef Q_OS_WINDOWS
+        exeFile.append(".exe");
+#endif
+//        QFile exe(dir.path() + "/" + exeFile);
+        QFile exe(m_client->conf().firefox.c_str());
+        if(!exe.exists()){
+            QString file = QFileDialog::getOpenFileName(this, tr("Путь к firefox"),
+                                                        QDir::homePath(),
+                                                        exeFile);
+            if(file != ""){
+                QFileInfo fi(file);
+                exe.setFileName(file);
+                m_client->conf().firefox = QDir::toNativeSeparators(fi.absolutePath()).toStdString();
+            }
+        }
+
+        if(exe.exists()){
+            qDebug() << mozillaApp->state();
+            mozillaApp->terminate();
+            mozillaApp->kill();
+            mozillaApp->waitForFinished();
+            mozillaApp->start(exe.fileName(), args);
+        }
     }
 
 }

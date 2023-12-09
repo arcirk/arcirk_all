@@ -81,7 +81,7 @@
          <string>...</string>
         </property>
         <property name="icon">
-         <iconset resource="../bAdmin/resurses.qrc">
+         <iconset resource="../bAdmin/ba_resurses.qrc">
           <normaloff>:/img/save.png</normaloff>:/img/save.png</iconset>
         </property>
        </widget>
@@ -92,7 +92,7 @@
          <string>Открыть конструктор запроса</string>
         </property>
         <property name="icon">
-         <iconset resource="../bAdmin/resurses.qrc">
+         <iconset resource="../bAdmin/ba_resurses.qrc">
           <normaloff>:/img/query_builder.png</normaloff>:/img/query_builder.png</iconset>
         </property>
        </widget>
@@ -213,7 +213,7 @@
   </widget>
   <action name="mnuOpen">
    <property name="icon">
-    <iconset resource="../bAdmin/resurses.qrc">
+    <iconset resource="../bAdmin/ba_resurses.qrc">
      <normaloff>:/img/addGroup_24.png</normaloff>:/img/addGroup_24.png</iconset>
    </property>
    <property name="text">
@@ -237,7 +237,7 @@
   </action>
  </widget>
  <resources>
-  <include location="../bAdmin/resurses.qrc"/>
+  <include location="../bAdmin/ba_resurses.qrc"/>
  </resources>
  <connections/>
 </ui>

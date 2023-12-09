@@ -1,6 +1,8 @@
 #include "dialogselectintree.h"
 #include "ui_dialogselectintree.h"
 #include <QMessageBox>
+#include <QDialogButtonBox>
+#include <QPushButton>
 
 DialogSelectInTree::DialogSelectInTree(TreeItemModel* model, QWidget *parent) :
     QDialog(parent),
@@ -8,25 +10,24 @@ DialogSelectInTree::DialogSelectInTree(TreeItemModel* model, QWidget *parent) :
 {
     ui->setupUi(this);
 
-    ui->treeView->setModel(model);
+    treeView = new TreeViewWidget(this);
+    ui->verticalLayout->addWidget(treeView);
+
+    treeView->setModel(model);
 
     for (int i = 0; i < model->columnCount(QModelIndex()); ++i) {
         auto key = model->column_name(i);
         if(key != "name" && key != "size" && key != "first"){
-            ui->treeView->hideColumn(i);
+            treeView->hideColumn(i);
         }
     }
 
     allow_sel_group_ = false;
 
-    //model->reset();
-    ui->treeView->resizeColumnToContents(0);
+    auto btn = ui->buttonBox->button(QDialogButtonBox::Cancel);
+    if(btn)
+        btn->setText("Отмена");
 
-    auto buttons = ui->buttonBox->buttons();
-    foreach (auto btn, buttons) {
-        if(btn->text() == "Cancel")
-            btn->setText("Отмена");
-    }
 }
 
 DialogSelectInTree::DialogSelectInTree(TreeItemModel *model, QVector<QString> hideColumns, QWidget *parent) :
@@ -35,18 +36,21 @@ DialogSelectInTree::DialogSelectInTree(TreeItemModel *model, QVector<QString> hi
 {
     ui->setupUi(this);
 
-    ui->treeView->setModel(model);
+    treeView = new TreeViewWidget(this);
+    ui->verticalLayout->addWidget(treeView);
+    treeView->setModel(model);
 
     foreach (auto v, hideColumns) {
         auto i = model->column_index(v);
         if(i != -1)
-            ui->treeView->hideColumn(i);
+            treeView->hideColumn(i);
     }
 
     allow_sel_group_ = false;
 
-    //model->reset();
-    ui->treeView->resizeColumnToContents(0);
+    auto btn = ui->buttonBox->button(QDialogButtonBox::Cancel);
+    if(btn)
+        btn->setText("Отмена");
 }
 
 DialogSelectInTree::~DialogSelectInTree()
@@ -61,16 +65,16 @@ QString DialogSelectInTree::file_name() const
 
 void DialogSelectInTree::accept()
 {
-    auto index = ui->treeView->currentIndex();
+    auto index = treeView->current_index();
     if(!index.isValid()){
         QMessageBox::critical(this, "Ошибка", "Элемент не выбран!");
         return;
     }
 
-    auto model = (TreeItemModel*)ui->treeView->model();
+    auto model = (TreeItemModel*)treeView->get_model();
     auto in = model->column_index("path");
     if(in != -1)
-        file_name_ = ui->treeView->model()->index(index.row(), in).data().toString();
+        file_name_ = model->index(index.row(), in).data().toString();
 
     sel_object = model->to_object(index);
 

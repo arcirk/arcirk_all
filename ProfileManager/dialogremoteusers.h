@@ -2,14 +2,10 @@
 #define DIALOGREMOTEUSERS_H
 
 #include <QDialog>
-//#include "shared_struct.hpp"
-//#include "treeviewmodel.h"
-//#include <qproxymodel.h>
-//#include "tree_model/treeitemmodel.h"
-
-#include "tree_model.h"
+#include "gui/treeviewwidget.h"
 
 using namespace arcirk::tree_model;
+using namespace arcirk::tree_widget;
 
 namespace Ui {
 class DialogRemoteUsers;
@@ -33,8 +29,8 @@ private slots:
 
 private:
     Ui::DialogRemoteUsers *ui;
-
-    TreeItemModel* model;
+    TreeViewWidget* treeView;
+    //TreeItemModel* model;
     int  m_result;
     bool m_management;
     QMap<QString, QString> m_colAliases;

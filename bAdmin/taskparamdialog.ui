@@ -24,7 +24,7 @@
           <string>...</string>
          </property>
          <property name="icon">
-          <iconset resource="resurses.qrc">
+          <iconset resource="ba_resurses.qrc">
            <normaloff>:/img/itemAdd.png</normaloff>:/img/itemAdd.png</iconset>
          </property>
          <property name="autoRaise">
@@ -38,7 +38,7 @@
           <string>...</string>
          </property>
          <property name="icon">
-          <iconset resource="resurses.qrc">
+          <iconset resource="ba_resurses.qrc">
            <normaloff>:/img/delete.png</normaloff>:/img/delete.png</iconset>
          </property>
          <property name="autoRaise">
@@ -76,7 +76,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="resurses.qrc"/>
+  <include location="ba_resurses.qrc"/>
  </resources>
  <connections>
   <connection>

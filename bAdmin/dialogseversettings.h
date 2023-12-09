@@ -25,19 +25,14 @@ public:
     arcirk::server::server_config getResult();
 
 private slots:
-    void on_btnEditHSPassword_toggled(bool checked);
-
-    void on_btnViewHSPassword_toggled(bool checked);
-
-    void on_btnEditWebDavPwd_toggled(bool checked);
-
-    void on_btnViewWebDavPwd_toggled(bool checked);
-
-    void on_btnEditSQLPassword_toggled(bool checked);
-
-    void on_btnViewSQLPassword_toggled(bool checked);
-
-    void on_btnSelPriceCheckerRepo_clicked();
+    void onBtnEditHSPasswordToggled(bool checked);
+    void onBtnViewHSPasswordToggled(bool checked);
+    void onBtnEditWebDavPwdToggled(bool checked);
+    void onBtnViewWebDavPwdToggled(bool checked);
+    void onBtnEditSQLPasswordToggled(bool checked);
+    void onBtnViewSQLPasswordToggled(bool checked);
+    void onBtnSelPriceCheckerRepoClicked();
+    void onBtnSelFirefoxPath();
 
 private:
     Ui::DialogSeverSettings *ui;

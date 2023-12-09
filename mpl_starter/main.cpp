@@ -14,9 +14,15 @@ void copy_all(const QString& repo_dir, const QString& dest){
         return;
 
     foreach (QString d, dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
-        QString dst_path = dest + QDir::separator() + d;
-        dir.mkpath(dst_path);
-        copy_all(repo_dir+ QDir::separator() + d, dst_path);
+        QDir dst_path = dest + QDir::separator() + d;
+
+        bool is_exists = true;
+        if(!dst_path.exists())
+            is_exists = dir.mkpath(dst_path.path());
+        if(is_exists)
+            copy_all(repo_dir + QDir::separator() + d, dst_path.path());
+        else
+            return;
     }
 
     // Счетчик
@@ -25,6 +31,14 @@ void copy_all(const QString& repo_dir, const QString& dest){
     foreach (QString f, list) {
         QString s = repo_dir + QDir::separator() + f;
         QString d = dest + QDir::separator() + f;
+        auto repo_file = QFileInfo(s);
+        auto mpl_file = QFileInfo(d);
+        if(mpl_file.exists() && repo_file.exists()){
+            if(repo_file.lastModified() > mpl_file.lastModified()){
+                QFile::remove(d);
+            }else
+                continue;
+        }
         QFile::copy(s, d);
     }
 }
@@ -39,7 +53,7 @@ bool verify_repo(const QString& repo_dir, QString& mpl){
     QString mpl_dir = app_home.replace("mpl_starter", PROFILE_MANAGER_NAME);
     mpl_dir = mpl_dir + QDir::separator() + "bin";
 
-    QDir dest(mpl_dir);
+    //QDir dest(mpl_dir);
 
     QString file_name = PROFILE_MANAGER_NAME;
 
@@ -47,42 +61,42 @@ bool verify_repo(const QString& repo_dir, QString& mpl){
     file_name.append(".exe");
 #endif
 
-    bool c_all = true;
-    if(!dest.exists()){
-        auto b = dest.mkpath(mpl_dir);
-        if(!b)
-            return false;
-    }else{
-        c_all = false;
-        auto repo_file = QFileInfo(repo_dir + QDir::separator() + file_name);
-        auto mpl_file = QFileInfo(mpl_dir + QDir::separator() + file_name);
-        mpl = mpl_file.absoluteFilePath();
-        if(mpl_file.exists() && repo_file.exists()){
-            if(repo_file.lastModified() > mpl_file.lastModified()){
-                QFile f(mpl_file.absoluteFilePath());
-                auto result = f.remove();
-                if(!result)
-                    return false;
-                QFile d(repo_file.absoluteFilePath());
-                result = d.copy(mpl_file.absoluteFilePath());
-                if(result)
-                    mpl = mpl_file.absoluteFilePath();
-                return result;
-            }else
-                return true;
-        }else{
-            return mpl_file.exists();
-        }
-    }
+//    bool c_all = true;
+//    if(!dest.exists()){
+//        auto b = dest.mkpath(mpl_dir);
+//        if(!b)
+//            return false;
+//    }else{
+//        c_all = false;
+//        auto repo_file = QFileInfo(repo_dir + QDir::separator() + file_name);
+//        auto mpl_file = QFileInfo(mpl_dir + QDir::separator() + file_name);
+//        mpl = mpl_file.absoluteFilePath();
+//        if(mpl_file.exists() && repo_file.exists()){
+//            if(repo_file.lastModified() > mpl_file.lastModified()){
+//                QFile f(mpl_file.absoluteFilePath());
+//                auto result = f.remove();
+//                if(!result)
+//                    return false;
+//                QFile d(repo_file.absoluteFilePath());
+//                result = d.copy(mpl_file.absoluteFilePath());
+//                if(result)
+//                    mpl = mpl_file.absoluteFilePath();
+//                return result;
+//            }else
+//                return true;
+//        }else{
+//            return mpl_file.exists();
+//        }
+//    }
 
-    if(c_all){
+//    if(c_all){
         copy_all(repo_dir, mpl_dir);
         QFile d(mpl_dir + QDir::separator() + file_name);
         mpl = mpl_dir + QDir::separator() + file_name;
         return d.exists();
-    }
+//    }
 
-    return false;
+//    return false;
 }
 
 int main(int argc, char *argv[])
@@ -103,7 +117,7 @@ int main(int argc, char *argv[])
         QProcess process;
         process.setArguments({"-h"});
         process.setProgram(mpl_file);
-        process.setWorkingDirectory(f.absolutePath());
+        process.setWorkingDirectory(f.absolutePath()); //f.absolutePath());
         process.startDetached();
     }
 

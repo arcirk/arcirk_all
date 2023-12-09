@@ -28,6 +28,7 @@ BOOST_FUSION_DEFINE_STRUCT(
     (std::string, price_checker_repo)
     (std::string, server_repo)
     (std::string, system_user)
+    (std::string, firefox)
     (bool, use_sid)
     );
 

@@ -5,10 +5,12 @@
 //#include "treeviewmodel.h"
 //#include "shared_struct_qt.hpp"
 //#include "tree_model/treeitemmodel.h"
-#include "shared_struct.hpp"
-#include "tree_model.h"
+//#include "shared_struct.hpp"
+//#include "tree_model.h"
+#include "gui/treeviewwidget.h"
 
 using namespace arcirk::tree_model;
+using namespace arcirk::tree_widget;
 
 namespace Ui {
 class DialogSelectInTree;
@@ -46,6 +48,8 @@ private:
     QString file_name_;
     nlohmann::json sel_object;
     bool allow_sel_group_;
+    TreeViewWidget* treeView;
+
 };
 
 #endif // DIALOGSELECTINTREE_H

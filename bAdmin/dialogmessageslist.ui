@@ -17,7 +17,7 @@
    <string>Чат</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="resurses.qrc">
+   <iconset resource="ba_resurses.qrc">
     <normaloff>:/img/messaneger.svg</normaloff>:/img/messaneger.svg</iconset>
   </property>
   <property name="styleSheet">
@@ -42,7 +42,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="resurses.qrc"/>
+  <include location="ba_resurses.qrc"/>
  </resources>
  <connections/>
 </ui>

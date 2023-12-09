@@ -34,10 +34,6 @@ DialogMstsc::DialogMstsc(mstsc_options& mst, QWidget *parent) :
 
     if(!_mstsc.password.empty()){
         QString hashKey = QString::fromStdString(WebSocketClient::crypt(_pwd, QString(CRYPT_KEY).toUtf8()));
-        //auto crypter = arcirk::cryptography::crypt_utils();
-        //auto pwd = QByteArray::fromBase64(_pwd.toUtf8()).toStdString();
-        //QString hashKey = crypter.decrypt_string(_mstsc.password).c_str();
-        //QString hashKey = QString::fromStdString(arcirk::to_utf(crypter.decrypt_string(arcirk::from_utf(_mstsc.password))));
         ui->txtPassword->setText(hashKey);
     }
     ui->txtUserName->setText(_mstsc.user_name.c_str());
@@ -92,8 +88,6 @@ void DialogMstsc::accept()
     QString _pwd = ui->txtPassword->text();
     if(!_pwd.isEmpty()){
         auto hashKey = WebSocketClient::crypt(_pwd, CRYPT_KEY);
-//        auto crypter = arcirk::cryptography::crypt_utils();
-//        auto hashKey = crypter.encrypt_string(_pwd.toStdString());
         _mstsc.password = hashKey;
     }
     _mstsc.user_name = ui->txtUserName->text().trimmed().toStdString();
@@ -170,11 +164,17 @@ void DialogMstsc::onSelectHost(const json &hosts)
         qMakePair("address","Хост")
     };
     model->set_column_aliases(m_aliases);
+    model->set_columns_order(QList<QString>{"first", "address"});
+    model->set_hierarchical_list(false);
 
     QVector<QString> m_hide{
         "ref",
-        "deviceType"
+        "deviceType",
+        "parent"
     };
+
+    model->set_table(hosts);
+
     for (int i = 0; i < model->rowCount(QModelIndex()); ++i) {
         auto index = model->index(i, 0, QModelIndex());
         auto obj = model->to_object(index);
@@ -186,9 +186,8 @@ void DialogMstsc::onSelectHost(const json &hosts)
         }
     }
 
-    model->set_table(hosts);
-
     auto dlg = DialogSelectInTree(model, m_hide, this);
+    dlg.set_window_text("Выбор хоста");
     dlg.setModal(true);
     dlg.exec();
 

@@ -53,3 +53,13 @@
 /build-bAdmin-Desktop_Qt_6_5_2_MSVC2019_64bit-Debug/
 /.idea/
 /build-ProfileManager-Desktop_Qt_6_5_2_MSVC2019_64bit-Debug/
+/build-bAdmin-Desktop_Qt_6_5_2_MSVC2019_64bit-Release/
+/build-ProfileManager-Desktop_Qt_6_5_2_MSVC2019_64bit-Release/
+/plugins/build-PluginTest-Desktop_Qt_6_5_2_MSVC2019_64bit-Debug/
+/plugins/iplugin/build-aiplugin-Desktop_Qt_6_5_2_MSVC2019_64bit-Debug/
+/plugins/iplugin/build-bankstatementsplugun-Desktop_Qt_6_5_2_MSVC2019_64bit-Debug/
+/plugins/iplugin/build-bankstatementsplugun-Desktop_Qt_6_5_2_MSVC2019_64bit-Release/
+/plugins/iplugin/build-iplugin-Desktop_Qt_6_5_2_MSVC2019_64bit-Debug/
+/plugins/virtual/build-facelib-Desktop_Qt_6_5_2_MSVC2019_64bit-Debug/
+/bAdmin/bAdmin.pro.user.31590f1
+/ProfileManager/ProfileManager.pro.user.31590f1

@@ -35,7 +35,7 @@
         <string>...</string>
        </property>
        <property name="icon">
-        <iconset resource="resurses.qrc">
+        <iconset resource="ba_resurses.qrc">
          <normaloff>:/img/viewPwd1.svg</normaloff>:/img/viewPwd1.svg</iconset>
        </property>
        <property name="checkable">
@@ -212,7 +212,7 @@
         <string>...</string>
        </property>
        <property name="icon">
-        <iconset resource="resurses.qrc">
+        <iconset resource="ba_resurses.qrc">
          <normaloff>:/img/desktop.svg</normaloff>:/img/desktop.svg</iconset>
        </property>
       </widget>
@@ -226,7 +226,7 @@
         <string>...</string>
        </property>
        <property name="icon">
-        <iconset resource="resurses.qrc">
+        <iconset resource="ba_resurses.qrc">
          <normaloff>:/img/activeUesers.png</normaloff>:/img/activeUesers.png</iconset>
        </property>
       </widget>
@@ -243,7 +243,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="resurses.qrc"/>
+  <include location="ba_resurses.qrc"/>
  </resources>
  <connections>
   <connection>
