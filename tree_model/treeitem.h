@@ -57,6 +57,9 @@ namespace arcirk::tree_model {
         void set_icon(const QIcon& ico){m_icon = ico;};
         QIcon icon() const {return m_icon;};
 
+        void set_inner_role(const tree_editor_inner_role& role){m_inner_role = role;}
+        tree_editor_inner_role inner_role() const {return m_inner_role;}
+
     private:
         QUuid m_ref;
         bool m_is_group;
@@ -71,6 +74,7 @@ namespace arcirk::tree_model {
         QMap<int, QList<QVariant>> m_userData;
         tree::item_editor_widget_roles m_widget;
         QIcon m_icon;
+        tree_editor_inner_role m_inner_role;
 
         void init_ids();
     };

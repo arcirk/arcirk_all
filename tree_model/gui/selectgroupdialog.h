@@ -21,7 +21,7 @@ namespace arcirk::tree_widget {
 
         void accept() override;
 
-        json result();
+        json result() const;
 
     private:
         Ui::SelectGroupDialog *ui;

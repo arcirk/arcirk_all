@@ -28,8 +28,8 @@ namespace arcirk::tree::widgets {
         virtual void setChecked(bool value) = 0;
         virtual QVariant currentState() const = 0;
         virtual void setCurrentState(const QVariant& state) = 0;
-        virtual void setRole(tree_editor_inneer_role role) = 0;
-        virtual tree_editor_inneer_role role(){return m_role;};
+        virtual void setRole(tree_editor_inner_role role) = 0;
+        virtual tree_editor_inner_role role(){return m_role;};
         virtual void setExtValue(const QVariant& value){m_ext_value = value;};
         virtual QVariant extValue(){return m_ext_value;};
 
@@ -40,8 +40,13 @@ namespace arcirk::tree::widgets {
 
 
     protected:
-        tree_editor_inneer_role m_role;
+        tree_editor_inner_role m_role;
         QVariant m_ext_value;
+
+    signals:
+        void innerRoleChanged(int row, int column, const tree_editor_inner_role& value);
+        void itemValueChanged(int row, int column, const QVariant& value);
+        void itemTypeClear(int row, int column);
     };
 }
 

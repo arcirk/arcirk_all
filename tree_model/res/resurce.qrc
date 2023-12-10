@@ -25,5 +25,6 @@
         <file>img/update.png</file>
         <file>img/select_type.png</file>
         <file>img/clear.ico</file>
+        <file>img/move_to.png</file>
     </qresource>
 </RCC>

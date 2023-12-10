@@ -5,6 +5,7 @@ QT += widgets
 CONFIG += c++20
 
 SOURCES += \
+    $$PWD/gui/araydialog.cpp \
     $$PWD/gui/comparewidget.cpp \
     $$PWD/gui/pairmodel.cpp \
     $$PWD/gui/rowdialog.cpp \
@@ -27,6 +28,7 @@ SOURCES += \
 
 HEADERS += \
     $$PWD/global/arcirk_qt.hpp \
+    $$PWD/gui/araydialog.h \
     $$PWD/gui/comparewidget.h \
     $$PWD/gui/pairmodel.h \
     $$PWD/gui/rowdialog.h \
@@ -60,6 +62,7 @@ INCLUDEPATH += $(BOOST_INCLDUE)
 INCLUDEPATH += $$PWD
 
 FORMS += \
+    $$PWD/gui/araydialog.ui \
     $$PWD/gui/comparewidget.ui \
     $$PWD/gui/rowdialog.ui \
     $$PWD/gui/selectgroupdialog.ui \

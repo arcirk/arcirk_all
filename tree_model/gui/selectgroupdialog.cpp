@@ -38,7 +38,7 @@ void SelectGroupDialog::accept()
     return QDialog::accept();
 }
 
-json SelectGroupDialog::result()
+json SelectGroupDialog::result() const
 {
     return m_result;
 }

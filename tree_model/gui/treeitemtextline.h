@@ -58,11 +58,11 @@ namespace arcirk::tree::widgets {
         void setChecked(bool value) override {Q_UNUSED(value);};
         QVariant currentState() const override{return QVariant();};
         void setCurrentState(const QVariant& state) override {Q_UNUSED(state);};
-        void setRole(tree_editor_inneer_role role) override {
+        void setRole(tree_editor_inner_role role) override {
             m_role = role;
-            if(role == tree_editor_inneer_role::widgetColor ||
-                role == tree_editor_inneer_role::widgetDirectoryPath ||
-                role == tree_editor_inneer_role::widgetFilePath){
+            if(role == tree_editor_inner_role::widgetColor ||
+                role == tree_editor_inner_role::widgetDirectoryPath ||
+                role == tree_editor_inner_role::widgetFilePath){
                 isSelectButton(true);
             }
         };
@@ -101,6 +101,7 @@ namespace arcirk::tree::widgets {
         QString m_synonim;
         QString m_value;
         bool is_synonim;
+        //QWidget* parent_;
 
     private slots:
         void onButtonClicked();

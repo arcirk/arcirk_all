@@ -13,26 +13,30 @@
 #include <QMessageBox>
 #include "treeitemtextline.h"
 #include "treeitemtextedit.h"
+#include "treeitemvariant.h"
 
 using namespace arcirk::tree_widget;
 using namespace arcirk::tree::widgets;
 
-RowDialog::RowDialog(const json& data, const User_Data& user_data, QWidget *parent,
+RowDialog::RowDialog(const json& data, User_Data& user_data, QWidget *parent,
                      const QMap<QString, QString>& aliases,
                      const QList<QString>& invisible,
                      const QList<QString>& order,
-                     const QString& parentSynonim) :
+                     const QString& parentSynonim,
+                     const QMap<QString, tree_editor_inner_role>& inner_roles) :
     QDialog(parent),
-    ui(new Ui::RowDialog)
+    ui(new Ui::RowDialog),
+    m_user_data(user_data)
 {
     ui->setupUi(this);
 
     m_data = data;
-    m_user_data = user_data;
+    //m_user_data = user_data;
     m_aliases = aliases;
     m_parentSynonim = parentSynonim;
     m_parentRef = "";
     is_new_element = false;
+    m_inner_roles = inner_roles;
 
     is_group = m_data.value("is_group", 0) == 1;
     std::string ref = m_data.value("ref", "");
@@ -69,6 +73,11 @@ RowDialog::~RowDialog()
 json RowDialog::data()
 {
     return m_data;
+}
+
+QMap<QString, tree_editor_inner_role> RowDialog::inner_roles() const
+{
+    return m_inner_roles;
 }
 
 void RowDialog::accept()
@@ -118,6 +127,8 @@ void RowDialog::createControls(const QList<QString>& invisible, const QList<QStr
         bool visible = invisible.indexOf(itr) ==-1;
         auto value = m_data[itr.toStdString()];
         auto role = widgetRole(itr);
+        if(m_inner_roles.find(itr) == m_inner_roles.end())
+           m_inner_roles.insert(itr, tree_editor_inner_role::widgetInnerRoleINVALID);
         if(visible){
            auto useRole = widgetUseRole(itr);
            if(useRole != forFolderAndItem){
@@ -177,6 +188,8 @@ QList<QWidget*> RowDialog::createEditor(const QString& key, item_editor_widget_r
         return createTextEdit(key, value);
     }else if(role == item_editor_widget_roles::widgetTextLineRole){
         return createLineEdit(key, value);
+    }else if(role == item_editor_widget_roles::widgetVariantRole){
+        return createVariantBox(key, value);
     }
 
     return QList<QWidget*>{};
@@ -302,6 +315,61 @@ QList<QWidget *> RowDialog::createComboBox(const QString &key, const json &value
     return QList<QWidget*>{control, lbl};
 }
 
+QList<QWidget *> RowDialog::createVariantBox(const QString &key, const json &value)
+{
+    auto control = new TreeItemVariant(0,0, this);
+    auto  itr = m_inner_roles.find(key);
+    if(itr != m_inner_roles.end()){
+        control->setRole(itr.value());
+    }
+    if(control->role() == widgetFilePath ||
+        control->role() == widgetDirectoryPath ||
+        control->role() == widgetText){
+        if(value.is_string()){
+            control->setText(value.get<std::string>().c_str());
+        }
+    }else if(control->role() == widgetInteger){
+        if(value.is_number()){
+            control->setData(value.get<int>());
+        }
+    }else if(control->role() == widgetByteArray){
+        if(value.is_array() && value.size() > 0){
+            auto itr = m_user_data.find(tree::RepresentationRole);
+            if(itr != m_user_data.end()){
+                auto it = itr.value().find(key);
+                if(it != itr.value().end()){
+                    control->setText(it.value().toString());
+                }else{
+                    control->setText("<бинарные данные>");
+                }
+                auto bt = value.get<ByteArray>();
+                control->setRawData(&bt);
+            }else
+                control->setText("<бинарные данные>");
+        }
+    }else if(control->role() == widgetArray){
+        if(value.is_array() && value.size() > 0){
+            control->setData(QVariant(arcirk::tree::to_string_list(value)));
+        }
+    }
+
+    control->setProperty("class", "VariatBox");
+    control->setObjectName(key);
+    control->enableLabelFrame(true);
+
+    auto lbl = new QLabel(this);
+    lbl->setText(fieldAlias(key) + ":");
+    lbl->setObjectName(QString(key) + "_LBL");
+
+    connect(control, &TreeItemVariant::itemValueChanged, this, &RowDialog::onVariantValueChanged);
+    connect(control, &TreeItemVariant::innerRoleChanged, this, &RowDialog::onInnerRoleChanged);
+    connect(control, &TreeItemVariant::itemTypeClear, this, &RowDialog::onItemTypeClear);
+
+    control->reset();
+
+    return QList<QWidget*>{control, lbl};
+}
+
 item_editor_widget_roles RowDialog::widgetRole(const QString &key)
 {
     auto itr = m_user_data.find(tree::user_role::WidgetRole);
@@ -342,18 +410,18 @@ QVariant RowDialog::widgetExtRole(const QString &key)
     return QVariant();
 }
 
-tree_editor_inneer_role RowDialog::widgetInnerRole(const QString &key)
+tree_editor_inner_role RowDialog::widgetInnerRole(const QString &key)
 {
     auto itr = m_user_data.find(tree::user_role::WidgetInnerRole);
     if(itr != m_user_data.end()){
         auto it = itr.value().find(key);
         if(it != itr.value().end()){
             if(it.value().isValid())
-                return (tree_editor_inneer_role)it.value().toInt();
+                return (tree_editor_inner_role)it.value().toInt();
         }
     }
 
-    return tree_editor_inneer_role::widgetText;
+    return tree_editor_inner_role::widgetText;
 }
 
 attribute_use RowDialog::widgetUseRole(const QString &key)
@@ -391,6 +459,17 @@ void RowDialog::addWidget(const QString& key, int row, QList<QWidget *> control,
     layout->addWidget(control[0], row, 1);
 
     m_widgets.insert(key, control);
+}
+
+void RowDialog::set_user_data(user_role role, const QString &column, const QVariant &value)
+{
+    auto itr = m_user_data.find(role);
+    if(itr != m_user_data.end()){
+        auto it = itr.value().find(column);
+        if(it != itr.value().end()){
+            itr.value()[column] = value;
+        }
+    }
 }
 
 QList<QWidget *> RowDialog::createTextEdit(const QString &key, const json &value)
@@ -528,4 +607,66 @@ void RowDialog::onTextControlDataChanged()
         }
     }
 }
+
+void RowDialog::onVariantValueChanged(int row, int column, const QVariant &value)
+{
+    auto w = sender();
+    if(w){
+        auto obj_name = w->objectName();
+        auto ctrl = qobject_cast<TreeItemVariant*>(w);
+        if(ctrl!=0 && m_data.find(obj_name.toStdString()) != m_data.end()){
+            if(ctrl->role() == widgetFilePath ||
+                ctrl->role() == widgetDirectoryPath ||
+                ctrl->role() == widgetText){
+                m_data[obj_name.toStdString()] = value.toString().toStdString();
+                set_user_data(tree::RepresentationRole, obj_name, ctrl->text());
+            }else if(ctrl->role() == widgetColor){
+
+            }else if(ctrl->role() == widgetByteArray){
+                ByteArray ba{};
+                if(ctrl->rawData()->size() > 0){
+                    ba = ByteArray(ctrl->rawData()->size());
+                    std::copy(ctrl->rawData()->begin(), ctrl->rawData()->end(), ba.begin());
+                    m_data[obj_name.toStdString()] = ba;
+                }
+                set_user_data(tree::RepresentationRole, obj_name, ctrl->text());
+            }else if(ctrl->role() == widgetInteger){
+                m_data[obj_name.toStdString()] = value.toInt();
+            }else if(ctrl->role() == widgetArray){
+                json m_value = json::array();
+                auto v = value.toStringList();
+                foreach (auto itr, v) {
+                    m_value += itr.toStdString();
+                }
+                m_data[obj_name.toStdString()] = m_value;
+            }else
+                m_data[obj_name.toStdString()] = "";
+
+        }
+
+    }
+}
+
+void RowDialog::onInnerRoleChanged(int row, int column, const tree_editor_inner_role &value)
+{
+    auto w = sender();
+    if(w){
+        auto obj_name = w->objectName();
+        if(m_inner_roles.find(obj_name) != m_inner_roles.end())
+            m_inner_roles[obj_name] = value;
+    }
+}
+
+void RowDialog::onItemTypeClear(int row, int column)
+{
+    auto w = sender();
+    if(w){
+        auto obj_name = w->objectName();
+        if(m_inner_roles.find(obj_name) != m_inner_roles.end()){
+            m_inner_roles[obj_name] = tree::widgetInnerRoleINVALID;
+            m_data[obj_name.toStdString()] = {};
+        }
+    }
+}
+
 #endif

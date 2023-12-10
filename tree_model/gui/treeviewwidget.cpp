@@ -150,32 +150,20 @@ void TreeViewWidget::setModel(QAbstractItemModel *model)
     }
     if(model->property("typeName").toString() != "TreeSortModel"){
         m_sort_model->setSourceModel(model);
+        auto model_ = (TreeItemModel*)model;
+        m_hierarchy_list = model_->hierarchical_list();
+        if(m_toolBar != 0){
+            m_toolBar->setButtonEnabled("add_item", true);
+            if(!model_->hierarchical_list()){
+                m_toolBar->setButtonVisible("add_group", false);
+                m_toolBar->setButtonVisible("move_to_item", false);
+            }
+            if(!m_inners_dialogs)
+                m_toolBar->setButtonVisible("move_to_item", false);
+        }
         connect((TreeItemModel*)model, &TreeItemModel::fetch, this, &TreeViewWidget::onTreeFeth);
-//        auto model_ = qobject_cast<TreeItemModel*>(model);
-//        if(model_!=0){
-//            set_hierarchy_list(model_->hierarchical_list());
-//            auto delegate = (TreeItemDelegate*)this->itemDelegate();
-//            if(delegate!=0)
-//                delegate->setGridLine(!model_->hierarchical_list());
-//        }
-
     }
-    //else{
-        //auto m_sort = (TreeSortModel*)model;
-        //connect(m_sort, &TreeSortModel::modelChanged, this, &TreeViewWidget::onSourceModelChanged);
-        //if(m_sort->sourceModel()!=0){
-        //    auto model_ = (TreeItemModel*)m_sort->sourceModel();
-//            if(model_!=0){
-//                set_hierarchy_list(model_->hierarchical_list());
-//                auto delegate = (TreeItemDelegate*)this->itemDelegate();
-//                if(delegate!=0)
-//                    delegate->setGridLine(!model_->hierarchical_list());
-//            }
-//        }
-//    }
     return QTreeView::setModel(m_sort_model);
-
-
 }
 
 void TreeViewWidget::setEnabled(bool value)
@@ -208,9 +196,23 @@ void TreeViewWidget::setTableToolBar(TableToolBar *value)
     m_toolBar = value;
     connect(m_toolBar, &TableToolBar::itemClicked, this, &TreeViewWidget::onToolBarItemClicked);
     auto model = get_model();
-    if(!model)
+    if(!model || !m_toolBar)
         return;
+    m_hierarchy_list = model->hierarchical_list();
     m_toolBar->setHierarchyState(model->hierarchical_list());
+    m_toolBar->setButtonEnabled("add_item", true);
+    if(!model->hierarchical_list()){
+        m_toolBar->setButtonVisible("add_group", false);
+        m_toolBar->setButtonVisible("move_to_item", false);
+    }
+    if(!m_inners_dialogs)
+        m_toolBar->setButtonVisible("move_to_item", false);
+
+}
+
+void TreeViewWidget::set_inners_dialogs(bool value)
+{
+    m_inners_dialogs = value;
 }
 
 void TreeViewWidget::currentChanged(const QModelIndex &current, const QModelIndex &previous)
@@ -222,6 +224,9 @@ void TreeViewWidget::currentChanged(const QModelIndex &current, const QModelInde
         if(!model){
             return QTreeView::currentChanged(current, previous);;
         }
+
+        m_hierarchy_list = model->hierarchical_list();
+
         if(index.isValid()){
             m_toolBar->setButtonEnabled("edit_item", true);
             m_toolBar->setButtonEnabled("delete_item", true);
@@ -230,7 +235,8 @@ void TreeViewWidget::currentChanged(const QModelIndex &current, const QModelInde
                 m_toolBar->setButtonEnabled("add_item", true);
             }else{
                 m_toolBar->setButtonEnabled("add_group", false);
-                m_toolBar->setButtonEnabled("add_item", false);
+                if(m_hierarchy_list)
+                    m_toolBar->setButtonEnabled("add_item", false);
             }
 
             m_toolBar->setButtonEnabled("move_to_item", true);
@@ -243,7 +249,8 @@ void TreeViewWidget::currentChanged(const QModelIndex &current, const QModelInde
             }
         }else{
             m_toolBar->setButtonEnabled("add_group", false);
-            m_toolBar->setButtonEnabled("add_item", false);
+            if(m_hierarchy_list)
+                m_toolBar->setButtonEnabled("add_item", false);
             m_toolBar->setButtonEnabled("move_to_item", false);
             m_toolBar->setButtonEnabled("delete_item", false);
             m_toolBar->setButtonEnabled("edit_item", false);
@@ -256,6 +263,26 @@ void TreeViewWidget::currentChanged(const QModelIndex &current, const QModelInde
     return QTreeView::currentChanged(current, previous);
 }
 
+void TreeViewWidget::hide_default_columns()
+{
+    auto model = get_model();
+    if(model==0)
+        return;
+    hideColumn(model->column_index("ref"));
+    hideColumn(model->column_index("parent"));
+    hideColumn(model->column_index("is_group"));
+}
+
+void TreeViewWidget::close_editor()
+{
+    auto w = this->indexWidget(currentIndex());
+    if(w){
+        this->commitData(w);
+        this->closeEditor(w, TreeItemDelegate::EndEditHint::SubmitModelCache);
+    }
+
+}
+
 void TreeViewWidget::openNewItemDialog()
 {
     auto model = get_model();
@@ -263,8 +290,9 @@ void TreeViewWidget::openNewItemDialog()
         return;
     auto current_index = this->current_index();
     json row_data = model->empty_data();
+    m_hierarchy_list = model->hierarchical_list();
 
-    if(m_only_groups_in_root){
+    if(m_only_groups_in_root || m_hierarchy_list){
         if (!current_index.isValid() || !model->is_group(current_index))
             return;
         row_data["is_group"] = 0;
@@ -295,6 +323,15 @@ void TreeViewWidget::openNewItemDialog()
         if(data["parent"].get<std::string>() != m_current_parent)
             current_index = QModelIndex();
         auto n_index = model->add(dlg.data(), current_index);
+        model->set_row_inner_roles(n_index.row(), dlg.inner_roles());
+        auto itr = m_udata.find(tree::RepresentationRole);
+        if(itr != m_udata.end()){
+            for (int i = 0; i < itr.value().size(); ++i) {
+                auto index_ = model->index(n_index.row(), i, n_index.parent());
+                model->setData(index_, itr.value()[model->column_name(i)], tree::RepresentationRole);
+            }
+
+        }
         emit addTreeItem(n_index, dlg.data());
     }
 
@@ -370,10 +407,19 @@ void TreeViewWidget::openOpenEditDialog()
                 m_parent_name = obj.value("name", "").c_str();
         }
     }
-    User_Data m_udata = model->user_data_values();{};
-    auto dlg = RowDialog(row_data, m_udata, this, model->columns_aliases(), QList<QString>{"data_type", "_id", "path"}, model->columns_order(), m_parent_name);
+    User_Data m_udata = model->user_data_values(current_index);
+    auto dlg = RowDialog(row_data, m_udata, this, model->columns_aliases(), QList<QString>{"data_type", "_id", "path"}, model->columns_order(), m_parent_name,
+                         model->row_inner_roles(current_index.row(), current_index.parent()));
     if(dlg.exec()){
         model->set_object(current_index, dlg.data());
+        model->set_row_inner_roles(current_index.row(), dlg.inner_roles());
+        auto itr = m_udata.find(tree::RepresentationRole);
+        if(itr != m_udata.end()){
+            for (int i = 0; i < itr.value().size(); ++i) {
+                auto index_ = model->index(current_index.row(), i, current_index.parent());
+                model->setData(index_, itr.value()[model->column_name(i)], tree::RepresentationRole);
+            }
+        }
         emit editTreeItem(current_index, dlg.data());
     }
 }
@@ -435,7 +481,6 @@ void TreeViewWidget::deleteItemCommand()
         emit deleteTreeItem(obj);
     }
 }
-
 
 void TreeViewWidget::mousePressEvent(QMouseEvent *event)
 {
@@ -602,12 +647,28 @@ void TreeViewWidget::onTreeFeth(const QModelIndex &parent)
 }
 
 void TreeViewWidget::onToolBarItemClicked(const QString &buttonName)
+
 {
-    if(!m_inners_dialogs)
-        emit toolBarItemClicked(buttonName);
-    else{
-        json b = buttonName.toStdString();
-        auto btn = b.get<toolbar_buttons>();
+    json b = buttonName.toStdString();
+    auto btn = b.get<toolbar_buttons>();
+    if(!m_inners_dialogs){
+        if(btn == add_item){
+            addRow();
+        }else if(btn == add_group){
+            //
+        }else if(btn == delete_item){
+            deleteItemCommand();
+        }else if(btn == edit_item){
+            editRow();
+        }else if(btn == move_to_item){
+            //
+        }else if(btn == move_up_item){
+            moveUp();
+        }else if(btn == move_down_item){
+            moveDown();
+        }else
+            emit toolBarItemClicked(buttonName);
+    }else{
         if(btn == add_item){
             openNewItemDialog();
         }else if(btn == add_group){
@@ -618,10 +679,71 @@ void TreeViewWidget::onToolBarItemClicked(const QString &buttonName)
             openOpenEditDialog();
         }else if(btn == move_to_item){
             openOpenMoveToDialog();
+        }else if(btn == move_up_item){
+            moveUp();
+        }else if(btn == move_down_item){
+            moveDown();
         }else
             emit toolBarItemClicked(buttonName);
     }
 }
 
+void TreeViewWidget::addRow()
+{
+    auto model = get_model();
+    if(!model)
+        return;
+    auto current_index = this->current_index();
+    json row_data = model->empty_data();
+    m_hierarchy_list = model->hierarchical_list();
+
+    if(m_only_groups_in_root || m_hierarchy_list){
+        if (!current_index.isValid() || !model->is_group(current_index))
+            return;
+        row_data["is_group"] = 0;
+        row_data["ref"] = "";
+        row_data["parent"] = quuid_to_string(model->ref(current_index)).toStdString();
+    }else
+        row_data["parent"] = NIL_STRING_UUID;
+
+    auto n_index = model->add(row_data, current_index);
+
+    auto proxy_index = m_sort_model->mapFromSource(n_index);
+
+    if(proxy_index.isValid()){
+        setCurrentIndex(proxy_index);
+    }
+
+}
+
+void TreeViewWidget::editRow()
+{
+    auto current_index = this->current_index();
+    if(current_index.isValid()){
+        this->edit(this->currentIndex(), AllEditTriggers, new QEvent(QEvent::Type::MouseButtonDblClick));
+    }
+}
+
+void TreeViewWidget::moveUp()
+{
+    auto model = get_model();
+    if(!model)
+        return;
+    auto current_index = this->current_index();
+
+    if(current_index.isValid())
+        model->move_up(current_index);
+}
+
+void TreeViewWidget::moveDown()
+{
+    auto model = get_model();
+    if(!model)
+        return;
+    auto current_index = this->current_index();
+
+    if(current_index.isValid())
+        model->move_down(current_index);
+}
 
 #endif

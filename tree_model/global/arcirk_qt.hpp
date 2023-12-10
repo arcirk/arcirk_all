@@ -156,7 +156,8 @@ namespace arcirk::tree {
         NotNullRole = Qt::UserRole + 12,
         WidgetInnerRole = Qt::UserRole + 13,
         UseRole = Qt::UserRole + 14,
-        EmptyRole = Qt::UserRole + 15
+        RepresentationRole = Qt::UserRole + 15,
+        EmptyRole = Qt::UserRole + 16
     };
 
     inline int user_roles_max(){
@@ -175,12 +176,29 @@ namespace arcirk::tree {
         widgetINVALID= -1
     };
 
-    enum tree_editor_inneer_role{
+    enum tree_editor_inner_role{
         widgetFilePath,
         widgetDirectoryPath,
         widgetColor,
-        widgetText
+        widgetText,
+        widgetByteArray,
+        widgetInteger,
+        widgetArray,
+        widgetNullType,
+        widgetInnerRoleINVALID=-1
     };
+
+    NLOHMANN_JSON_SERIALIZE_ENUM(tree_editor_inner_role, {
+        {widgetInnerRoleINVALID, nullptr}    ,
+        {widgetFilePath, "widgetFilePath"}  ,
+        {widgetDirectoryPath, "widgetDirectoryPath"}  ,
+        {widgetColor, "widgetColor"}  ,
+        {widgetText, "widgetText"}  ,
+        {widgetByteArray, "widgetByteArray"}  ,
+        {widgetInteger, "widgetInteger"}  ,
+        {widgetArray, "widgetArray"}  ,
+        {widgetNullType, "widgetNullType"}  ,
+    })
 
     enum attribute_use{
         forFolder,
@@ -243,6 +261,10 @@ namespace arcirk::tree {
         return result;
     }
 
+//    inline QByteArray byte_array_to_qt(const ByteArray& bt){
+//        QByteArray* q_data = new QByteArray(reinterpret_cast<const char*>(data.data()), data.size());
+//    }
+
 } // namespace arcirk::tree
 
 namespace arcirk::tree_model{
@@ -277,6 +299,8 @@ namespace arcirk::tree_model{
                 return value.get<int>();
             else if(value.is_boolean())
                 return value.get<bool>();
+            else if(value.is_array())
+                return arcirk::tree::to_string_list(value);
             else
                 return QVariant();
     }
@@ -294,6 +318,11 @@ namespace arcirk::tree_model{
                 val = value.toFloat();
             }else if(value.typeId() == QMetaType::Bool){
                 val = value.toBool();
+            }else if(value.typeId() == QMetaType::QStringList){
+                val = json::array();
+                foreach (auto itr, value.toStringList()) {
+                    val += itr.toStdString();
+                }
             }else
                 val = "";
 
@@ -797,10 +826,12 @@ namespace arcirk::tree_model{
                 m_user_data.clear();
                 for (int i = 0; i < tree::user_roles_max(); ++i) {
                     QMap<QString, QVariant> m_val{};
+                    m_user_data.insert((tree::user_role)(Qt::UserRole +i), QMap<QString, QVariant>());
                     foreach (auto column, m_columns) {
-                        m_val.insert(column, QVariant());
+                        //m_val.insert(column, QVariant());
+                        m_user_data[(tree::user_role)(Qt::UserRole +i)].insert(column, QVariant());
                     }
-                    m_user_data.insert((tree::user_role)(Qt::UserRole +i), m_val);
+                    //m_user_data.insert((tree::user_role)(Qt::UserRole +i), m_val);
                 }
 
             }

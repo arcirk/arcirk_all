@@ -1,13 +1,15 @@
 ﻿#include "tree_model.h"
+
+#ifdef USE_QUERY_BUILDER_LIB
+#include "query_builder.hpp"
 #include <QSqlDatabase>
+#include <QSqlError>
+#endif
+
+#ifdef USE_WEBSOCKET_LIB
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
-#include <QSqlError>
-#include "query_builder.hpp"
-
-//#ifndef IS_OS_ANDROID
-//#include "gui/selectgroupdialog.h"
-//#endif
+#endif
 
 using namespace arcirk::tree_model;
 using namespace arcirk::database;
@@ -26,9 +28,6 @@ TreeItemModel::TreeItemModel(const json &rootData, QObject *parent)
 
 TreeItemModel::~TreeItemModel()
 {
-//    if(m_db.isOpen())
-//        m_db.close();
-
     delete rootItem;
 }
 
@@ -38,8 +37,7 @@ QVariant TreeItemModel::headerData(int section, Qt::Orientation orientation, int
         if(role == Qt::SizeHintRole)
             return m_conf->size();
 
-    if (orientation == Qt::Horizontal && role == Qt::DisplayRole){
-        //QString name = m_conf->column_name_(section, true);
+    if (orientation == Qt::Horizontal && role == Qt::DisplayRole){;
         return m_conf->column_name_(section, true);
     }
 
@@ -353,6 +351,8 @@ void TreeItemModel::init_class(const json& rootData)
     if(data.empty())
         data = json::object();
     data["ref"] = NIL_STRING_UUID;
+    if(data.find("is_group") == data.end())
+        data["is_group"] = 0;
     m_conf = std::make_shared<root_tree_conf>();
     m_conf->set_root_data(data);
     rootItem = new TreeItem(data, m_conf);
@@ -486,6 +486,7 @@ void TreeItemModel::remove_childs(const QModelIndex &parent)
 
 bool TreeItemModel::remove_sql_data(const QModelIndex &index)
 {
+#ifdef USE_QUERY_BUILDER_LIB
     if((m_conf->type_connection() == root_tree_conf::sqlIteMemoryConnection ||
        m_conf->type_connection() == root_tree_conf::sqlIteConnection) && m_db.isOpen()){
         auto item = getItem(index);
@@ -511,10 +512,14 @@ bool TreeItemModel::remove_sql_data(const QModelIndex &index)
 
     }
     return true;// removeRow(index.row(), index.parent());
+#else
+    return false;
+#endif
 }
 
 void TreeItemModel::reset_sql_table()
 {
+#ifdef USE_QUERY_BUILDER_LIB
     if(!m_db.isOpen())
         return;
 
@@ -530,6 +535,8 @@ void TreeItemModel::reset_sql_table()
         auto table = query.select().from(m_conf->table_name().toStdString()).where(m_conf->user_sql_where(), true).to_table(m_db);
         set_table(table);
     }
+#endif
+
 }
 
 json TreeItemModel::to_array(const QModelIndex &parent, bool childs, bool group_only) const
@@ -656,6 +663,7 @@ void TreeItemModel::load_from_database(const QString& parent)
 
 json TreeItemModel::http_get_directory(const json &parent) const{
 
+#ifdef USE_WEBSOCKET_LIB
     std::string uuid_form_ = arcirk::uuids::nil_string_uuid();
 
     nlohmann::json param = {
@@ -725,11 +733,15 @@ json TreeItemModel::http_get_directory(const json &parent) const{
     auto http_result = json::parse(QByteArray::fromBase64(msg.result.data()).toStdString());
 
     return http_result;
+#else
+    return WS_RESULT_ERROR;
+#endif
 }
 
 
 nlohmann::json TreeItemModel::http_get(const json &parent) const
 {
+#ifdef USE_WEBSOCKET_LIB
     if(m_conf->table_name().isEmpty())
         return WS_RESULT_ERROR;
 
@@ -820,6 +832,9 @@ nlohmann::json TreeItemModel::http_get(const json &parent) const
     auto http_result = nlohmann::json::parse(QByteArray::fromBase64(msg["result"].get<std::string>().data()).toStdString());
 
     return http_result;
+#else
+    return WS_RESULT_ERROR;
+#endif
 }
 
 json TreeItemModel::to_object(const QModelIndex &index) const
@@ -948,11 +963,6 @@ QList<QModelIndex> TreeItemModel::find_all(int column, const QVariant &source, c
 }
 
 json TreeItemModel::empty_data(){
-//    json result = json::object();
-//    for (auto itr = m_conf->columns().constBegin(); itr != m_conf->columns().constEnd(); ++itr) {
-//        result[itr->toStdString()] = {};
-//    }
-//    return result;
     Q_ASSERT(rootItem!=0);
     return rootItem->to_object();
 }
@@ -1033,6 +1043,7 @@ QIcon TreeItemModel::row_image(const QModelIndex &index)
 
 void TreeItemModel::reset_sql_data()
 {
+#ifdef USE_QUERY_BUILDER_LIB
     if(!m_conf->is_database_changed())
         return;
     Q_ASSERT(m_conf->get_database()!=0);
@@ -1068,26 +1079,8 @@ void TreeItemModel::reset_sql_data()
         if(m_conf->get_database()->lastError().isValid())
             qCritical() << m_conf->get_database()->lastError().text();
     }
+#endif
 }
-
-//QList<QVariant> TreeItemModel::unloadColumn(int column, const QModelIndex& parent, bool recursive)
-//{
-//    auto parentItem = getItem(parent);
-//    Q_ASSERT(column < parentItem->childCount());
-//    QList<QVariant> result{};
-
-//    for (int i = 0; i < parentItem->childCount(); ++i) {
-//        auto index = this->index(i, column, parent);
-//        result.append(index.data());
-//    }
-
-//    return result;
-//}
-
-//QList<QVariant> TreeItemModel::unloadColumn(const QString &column, const QModelIndex &parent, bool recursive)
-//{
-//    return unloadColumn(column_index(column), parent);
-//}
 
 json TreeItemModel::unload_column(const QString &column, const QModelIndex &parent, bool recursive)
 {
@@ -1153,4 +1146,48 @@ QUuid TreeItemModel::ref(const QModelIndex& index) const{
 
     auto item = getItem(index);
     return item->ref();
+}
+
+void TreeItemModel::set_inner_role(const QModelIndex &index, tree_editor_inner_role role)
+{
+    if(!index.isValid())
+        return;
+
+    auto item = getItem(index);
+    item->set_inner_role(role);
+}
+
+tree_editor_inner_role TreeItemModel::inner_role(const QModelIndex &index)
+{
+    if(!index.isValid())
+        return tree_editor_inner_role::widgetInnerRoleINVALID;
+
+    auto item = getItem(index);
+    return item->inner_role();
+}
+
+QMap<QString, tree_editor_inner_role> TreeItemModel::row_inner_roles(int row, const QModelIndex& parent) const
+{
+    QMap<QString, tree_editor_inner_role> result{};
+    if(row < 0 || row >= columnCount())
+        return result;
+
+    for (int i = 0; i < columnCount(); ++i) {
+        auto index_ = index(row, i, parent);
+        result.insert(column_name(i), (tree_editor_inner_role)data(index_, WidgetInnerRole).toInt());
+    }
+
+    return result;
+}
+
+void TreeItemModel::set_row_inner_roles(int row, const QMap<QString, tree_editor_inner_role>& roles, const QModelIndex &parent)
+{
+    if(roles.size() != columnCount())
+        return;
+
+    for (int i = 0; i < columnCount(); ++i) {
+        auto index_ = index(row, i, parent);
+        auto item = getItem(index_);
+        item->setData(i, roles[column_name(i)], WidgetInnerRole);
+    }
 }

@@ -14,16 +14,16 @@ CONFIG += c++20
 
 
 include(../../virtual/facelib/facelib.pri)
+include(../../../tree_model/tree_model.pri)
+include(../../../common/arcirk/arcirk.pri)
 
 SOURCES += \
     bankstatementsplugun.cpp \
-    pluginpropertydialog.cpp \
-    propertycontrol.cpp
+    pluginpropertydialog.cpp
 
 HEADERS += \
     bankstatementsplugun.h \
-    pluginpropertydialog.h \
-    propertycontrol.h
+    pluginpropertydialog.h
 
 # Default rules for deployment.
 unix {
@@ -35,6 +35,14 @@ RESOURCES += \
     plugin_res.qrc
 
 FORMS += \
-    pluginpropertydialog.ui \
-    propertycontrol.ui
+    pluginpropertydialog.ui
 
+INCLUDEPATH += $$PWD/../../virtual/facelib
+
+windows:DEFINES += _CRT_SECURE_NO_WARNINGS
+windows:DEFINES += _WINDOWS
+DEFINES += BOOST_LOCALE
+
+Boost_USE_STATIC_LIBS = ON
+
+INCLUDEPATH += $(BOOST_INCLDUE)

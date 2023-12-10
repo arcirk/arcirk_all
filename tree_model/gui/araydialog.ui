@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>PluginPropertyDialog</class>
- <widget class="QDialog" name="PluginPropertyDialog">
+ <class>ArrayDialog</class>
+ <widget class="QDialog" name="ArrayDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>391</width>
-    <height>235</height>
+    <width>330</width>
+    <height>308</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Список</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="1" column="0">
+   <item row="0" column="1">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+      <enum>Qt::Vertical</enum>
      </property>
      <property name="standardButtons">
       <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
@@ -34,7 +34,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>PluginPropertyDialog</receiver>
+   <receiver>ArrayDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -50,7 +50,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>PluginPropertyDialog</receiver>
+   <receiver>ArrayDialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

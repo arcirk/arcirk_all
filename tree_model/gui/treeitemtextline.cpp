@@ -38,6 +38,8 @@ TreeItemTextLine::TreeItemTextLine(int row, int column, QWidget *parent) :
     connect(m_button, &QToolButton::clicked, this, &TreeItemTextLine::onButtonClicked);
     connect(m_clear_button, &QToolButton::clicked, this, &TreeItemTextLine::onButtonClicked);
     connect(m_text_line, &TextBox::textChanged, this, &TreeItemTextLine::onTextChanged);
+
+    isBorder(false);
 }
 
 void TreeItemTextLine::setSynonim(const QString &value)
@@ -139,7 +141,7 @@ void TreeItemTextLine::onButtonClicked()
            if(m_role == widgetText){
                 auto dlg = TextEditDialog(this);
                 dlg.setText(m_text_line->text());
-                if(dlg.exec() == QDialog::Accepted){
+                if(dlg.exec()){
                     m_text_line->setText(dlg.text());
                 }
            }else if(m_role == widgetFilePath){

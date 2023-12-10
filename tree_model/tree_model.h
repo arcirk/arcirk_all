@@ -9,7 +9,9 @@
 #include <QHeaderView>
 #include "treeitem.h"
 #include <memory>
+#ifdef USE_WEBSOCKET_LIB
 #include "websocketclient.h"
+#endif
 
 using namespace arcirk::tree;
 using namespace arcirk::http;
@@ -115,8 +117,33 @@ namespace arcirk::tree_model {
 
         void set_user_role_data(const QString& column, tree::user_role role, const QVariant& value);
         QVariant user_role_data(const QString& column, tree::user_role role) const;
+
         QMap<tree::user_role, QMap<QString, QVariant>> user_data_values() const{
             return m_conf->user_data_values();
+        }
+        QMap<tree::user_role, QMap<QString, QVariant>> user_data_values(const QModelIndex& index) const{
+            auto u_data = m_conf->user_data_values();
+            if(!index.isValid())
+                return u_data;
+            int count = user_roles_max() + (int)Qt::UserRole;
+            int start = (int)UserRoleDef;
+            for (int var = start; var < count; ++var) {
+                auto itr = u_data.find((user_role)var);
+                if(itr != u_data.end()){
+                    for (int i = 0; i < columnCount(); ++i) {
+                        auto index_ = this->index(index.row(), i, index.parent());
+                        if(index_.isValid()){
+                            auto val = index_.data((user_role)var);
+                            if(val.isValid())
+                                u_data[(user_role)var][column_name(i)] = val;
+                        }
+
+                    }
+                }
+            }
+
+
+            return u_data;
         }
 
         void set_fetch_expand(bool value){m_conf->set_fetch_expand(value);};
@@ -151,16 +178,12 @@ namespace arcirk::tree_model {
 
         QMap<QString, QString> column_aliases_default() const{ return m_conf->column_aliases_default();};
 
-//        QList<QString> not_null_fields(){
-//            QList<QString> m_lst{};
-//            foreach (auto itr, m_conf->columns()) {
-//                auto ext = user_role_data(itr, tree::NotNullRole);
-//                if(ext.isValid() && ext.toBool()){
-//                    m_lst.append(itr);
-//                }
-//            }
-//            return m_lst;
-//        }
+        //внутренняя роль элемента управления TreeVariant
+        void set_inner_role(const QModelIndex& index, tree_editor_inner_role role);
+        tree_editor_inner_role inner_role(const QModelIndex& index);
+        QMap<QString, tree_editor_inner_role> row_inner_roles(int row, const QModelIndex& parent = QModelIndex()) const;
+        void set_row_inner_roles(int row, const QMap<QString, tree_editor_inner_role>& roles, const QModelIndex& parent = QModelIndex());
+        //
 
     protected:
         QSqlDatabase m_db;

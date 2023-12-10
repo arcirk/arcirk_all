@@ -19,6 +19,7 @@ public:
                    const QModelIndex &index) const override;
 
     void setGridLine(bool value){m_grid_line = value;}
+
 private:
     bool m_grid_line;
     QPair<int,int> m_current_index;

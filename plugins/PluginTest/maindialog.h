@@ -2,6 +2,7 @@
 #define MAINDIALOG_H
 
 #include <QDialog>
+#include <QAbstractButton>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainDialog; }
@@ -16,7 +17,10 @@ public:
     ~MainDialog();
 
 private slots:
-    void on_btnCreate_clicked();
+    void onBtnCreateClicked();
+    void onSelectPlugin();
+    void onTextChanged(const QString& value);
+    void onDialogBoxClicked(QAbstractButton * button);
 
 private:
     Ui::MainDialog *ui;

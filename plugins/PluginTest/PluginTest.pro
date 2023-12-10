@@ -23,5 +23,4 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
-INCLUDEPATH += $$PWD/../iplugin/iplugin
-DEPENDPATH += $$PWD/../iplugin/iplugin
+INCLUDEPATH += $$PWD/../../plugins/virtual/facelib

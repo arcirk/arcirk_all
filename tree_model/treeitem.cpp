@@ -1,9 +1,9 @@
 #include "treeitem.h"
-
-
+#ifdef USE_QUERY_BUILDER_LIB
 #include "query_builder.hpp"
 #include <QSqlQuery>
 #include <QSqlError>
+#endif
 
 using namespace arcirk::tree_model;
 
@@ -47,6 +47,9 @@ TreeItem::TreeItem(const json &data, TreeItem *parent)
     m_is_group = m_item_data.value("is_group", 0) != 0;
 
     init_ids();
+
+    m_widget = tree::item_editor_widget_roles::widgetINVALID;
+    m_inner_role = tree_editor_inner_role::widgetInnerRoleINVALID;
 }
 
 TreeItem::TreeItem(const json &data, std::shared_ptr<root_tree_conf> conf)
@@ -61,6 +64,8 @@ TreeItem::TreeItem(const json &data, std::shared_ptr<root_tree_conf> conf)
     m_is_group = true;
     m_object_name = "TreeItemModel";
     m_childItems = {};
+    m_widget = tree::item_editor_widget_roles::widgetINVALID;
+    m_inner_role = tree_editor_inner_role::widgetInnerRoleINVALID;
 }
 
 TreeItem::~TreeItem()
@@ -95,19 +100,45 @@ QVariant TreeItem::data(int column, int role) const
 
     if(role == Qt::DisplayRole){
         auto value = m_item_data.value(c_name.toStdString(), json{});
-        if(value.is_null())
+        if(value.is_null()){
             return QVariant();
+        }else if(value.is_array()){
+          auto inner = data(column, tree::WidgetInnerRole);
+          if(inner.isValid()){
+              auto inner_ = (tree::tree_editor_inner_role)inner.toInt();
+              if(inner_ == tree::tree_editor_inner_role::widgetByteArray){
+                  auto disp = data(column, tree::RepresentationRole);
+                  if(disp.isValid())
+                      return disp;
+                  else{
+                      if(value.size() == 0)
+                         return "<null>";
+                      else{
+                         return "<бинарные данные>";
+                      }
+                  }
+              }else{
+                  return "<массив>";
+              }
+          }else
+              return QVariant();
+        }
         return to_variant(value);
     }else if(role >= Qt::UserRole && role <= Qt::UserRole + tree::user_roles_max()){
         auto itr =m_userData.find(role);
         if(itr != m_userData.end())
-            if(role != tree::WidgetRole)
-                return itr.value()[column];
-            else{
+            if(role == tree::WidgetRole){
                 if(m_widget == tree::item_editor_widget_roles::widgetINVALID)
                     return itr.value()[column];
                 else
                     return m_widget;
+            }else if(role == tree::WidgetInnerRole){
+                if(m_inner_role == tree::tree_editor_inner_role::widgetInnerRoleINVALID)
+                    return itr.value()[column];
+                else
+                    return m_inner_role;
+            }else{
+                return itr.value()[column];
             }
         else
             return QVariant();
@@ -140,8 +171,7 @@ bool TreeItem::setData(int column, const QVariant &value, int role)
                 m_vec.resize(m_conf->columns().size());
                 m_userData.insert(role, m_vec);
                 m_userData[role][column] = value;
-                //return false;
-        }
+        }else
             m_userData[role][column] = value;
     }else if(role == Qt::ForegroundRole){
         m_text_color = value;
@@ -217,7 +247,7 @@ void TreeItem::set_object(const json &object, bool upgrade_database){
     m_is_group = m_item_data.value("is_group", 0) != 0;
 
     init_ids();
-
+#ifdef USE_QUERY_BUILDER_LIB
     if(upgrade_database && m_conf->is_database_changed()){
         if((m_conf->type_connection() == root_tree_conf::sqlIteMemoryConnection ||
              m_conf->type_connection() == root_tree_conf::sqlIteConnection) &&
@@ -254,6 +284,7 @@ void TreeItem::set_object(const json &object, bool upgrade_database){
                 }
         }
     }
+#endif
 }
 
 void TreeItem::set_object_name(const QString &name)

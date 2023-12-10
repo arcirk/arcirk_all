@@ -63,3 +63,10 @@
 /plugins/virtual/build-facelib-Desktop_Qt_6_5_2_MSVC2019_64bit-Debug/
 /bAdmin/bAdmin.pro.user.31590f1
 /ProfileManager/ProfileManager.pro.user.31590f1
+/plugins/build-PluginGroups-Desktop_Qt_6_5_2_MSVC2019_64bit-Debug/
+/plugins/iplugin/iplugin/debug/
+/plugins/iplugin/iplugin/release/
+/plugins/PluginGroups/PluginGroups.pro.user
+/plugins/PluginTest/debug/
+/plugins/PluginTest/release/
+/tree_model/gui/araydialog.ui.bak

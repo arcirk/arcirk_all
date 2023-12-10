@@ -80,12 +80,16 @@ namespace arcirk::tree_widget {
 
         void setTableToolBar(TableToolBar* value);
 
-        void set_inners_dialogs(bool value){m_inners_dialogs = value; };
+        void set_inners_dialogs(bool value);
         void set_only_groups_in_root(bool value){m_only_groups_in_root = value;};
 
         void currentChanged(const QModelIndex &current, const QModelIndex &previous) override;
 
         void add_group_in_root_only(bool value){m_add_group_in_root_only = value;};;
+
+        void hide_default_columns();
+
+        void close_editor();
 
     protected:
         void mousePressEvent(QMouseEvent *event) override;
@@ -120,6 +124,10 @@ namespace arcirk::tree_widget {
         void openOpenEditDialog();
         void openOpenMoveToDialog();
         void deleteItemCommand();
+        void addRow();
+        void editRow();
+        void moveUp();
+        void moveDown();
 
     signals:
         void doDropEvent(const QModelIndex& index, const QString& sender);

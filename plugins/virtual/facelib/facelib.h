@@ -3,22 +3,21 @@
 #include <QString>
 #include <QVariant>
 #include <QtPlugin>
+#include <QWidget>
 
 namespace arcirk::plugins {
-class IAIPlugin {
-public:
-    virtual ~IAIPlugin() { }
+    class IAIPlugin {
+    public:
+        virtual ~IAIPlugin() = default;
 
-    //virtual QByteArray readData() const = 0;
+        virtual void setParam(const QString& param) = 0;
+        virtual bool editParam(QWidget* parent) = 0;
+        virtual bool isValid() = 0;
+        virtual bool accept() = 0;
+        virtual bool prepare() = 0;
+        virtual QByteArray param() const = 0;
 
-    virtual void setParam(const QString& param) = 0;
-    virtual bool isValid() = 0;
-    virtual bool accept() = 0;
-    virtual bool prepare() = 0;
-    virtual QByteArray param() const = 0;
-
-    //    virtual void setParam(const QString& param) = 0;
-};
+    };
 }
 
 Q_DECLARE_INTERFACE( arcirk::plugins::IAIPlugin, "ru.arcirk.plugins.PluginInterface/1.0" )
