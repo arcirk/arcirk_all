@@ -9,10 +9,6 @@ using namespace arcirk::plugins;
 
 BankStatementsPlugun::~BankStatementsPlugun()
 {
-//    m_param.insert("host", "");
-//    m_param.insert("token", "");
-//    m_param.insert("destantion", "");
-//    m_param.insert("destantion_bnk", "");
 
 }
 
@@ -45,8 +41,11 @@ QByteArray BankStatementsPlugun::param() const
 
 bool BankStatementsPlugun::editParam(QWidget* parent)
 {
+    m_param = read_param();
     auto dlg = PluginPropertyDialog(m_param, parent);
     if(dlg.exec()){
+        m_param = dlg.result();
+        write_param();
         return true;
     }
     return false;
@@ -78,12 +77,50 @@ json BankStatementsPlugun::default_param() const
 
 json BankStatementsPlugun::read_param() const
 {
-    auto app_path = QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+    auto app_path = QPath(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
 
-    if(!app_path.exists())
+
+    if(!app_path.exists()){
+        auto res =app_path.mkpath();
+        if(!res)
+            return default_param();
+    }
+
+    app_path /= PLUGIN_FILE_NAME;
+
+    if(!app_path.exists()){
+        return default_param();
+    }
+
+    QFile f(app_path.path());
+    if(f.open(QIODevice::ReadOnly)){
+        auto str = f.readAll().toStdString();
+        if(json::accept(str)){
+            return json::parse(str);
+        }else
+            return default_param();
+        f.close();
+    }else
         return default_param();
 
-    app_path += QDir::separator();
+}
 
+void BankStatementsPlugun::write_param()
+{
+    auto app_path = QPath(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+
+    if(!app_path.exists()){
+        auto res =app_path.mkpath();
+        if(!res)
+            return;
+    }
+
+    app_path /= PLUGIN_FILE_NAME;
+    QFile f(app_path.path());
+    if(f.open(QIODevice::WriteOnly)){
+        f.write(m_param.dump().c_str());
+        f.close();
+    }
 
 }
+

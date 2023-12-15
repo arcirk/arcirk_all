@@ -39,20 +39,25 @@ MainDialog::~MainDialog()
 void MainDialog::onBtnCreateClicked()
 {
     using namespace arcirk::plugins;
-    QFile f(ui->lineEdit->text());
-    if(!f.exists()){
-        QMessageBox::critical(this, "Ошибка", "Файл плагина не существует!");
-        return;
-    }
-    QPluginLoader loader(f.fileName());
-    QObject *obj = loader.instance();
-    IAIPlugin* plugin
-        = qobject_cast<IAIPlugin*>(obj);
-    if(plugin){
-        if(plugin->editParam(this)){
-            loader.unload();
+    try {
+        QFile f(ui->lineEdit->text());
+        if(!f.exists()){
+            QMessageBox::critical(this, "Ошибка", "Файл плагина не существует!");
+            return;
         }
+        QPluginLoader loader(f.fileName());
+        QObject *obj = loader.instance();
+        IAIPlugin* plugin
+            = qobject_cast<IAIPlugin*>(obj);
+        if(plugin){
+            if(plugin->editParam(this)){
+                loader.unload();
+            }
+        }
+    } catch (const std::exception& e) {
+        qCritical() << e.what();
     }
+
 }
 
 void MainDialog::onSelectPlugin()

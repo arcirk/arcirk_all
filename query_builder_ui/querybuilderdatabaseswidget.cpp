@@ -5,7 +5,7 @@
 #include "query_builder.hpp"
 #include <QSqlQuery>
 #include "sqlite_utils.hpp"
-
+//#include "global/arcirk_qt.hpp"
 
 using namespace arcirk::query_builder_ui;
 using namespace arcirk::database::builder;
@@ -55,7 +55,7 @@ QueryBuilderDatabasesWidget::QueryBuilderDatabasesWidget(QSqlDatabase& connectio
                               );
     model->set_columns_order(QList<QString>{"name", "ref", "parent", "is_group"});
     model->set_user_role_data("name", tree::NotNullRole, true);
-    model->set_user_role_data("query", tree::WidgetInnerRole, tree::tree_editor_inneer_role::widgetFilePath);
+    model->set_user_role_data("query", tree::WidgetInnerRole, tree::tree_editor_inner_role::widgetFilePath);
     model->set_user_role_data("query", tree::WidgetRole, tree::item_editor_widget_roles::widgetTextEditRole);
     model->set_user_role_data("query", tree::UserRoleExt, "Файлы базы данных (*.sqlite, *.sqlite3);;Все файлы (*.*)");
     foreach (auto itr, model->columnNames()) {

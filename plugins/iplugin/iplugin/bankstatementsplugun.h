@@ -4,6 +4,9 @@
 #include "facelib.h"
 #include <QObject>
 #include "arcirk.hpp"
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
 
 BOOST_FUSION_DEFINE_STRUCT(
     (arcirk::plugins), plugin_param,
@@ -14,7 +17,7 @@ BOOST_FUSION_DEFINE_STRUCT(
     (std::string, parent)
 )
 
-#define PLUGIN_NAME "BankStatements"
+#define PLUGIN_FILE_NAME "BankStatements.json"
 
 namespace arcirk::plugins {
 
@@ -24,6 +27,77 @@ namespace arcirk::plugins {
 //        QString destantion;
 //        QString destantion_bnk;
 //    };
+
+struct QPath
+{
+    QPath(const QString& p) {
+        m_patch = p;
+        //m_info = QFileInfo(p);
+    }
+
+    QString path() const{
+        return m_patch;
+    }
+
+    const QString& operator +(const QString& v){
+        if(v != QDir::separator())
+            m_patch.append(QDir::separator());
+        m_patch.append(v);
+        return m_patch;
+    }
+    const QString& operator +=(const QString& v){
+        m_patch.append(v);
+        return m_patch;
+    }
+
+    const QString& operator /=(const QString& v){
+        m_patch.append(QDir::fromNativeSeparators(QDir::separator()));
+        m_patch.append(v);
+        return m_patch;
+    }
+
+    const QString& operator =(const QFile& f){
+        m_patch = f.fileName();
+        return m_patch;
+    }
+
+    const QString& operator =(const QDir& d){
+        m_patch = d.path();
+        return m_patch;
+    }
+
+    const QString& operator <<(const QString& v){
+        if(v != QDir::separator())
+            m_patch.append(QDir::separator());
+        m_patch.append(v);
+        return m_patch;
+    }
+
+    bool exists() const{
+        QFileInfo f(m_patch);
+        return f.exists();
+    }
+
+    bool isDir(){
+        QFileInfo f(m_patch);
+        return f.isDir();
+    }
+
+    bool isFile(){
+        QFileInfo f(m_patch);
+        return f.isFile();
+    }
+
+    bool mkpath(){
+        QDir d(m_patch);
+        return d.mkpath(m_patch);
+    }
+
+
+private:
+    QString m_patch;
+
+};
 
     class BankStatementsPlugun : public QObject, public IAIPlugin
     {

@@ -68,6 +68,22 @@ using json = nlohmann::json;
 typedef unsigned char BYTE;
 typedef std::vector<BYTE> ByteArray;
 
+namespace arcirk::synchronize {
+    enum variant_type{
+        vNull = 0,
+        vJsonDump,
+        vBinary
+    };
+}
+
+
+BOOST_FUSION_DEFINE_STRUCT(
+    (arcirk::synchronize), variant_p,
+    (std::string, representation)
+    (int, type)
+    (ByteArray, data)
+)
+
 BOOST_FUSION_DEFINE_STRUCT(
     (arcirk::http), http_param,
     (std::string, command)

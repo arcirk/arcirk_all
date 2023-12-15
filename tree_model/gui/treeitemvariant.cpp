@@ -19,7 +19,9 @@ TreeItemVariant::TreeItemVariant(int row, int column, QWidget *parent)
 
     Q_INIT_RESOURCE(resurce);
 
-    m_raw_data = {};
+    //m_raw_data = {};
+    m_raw = arcirk::synchronize::variant_p();
+    m_raw.type = (int)arcirk::synchronize::vNull;
 
     auto hbox = new QHBoxLayout(this);
     hbox->setContentsMargins(0,0,0,0);
@@ -101,6 +103,7 @@ void TreeItemVariant::setChecked(bool value)
 
 void TreeItemVariant::setText(const QString &text)
 {
+    m_raw.representation = text.toStdString();
     if(m_role == widgetArray || m_role == widgetByteArray){
         m_label->setText(text);
     }else
@@ -109,19 +112,20 @@ void TreeItemVariant::setText(const QString &text)
 
 QString TreeItemVariant::text() const
 {
-    QString value = "";
-//    json state = m_current_state.toString().toStdString();
-//    auto inner_state = state.get<tree_editor_inner_role>();
-    if(m_role == widgetText){
-        value = m_text->text();
-    }else if(m_role == widgetArray){
-        value = m_label->text();
-    }else if(m_role == widgetByteArray){
-        value = m_label->text();
-    }else if(m_role == widgetInteger){
-        value = QString::number(m_integer->value());
-    }
-    return value;
+    //QString value = "";
+////    json state = m_current_state.toString().toStdString();
+////    auto inner_state = state.get<tree_editor_inner_role>();
+//    if(m_role == widgetText){
+//        value = m_text->text();
+//    }else if(m_role == widgetArray){
+//        value = m_label->text();
+//    }else if(m_role == widgetByteArray){
+//        value = m_label->text();
+//    }else if(m_role == widgetInteger){
+//        value = QString::number(m_integer->value());
+//    }
+
+    return m_raw.representation.c_str();
 }
 
 void TreeItemVariant::setCurrentState(const QVariant &state)
@@ -133,29 +137,67 @@ void TreeItemVariant::setCurrentState(const QVariant &state)
 
 void TreeItemVariant::setData(const QVariant &data)
 {
-    //qDebug() << __FUNCTION__;
-    m_current_value = data;
-    if(m_current_value.typeId() == QMetaType::QStringList){
-        m_list = m_current_value.toStringList();
-        setText(m_list.join(", "));
+    auto ba = data.toByteArray();
+    if(ba.size() == sizeof(arcirk::synchronize::variant_p)){
+        const auto r = reinterpret_cast<arcirk::synchronize::variant_p*>(ba.data());
+        m_raw.representation = r->representation;
+        m_raw.type = r->type;
+        m_raw.data = ByteArray(r->data.size());
+        std::copy(r->data.begin(), r->data.end(), m_raw.data.begin());
     }
+
+}
+
+void TreeItemVariant::setData(const json &data)
+{
+    using namespace arcirk::synchronize;
+    try {
+        auto ba = data.get<ByteArray>();
+        auto const ptr = reinterpret_cast<variant_p*>(ba.data());
+        if(ptr){
+            m_raw.representation = ptr->representation;
+            m_raw.type = ptr->type;
+            if(ptr->data.size() > 0){
+                m_raw.data = ByteArray(ptr->data.size());
+                std::copy(ptr->data.begin(), ptr->data.end(), m_raw.data.begin());
+            }
+        }
+    } catch (...) {
+    }
+
 }
 
 QVariant TreeItemVariant::data()
 {
-    //qDebug() << __FUNCTION__ << m_current_value;
-    return m_current_value;
+    const auto r = reinterpret_cast<char*>(&m_raw);
+    return QByteArray::fromRawData(r, sizeof(arcirk::synchronize::variant_p));
 }
 
-ByteArray *TreeItemVariant::rawData()
-{
-    return &m_raw_data;
-}
+//ByteArray *TreeItemVariant::rawData()
+//{
+////    const auto ptr = reinterpret_cast<ByteArray*>(&m_raw);
+////    return ptr;
+//    //const auto r = reinterpret_cast<char*>(&m_raw);
+//    auto raw = data().toByteArray();
+//    auto ba = ByteArray(sizeof(arcirk::synchronize::variant_p));
+//    std::copy(raw.begin(), raw.end(), ba.begin());
+//    return &ba;
+
+//}
 
 void TreeItemVariant::setRawData(ByteArray *data)
 {
-    m_raw_data = ByteArray(data->size());
-    std::copy(data->begin(), data->end(), m_raw_data.begin());
+    const auto raw = reinterpret_cast<arcirk::synchronize::variant_p*>(data->data());
+    if(raw->data.size() > 0){
+        qDebug() << raw->data.size();
+        m_raw.data = ByteArray(raw->data.size());
+        std::copy(raw->data.begin(), raw->data.end(), m_raw.data.begin());
+    }
+
+    m_raw.representation = raw->representation;
+    m_raw.type = raw->type;
+    m_role = (tree_editor_inner_role)m_raw.type;
+    reset_state(enum_synonym(m_role).c_str());
 }
 
 void TreeItemVariant::enableLabelFrame(bool value)
@@ -194,6 +236,7 @@ void TreeItemVariant::reset_state(const QString &state)
         m_erase->setVisible(true);
         m_integer->setVisible(false);
         m_save->setVisible(false);
+        m_raw.type = (int)arcirk::synchronize::vJsonDump;
     }else if(inner_state == widgetArray){
         m_label->setVisible(true);
         m_text->setVisible(false);
@@ -203,6 +246,7 @@ void TreeItemVariant::reset_state(const QString &state)
         m_integer->setVisible(false);
         m_save->setVisible(false);
         m_list = m_current_value.toStringList();
+        m_raw.type = (int)arcirk::synchronize::vJsonDump;
     }else if(inner_state == widgetByteArray){
         m_label->setVisible(true);
         m_text->setVisible(false);
@@ -211,6 +255,7 @@ void TreeItemVariant::reset_state(const QString &state)
         m_erase->setVisible(true);
         m_integer->setVisible(false);
         m_save->setVisible(true);
+        m_raw.type = (int)arcirk::synchronize::vBinary;
     }else if(inner_state == widgetInteger){
         m_label->setVisible(false);
         m_text->setVisible(false);
@@ -220,6 +265,7 @@ void TreeItemVariant::reset_state(const QString &state)
         m_integer->setVisible(true);
         m_save->setVisible(false);
         m_integer->setValue(m_current_value.toInt());
+        m_raw.type = (int)arcirk::synchronize::vJsonDump;
     }else{
         m_label->setVisible(true);
         m_text->setVisible(false);
@@ -229,19 +275,26 @@ void TreeItemVariant::reset_state(const QString &state)
         m_integer->setVisible(false);
         m_save->setVisible(false);
         m_label->setText("");
+        m_raw.type = (int)arcirk::synchronize::vNull;
     }
 
     m_current_state = state;
     if(inner_state != widgetInnerRoleINVALID){
-        //setRole(inner_state);
         m_role = inner_state;
         emit innerRoleChanged(row(), column(), m_role);
     }else{
-        //setRole(widgetText);
         m_role = widgetText;
         emit innerRoleChanged(row(), column(), m_role);
     }
-    //qDebug() << __FUNCTION__ << state;
+
+    m_raw.type = (int)inner_state;
+}
+
+void TreeItemVariant::generateRaw(const std::string& rep, ByteArray* data)
+{
+    m_raw.representation = rep;
+    m_raw.data = ByteArray(data->size());
+    std::copy(data->begin(), data->end(), m_raw.data.begin());
 }
 
 void TreeItemVariant::onMenuItemClicked()
@@ -262,24 +315,18 @@ void TreeItemVariant::onSelectClicked()
             m_list = arcirk::tree::to_string_list(result);
             m_current_value = QVariant(m_list);
             m_label->setText(m_list.join(","));
+            auto str = arcirk::string_to_byte_array(result.dump());
+            generateRaw(m_label->text().toStdString(), &str);
             emit itemValueChanged(row(), column(), m_current_value);
         }
     }else if(m_role == widgetByteArray){
         auto result = QFileDialog::getOpenFileName(this, "Выбор файла");
         if(!result.isEmpty()){
-            //QFile f(result);
-//            if(f.open(QIODevice::ReadOnly)){
-//                m_current_value = f.readAll();
-//                f.close();
-//                QFileInfo info(result);
-//                m_label->setText(info.fileName());
-//                emit itemValueChanged(row(), column(), m_current_value);
-//            }
-//            ByteArray ba{};
-            m_raw_data.clear();
-            arcirk::read_file(result.toStdString(), m_raw_data);
             QFileInfo info(result);
             m_label->setText(info.fileName());
+            ByteArray bt{};
+            arcirk::read_file(result.toStdString(), bt);
+            generateRaw(info.fileName().toStdString(), &bt);
             emit itemValueChanged(row(), column(), m_current_value);
         }
     }
@@ -287,10 +334,10 @@ void TreeItemVariant::onSelectClicked()
 
 void TreeItemVariant::onSaveClicked()
 {
-    if(m_role == widgetByteArray && m_raw_data.size() > 0){
-        auto result = QFileDialog::getSaveFileName(this, "Сохранить как...", text());
+    if(m_role == widgetByteArray && m_raw.data.size() > 0){
+        auto result = QFileDialog::getSaveFileName(this, "Сохранить как...", m_raw.representation.c_str());
         if(!result.isEmpty()){
-            arcirk::write_file(result.toStdString(), m_raw_data);
+            arcirk::write_file(m_raw.representation, m_raw.data);
         }
     }
 }
@@ -304,19 +351,25 @@ void TreeItemVariant::onEraseClicked()
     m_erase->setVisible(false);
     m_integer->setVisible(false);
     setRole(tree_editor_inner_role::widgetNullType);
-    setCurrentState(enum_synonym(tree_editor_inner_role::widgetNullType).c_str());
+    setCurrentState(enum_synonym(tree_editor_inner_role::widgetNullType).c_str());    
     emit itemTypeClear(row(), column());
 }
 
 void TreeItemVariant::onSpinChanged(int value)
 {
     m_current_value = value;
+    json v = value;
+    auto bt = arcirk::string_to_byte_array(v.dump());
+    generateRaw(QString::number(value).toStdString(), &bt);
     emit itemValueChanged(row(), column(), m_current_value);
 }
 
 void TreeItemVariant::onTextChanged(const QString &value)
 {
     m_current_value = value;
+    json v = value.toStdString();
+    auto bt = arcirk::string_to_byte_array(v.dump());
+    generateRaw(value.toStdString(), &bt);
     emit itemValueChanged(row(), column(), m_current_value);
 }
 

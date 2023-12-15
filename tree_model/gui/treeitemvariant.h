@@ -28,9 +28,10 @@ namespace arcirk::tree::widgets {
         };
 
         void setData(const QVariant& data);
+        void setData(const json& data);
         QVariant data();
-        ByteArray *rawData();
         void setRawData(ByteArray * data);
+        //ByteArray *rawData();
 
         void enableLabelFrame(bool value);
 
@@ -47,10 +48,14 @@ namespace arcirk::tree::widgets {
         QVariant m_current_state;
         QVariant m_current_value;
         QStringList m_list;
-        ByteArray m_raw_data;
+        //ByteArray m_raw_data;
+        arcirk::synchronize::variant_p m_raw;
 
 
         void reset_state(const QString& state);
+        void generateRaw(const std::string& rep, ByteArray* data = {});
+
+//
 
     private slots:
         void onMenuItemClicked();

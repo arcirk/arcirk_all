@@ -191,7 +191,7 @@ void TreeItemDelegate::setEditorData(QWidget *editor, const QModelIndex &index) 
             if (!ctrl) {
                 return QStyledItemDelegate::setEditorData(editor, index);
             }
-            ctrl->setData(index.data());
+            ctrl->setData(index.data(tree::RawDataRole));
             ctrl->setCurrentState(index.data(tree::WidgetStateRole));
             if(editorInnerRole.isValid()){
                 ctrl->setRole((tree_editor_inner_role)editorInnerRole.toInt());

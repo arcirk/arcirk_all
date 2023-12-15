@@ -103,29 +103,54 @@ QVariant TreeItem::data(int column, int role) const
         if(value.is_null()){
             return QVariant();
         }else if(value.is_array()){
-          auto inner = data(column, tree::WidgetInnerRole);
-          if(inner.isValid()){
-              auto inner_ = (tree::tree_editor_inner_role)inner.toInt();
-              if(inner_ == tree::tree_editor_inner_role::widgetByteArray){
-                  auto disp = data(column, tree::RepresentationRole);
-                  if(disp.isValid())
-                      return disp;
-                  else{
-                      if(value.size() == 0)
-                         return "<null>";
-                      else{
-                         return "<бинарные данные>";
-                      }
-                  }
-              }else{
-                  return "<массив>";
-              }
-          }else
-              return QVariant();
-        }
-        return to_variant(value);
+            auto disp = data(column, tree::RepresentationRole);
+            if(disp.isValid())
+              return disp;
+            else{
+                if(value.size() == 0)
+                   return "<null>";
+                else{
+//                   try {
+//                       auto ba = value.get<ByteArray>();
+//                       const auto raw = reinterpret_cast<arcirk::synchronize::variant_p*>(ba.data());
+//                       //setData(column, raw->representation.c_str(), tree::RepresentationRole);
+//                       return raw->representation.c_str();
+//                   } catch (...) {
+//                   }
+                   return "<бинарные данные>";
+                }
+            }
+//          auto inner = data(column, tree::WidgetInnerRole);
+//          if(inner.isValid()){
+//              auto inner_ = (tree::tree_editor_inner_role)inner.toInt();
+//              if(inner_ == tree::tree_editor_inner_role::widgetByteArray){
+//                  auto disp = data(column, tree::RepresentationRole);
+//                  if(disp.isValid())
+//                      return disp;
+//                  else{
+//                      if(value.size() == 0)
+//                         return "<null>";
+//                      else{
+//                         return "<бинарные данные>";
+//                      }
+//                  }
+//              }else{
+//                  return "<массив>";
+//              }
+//          }else
+//              return QVariant();
+        }else
+            return to_variant(value);
+    }else if(role == tree::RawDataRole){
+        auto value = m_item_data.value(c_name.toStdString(), json{});
+        if(value.is_array()){
+          auto bt = value.get<ByteArray>();
+          const auto ch = reinterpret_cast<char*>(bt.data());
+          return QByteArray(ch, bt.size());
+        }else
+          return QVariant(QByteArray());
     }else if(role >= Qt::UserRole && role <= Qt::UserRole + tree::user_roles_max()){
-        auto itr =m_userData.find(role);
+        auto itr = m_userData.find(role);
         if(itr != m_userData.end())
             if(role == tree::WidgetRole){
                 if(m_widget == tree::item_editor_widget_roles::widgetINVALID)
@@ -165,6 +190,12 @@ bool TreeItem::setData(int column, const QVariant &value, int role)
         auto c_name = m_conf->column_name(column);
         m_item_data[c_name.toStdString()] = to_json(value);
         //validate_text();
+    }else if(role == tree::RawDataRole){
+        auto c_name = m_conf->column_name(column);
+        auto bt = value.toByteArray();
+        ByteArray val{};
+        std::copy(bt.begin(), bt.end(), val.begin());
+        m_item_data[c_name.toStdString()] = val;
     }else if(role >= Qt::UserRole && role <= Qt::UserRole + tree::user_roles_max()){
         if(m_userData.find(role) == m_userData.end()){
                 QList<QVariant> m_vec;
@@ -247,6 +278,20 @@ void TreeItem::set_object(const json &object, bool upgrade_database){
     m_is_group = m_item_data.value("is_group", 0) != 0;
 
     init_ids();
+
+    for (auto itr = m_item_data.items().begin(); itr != m_item_data.items().end(); ++itr) {
+        if(itr.value().is_array()){
+            try {
+                auto ba = itr.value().get<ByteArray>();
+                if(ba.size() > 0){
+                    const auto raw = reinterpret_cast<arcirk::synchronize::variant_p*>(ba.data());
+                    setData(m_conf->column_index(itr.key().c_str()), raw->representation.c_str(), tree::RepresentationRole);
+                }
+            } catch (...) {
+            }
+        }
+    }
+
 #ifdef USE_QUERY_BUILDER_LIB
     if(upgrade_database && m_conf->is_database_changed()){
         if((m_conf->type_connection() == root_tree_conf::sqlIteMemoryConnection ||

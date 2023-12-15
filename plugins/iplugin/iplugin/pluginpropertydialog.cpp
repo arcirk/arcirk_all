@@ -23,6 +23,7 @@ PluginPropertyDialog::PluginPropertyDialog(const json& table, QWidget *parent) :
     model->set_enable_rows_icons(false);
     model->set_user_role_data("value", tree::WidgetRole, tree::widgetVariantRole);
     model->set_user_role_data("key", tree::NotNullRole, true);
+    model->set_table(table);
 
     m_tree->enable_sort(false);
     m_tree->setTableToolBar(m_toolbar);
@@ -39,5 +40,11 @@ PluginPropertyDialog::PluginPropertyDialog(const json& table, QWidget *parent) :
 PluginPropertyDialog::~PluginPropertyDialog()
 {
     delete ui;
+}
+
+json PluginPropertyDialog::result() const
+{
+    auto model = m_tree->get_model();
+    return model->to_table_model(QModelIndex());
 }
 

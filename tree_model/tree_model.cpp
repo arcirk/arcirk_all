@@ -1191,3 +1191,52 @@ void TreeItemModel::set_row_inner_roles(int row, const QMap<QString, tree_editor
         item->setData(i, roles[column_name(i)], WidgetInnerRole);
     }
 }
+
+void TreeItemModel::reset_variant_roles(const QModelIndex& parent)
+{
+    QList<QString> m_keys{};
+
+    auto def = m_conf->user_data_values()[tree::user_role::WidgetRole];
+    for (auto itr = def.begin(); itr != def.end(); ++itr) {
+        auto val = itr.value();
+        if(val.isValid()){
+            if((item_editor_widget_roles)val.toInt() == widgetVariantRole){
+                if(m_keys.indexOf(itr.key()) == -1)
+                    m_keys.append(itr.key());
+            }
+        }
+    }
+
+    for (int i = 0; i < rowCount(parent); ++i) {
+        foreach (auto key, m_keys) {
+            auto k = column_index(key);
+            auto index = this->index(i, k, parent);
+            if(index.isValid()){
+                auto item = getItem(index);
+                auto object = to_object(index);
+                if(object.find(key.toStdString()) != object.end()){
+                    auto val = object[key.toStdString()];
+                    if(val.is_string())
+                        item->setData(k, tree_editor_inner_role::widgetText, WidgetInnerRole);
+                    else if(val.is_number())
+                        item->setData(k, tree_editor_inner_role::widgetInteger, WidgetInnerRole);
+                    else if(val.is_boolean())
+                        item->setData(k, tree_editor_inner_role::widgetBoolean, WidgetInnerRole);
+                    else if(val.is_array()){
+                        tree_editor_inner_role r = tree_editor_inner_role::widgetArray;
+                        try {
+                            ByteArray tmp = val.get<ByteArray>();
+                            r = tree_editor_inner_role::widgetByteArray;
+                        } catch (...) {
+
+                        }
+                        item->setData(k, r, WidgetInnerRole);
+                    }else
+                        item->setData(k, tree_editor_inner_role::widgetNullType, WidgetInnerRole);
+                }
+
+                reset_variant_roles(index);
+            }
+        }
+    }
+}

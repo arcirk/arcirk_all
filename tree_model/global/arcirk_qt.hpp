@@ -35,6 +35,21 @@
 using json = nlohmann::json;
 using namespace arcirk;
 
+enum ref_type_enum{
+    baseLink = 0,
+    fileData,
+    fileLink,
+    stringArray
+};
+
+BOOST_FUSION_DEFINE_STRUCT(
+    (arcirk::tree_model), ref_type,
+    (std::string, uuid)
+    (int, type)
+    (std::string, representation)
+    (ByteArray, data)
+)
+
 #ifndef IS_OS_ANDROID
 BOOST_FUSION_DEFINE_STRUCT(
     (arcirk::tree_model), query_inners_item,
@@ -157,7 +172,8 @@ namespace arcirk::tree {
         WidgetInnerRole = Qt::UserRole + 13,
         UseRole = Qt::UserRole + 14,
         RepresentationRole = Qt::UserRole + 15,
-        EmptyRole = Qt::UserRole + 16
+        RawDataRole = Qt::UserRole + 16,
+        EmptyRole = Qt::UserRole + 17
     };
 
     inline int user_roles_max(){
@@ -185,6 +201,7 @@ namespace arcirk::tree {
         widgetInteger,
         widgetArray,
         widgetNullType,
+        widgetBoolean,
         widgetInnerRoleINVALID=-1
     };
 
@@ -198,6 +215,7 @@ namespace arcirk::tree {
         {widgetInteger, "widgetInteger"}  ,
         {widgetArray, "widgetArray"}  ,
         {widgetNullType, "widgetNullType"}  ,
+        {widgetBoolean, "widgetBoolean"}  ,
     })
 
     enum attribute_use{

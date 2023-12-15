@@ -322,36 +322,49 @@ QList<QWidget *> RowDialog::createVariantBox(const QString &key, const json &val
     if(itr != m_inner_roles.end()){
         control->setRole(itr.value());
     }
-    if(control->role() == widgetFilePath ||
-        control->role() == widgetDirectoryPath ||
-        control->role() == widgetText){
-        if(value.is_string()){
-            control->setText(value.get<std::string>().c_str());
-        }
-    }else if(control->role() == widgetInteger){
-        if(value.is_number()){
-            control->setData(value.get<int>());
-        }
-    }else if(control->role() == widgetByteArray){
-        if(value.is_array() && value.size() > 0){
-            auto itr = m_user_data.find(tree::RepresentationRole);
-            if(itr != m_user_data.end()){
-                auto it = itr.value().find(key);
-                if(it != itr.value().end()){
-                    control->setText(it.value().toString());
-                }else{
-                    control->setText("<бинарные данные>");
-                }
-                auto bt = value.get<ByteArray>();
-                control->setRawData(&bt);
-            }else
-                control->setText("<бинарные данные>");
-        }
-    }else if(control->role() == widgetArray){
-        if(value.is_array() && value.size() > 0){
-            control->setData(QVariant(arcirk::tree::to_string_list(value)));
-        }
-    }
+    control->setData(value);
+
+//    try {
+//        auto ba = value.get<ByteArray>();
+//        if(ba.size() > 0)
+//            control->setRawData(&ba);
+//    } catch (const std::exception& e) {
+//        qCritical() << e.what();
+//    }
+
+//    if(control->role() == widgetFilePath ||
+//        control->role() == widgetDirectoryPath ||
+//        control->role() == widgetText){
+//        if(value.is_string()){
+//            control->setText(value.get<std::string>().c_str());
+//        }
+//    }else if(control->role() == widgetInteger){
+//        if(value.is_number()){
+//            control->setData(value.get<int>());
+//        }
+//    }else if(control->role() == widgetByteArray){
+//        if(value.is_array() && value.size() > 0){
+//            auto ba = value.get<ByteArray>();
+//            control->setRawData(&bt);
+
+////            auto itr = m_user_data.find(tree::RepresentationRole);
+////            if(itr != m_user_data.end()){
+////                auto it = itr.value().find(key);
+////                if(it != itr.value().end()){
+////                    control->setText(it.value().toString());
+////                }else{
+////                    control->setText("<бинарные данные>");
+////                }
+////                auto bt = value.get<ByteArray>();
+////                control->setRawData(&bt);
+////            }else
+////                control->setText("<бинарные данные>");
+//        }
+//    }else if(control->role() == widgetArray){
+//        if(value.is_array() && value.size() > 0){
+//            control->setData(QVariant(arcirk::tree::to_string_list(value)));
+//        }
+//    }
 
     control->setProperty("class", "VariatBox");
     control->setObjectName(key);
@@ -608,39 +621,45 @@ void RowDialog::onTextControlDataChanged()
     }
 }
 
-void RowDialog::onVariantValueChanged(int row, int column, const QVariant &value)
+void RowDialog::onVariantValueChanged(int row, int column, const QVariant& /*value*/)
 {
     auto w = sender();
     if(w){
         auto obj_name = w->objectName();
         auto ctrl = qobject_cast<TreeItemVariant*>(w);
         if(ctrl!=0 && m_data.find(obj_name.toStdString()) != m_data.end()){
-            if(ctrl->role() == widgetFilePath ||
-                ctrl->role() == widgetDirectoryPath ||
-                ctrl->role() == widgetText){
-                m_data[obj_name.toStdString()] = value.toString().toStdString();
-                set_user_data(tree::RepresentationRole, obj_name, ctrl->text());
-            }else if(ctrl->role() == widgetColor){
+            set_user_data(tree::RepresentationRole, obj_name, ctrl->text());
+            auto raw = ctrl->data().toByteArray();
+            auto ba = ByteArray(sizeof(arcirk::synchronize::variant_p));
+            std::copy(raw.begin(), raw.end(), ba.begin());
+            m_data[obj_name.toStdString()] = ba;
 
-            }else if(ctrl->role() == widgetByteArray){
-                ByteArray ba{};
-                if(ctrl->rawData()->size() > 0){
-                    ba = ByteArray(ctrl->rawData()->size());
-                    std::copy(ctrl->rawData()->begin(), ctrl->rawData()->end(), ba.begin());
-                    m_data[obj_name.toStdString()] = ba;
-                }
-                set_user_data(tree::RepresentationRole, obj_name, ctrl->text());
-            }else if(ctrl->role() == widgetInteger){
-                m_data[obj_name.toStdString()] = value.toInt();
-            }else if(ctrl->role() == widgetArray){
-                json m_value = json::array();
-                auto v = value.toStringList();
-                foreach (auto itr, v) {
-                    m_value += itr.toStdString();
-                }
-                m_data[obj_name.toStdString()] = m_value;
-            }else
-                m_data[obj_name.toStdString()] = "";
+//            if(ctrl->role() == widgetFilePath ||
+//                ctrl->role() == widgetDirectoryPath ||
+//                ctrl->role() == widgetText){
+//                m_data[obj_name.toStdString()] = value.toString().toStdString();
+//                set_user_data(tree::RepresentationRole, obj_name, ctrl->text());
+//            }else if(ctrl->role() == widgetColor){
+
+//            }else if(ctrl->role() == widgetByteArray){
+////                ByteArray ba{};
+////                if(ctrl->rawData()->size() > 0){
+////                    ba = ByteArray(ctrl->rawData()->size());
+////                    std::copy(ctrl->rawData()->begin(), ctrl->rawData()->end(), ba.begin());
+////                    m_data[obj_name.toStdString()] = ba;
+////                }
+//                set_user_data(tree::RepresentationRole, obj_name, ctrl->text());
+//            }else if(ctrl->role() == widgetInteger){
+//               // m_data[obj_name.toStdString()] = value.toInt();
+//            }else if(ctrl->role() == widgetArray){
+////                json m_value = json::array();
+////                auto v = value.toStringList();
+////                foreach (auto itr, v) {
+////                    m_value += itr.toStdString();
+////                }
+////                m_data[obj_name.toStdString()] = m_value;
+//            }else
+//                m_data[obj_name.toStdString()] = "";
 
         }
 

@@ -183,6 +183,7 @@ namespace arcirk::tree_model {
         tree_editor_inner_role inner_role(const QModelIndex& index);
         QMap<QString, tree_editor_inner_role> row_inner_roles(int row, const QModelIndex& parent = QModelIndex()) const;
         void set_row_inner_roles(int row, const QMap<QString, tree_editor_inner_role>& roles, const QModelIndex& parent = QModelIndex());
+        void reset_variant_roles(const QModelIndex& parent = QModelIndex());
         //
 
     protected:

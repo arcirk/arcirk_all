@@ -2,7 +2,6 @@
 #define PLUGINPROPERTYDIALOG_H
 
 #include <QDialog>
-//#include <QJsonObject>
 #include "gui/treeviewwidget.h"
 
 namespace Ui {
