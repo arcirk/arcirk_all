@@ -24,3 +24,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 INCLUDEPATH += $$PWD/../../plugins/virtual/facelib
+
+RESOURCES += \
+    test_res.qrc

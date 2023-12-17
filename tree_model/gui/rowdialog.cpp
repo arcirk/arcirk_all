@@ -14,6 +14,7 @@
 #include "treeitemtextline.h"
 #include "treeitemtextedit.h"
 #include "treeitemvariant.h"
+#include <alpaca/alpaca.h>
 
 using namespace arcirk::tree_widget;
 using namespace arcirk::tree::widgets;
@@ -31,7 +32,6 @@ RowDialog::RowDialog(const json& data, User_Data& user_data, QWidget *parent,
     ui->setupUi(this);
 
     m_data = data;
-    //m_user_data = user_data;
     m_aliases = aliases;
     m_parentSynonim = parentSynonim;
     m_parentRef = "";
@@ -95,7 +95,6 @@ void RowDialog::accept()
                 auto ln = (TreeItemTextLine*)w;
                 if(ln->autoMarkIncomplete() && ln->text().isEmpty()){
                     cancel = true;
-                    //emit onError("Ошибка заполнения", QString("Не заполнено поле %1").arg(ln->objectName()));
                     QMessageBox::critical(this, "Ошибка заполнения", QString("Не заполнено поле %1").arg(fieldAlias(ln->objectName())));
                 }
 
@@ -318,10 +317,10 @@ QList<QWidget *> RowDialog::createComboBox(const QString &key, const json &value
 QList<QWidget *> RowDialog::createVariantBox(const QString &key, const json &value)
 {
     auto control = new TreeItemVariant(0,0, this);
-    auto  itr = m_inner_roles.find(key);
-    if(itr != m_inner_roles.end()){
-        control->setRole(itr.value());
-    }
+//    auto  itr = m_inner_roles.find(key);
+//    if(itr != m_inner_roles.end()){
+//        control->setRole(itr.value());
+//    }
     control->setData(value);
 
 //    try {
@@ -378,7 +377,7 @@ QList<QWidget *> RowDialog::createVariantBox(const QString &key, const json &val
     connect(control, &TreeItemVariant::innerRoleChanged, this, &RowDialog::onInnerRoleChanged);
     connect(control, &TreeItemVariant::itemTypeClear, this, &RowDialog::onItemTypeClear);
 
-    control->reset();
+    //control->reset();
 
     return QList<QWidget*>{control, lbl};
 }
@@ -623,6 +622,8 @@ void RowDialog::onTextControlDataChanged()
 
 void RowDialog::onVariantValueChanged(int row, int column, const QVariant& /*value*/)
 {
+    using namespace arcirk::synchronize;
+
     auto w = sender();
     if(w){
         auto obj_name = w->objectName();
@@ -630,37 +631,9 @@ void RowDialog::onVariantValueChanged(int row, int column, const QVariant& /*val
         if(ctrl!=0 && m_data.find(obj_name.toStdString()) != m_data.end()){
             set_user_data(tree::RepresentationRole, obj_name, ctrl->text());
             auto raw = ctrl->data().toByteArray();
-            auto ba = ByteArray(sizeof(arcirk::synchronize::variant_p));
+            auto ba = ByteArray(raw.size());
             std::copy(raw.begin(), raw.end(), ba.begin());
             m_data[obj_name.toStdString()] = ba;
-
-//            if(ctrl->role() == widgetFilePath ||
-//                ctrl->role() == widgetDirectoryPath ||
-//                ctrl->role() == widgetText){
-//                m_data[obj_name.toStdString()] = value.toString().toStdString();
-//                set_user_data(tree::RepresentationRole, obj_name, ctrl->text());
-//            }else if(ctrl->role() == widgetColor){
-
-//            }else if(ctrl->role() == widgetByteArray){
-////                ByteArray ba{};
-////                if(ctrl->rawData()->size() > 0){
-////                    ba = ByteArray(ctrl->rawData()->size());
-////                    std::copy(ctrl->rawData()->begin(), ctrl->rawData()->end(), ba.begin());
-////                    m_data[obj_name.toStdString()] = ba;
-////                }
-//                set_user_data(tree::RepresentationRole, obj_name, ctrl->text());
-//            }else if(ctrl->role() == widgetInteger){
-//               // m_data[obj_name.toStdString()] = value.toInt();
-//            }else if(ctrl->role() == widgetArray){
-////                json m_value = json::array();
-////                auto v = value.toStringList();
-////                foreach (auto itr, v) {
-////                    m_value += itr.toStdString();
-////                }
-////                m_data[obj_name.toStdString()] = m_value;
-//            }else
-//                m_data[obj_name.toStdString()] = "";
-
         }
 
     }

@@ -21,6 +21,7 @@ private slots:
     void onSelectPlugin();
     void onTextChanged(const QString& value);
     void onDialogBoxClicked(QAbstractButton * button);
+    void onBtnParamClicked();
 
 private:
     Ui::MainDialog *ui;

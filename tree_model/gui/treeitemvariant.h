@@ -4,9 +4,7 @@
 #ifndef IS_OS_ANDROID
 #include "treeitemwidget.h"
 #include <QWidget>
-#include <QLabel>
-#include <QLineEdit>
-#include <QSpinBox>
+#include <QHBoxLayout>
 
 namespace arcirk::tree::widgets {
     class TreeItemVariant : public TreeItemWidget
@@ -20,42 +18,51 @@ namespace arcirk::tree::widgets {
         void setChecked(bool value) override;
         void setText(const QString& text) override;
         QString text() const override;
-        QVariant currentState() const override{return m_current_state;};
+        QVariant currentState() const override{return m_raw.role;};
         void setCurrentState(const QVariant& state) override;
-        void setRole(tree_editor_inner_role role) override {
-            m_role = role;            
-            emit innerRoleChanged(row(), column(), m_role);
-        };
+        void setRole(tree_editor_inner_role role) override;
 
         void setData(const QVariant& data);
         void setData(const json& data);
         QVariant data();
-        void setRawData(ByteArray * data);
-        //ByteArray *rawData();
-
         void enableLabelFrame(bool value);
-
-        void reset();
+        void update();
 
     private:
-        QLabel* m_label;
-        QLineEdit* m_text;
-        QToolButton * m_sel_type;
-        QToolButton * m_selelect;
-        QToolButton * m_save;
-        QToolButton * m_erase;
-        QSpinBox * m_integer;
-        QVariant m_current_state;
+        bool m_label_frame;
+        QWidget* m_current_widget;
         QVariant m_current_value;
-        QStringList m_list;
-        //ByteArray m_raw_data;
+        QMenu* m_current_menu;
+        QHBoxLayout * m_hbox;
+
         arcirk::synchronize::variant_p m_raw;
-
-
-        void reset_state(const QString& state);
         void generateRaw(const std::string& rep, ByteArray* data = {});
 
-//
+        void createEditor();
+        QWidget *createEditorNull();
+        QWidget *createEditorLabel(bool save);
+        QWidget *createEditorTextLine();
+        QWidget *createEditorTextBox();
+        QWidget *createEditorNumber();
+
+        void setControlType();
+
+
+        void clearLayout(QLayout* layout, bool deleteWidgets = true)
+        {
+            while (QLayoutItem* item = layout->takeAt(0))
+            {
+                QWidget* widget;
+                if (  (deleteWidgets)
+                    && (widget = item->widget())  ) {
+                    delete widget;
+                }
+                if (QLayout* childLayout = item->layout()) {
+                    clearLayout(childLayout, deleteWidgets);
+                }
+                delete item;
+            }
+        }
 
     private slots:
         void onMenuItemClicked();
@@ -64,6 +71,7 @@ namespace arcirk::tree::widgets {
         void onEraseClicked();
         void onSpinChanged(int value);
         void onTextChanged(const QString& value);
+        void onTextEditChanged();
 
     };
 }

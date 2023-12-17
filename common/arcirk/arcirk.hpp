@@ -77,12 +77,32 @@ namespace arcirk::synchronize {
 }
 
 
-BOOST_FUSION_DEFINE_STRUCT(
-    (arcirk::synchronize), variant_p,
-    (std::string, representation)
-    (int, type)
-    (ByteArray, data)
-)
+//BOOST_FUSION_DEFINE_STRUCT(
+//    (arcirk::synchronize), variant_p,
+//    (std::string, representation)
+//    (int, type)
+//    (int, role)
+//    (ByteArray, data)
+//)
+
+namespace arcirk::synchronize {
+    struct variant_p{
+        std::string representation;
+        int  type;
+        int role;
+        ByteArray data;
+    };
+
+    inline variant_p variant_p_(){
+        auto v = variant_p();
+        v.representation = "";
+        v.data = {};
+        v.type = 0;
+        v.role = 0;
+        return v;
+    }
+}
+
 
 BOOST_FUSION_DEFINE_STRUCT(
     (arcirk::http), http_param,

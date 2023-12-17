@@ -192,10 +192,6 @@ void TreeItemDelegate::setEditorData(QWidget *editor, const QModelIndex &index) 
                 return QStyledItemDelegate::setEditorData(editor, index);
             }
             ctrl->setData(index.data(tree::RawDataRole));
-            ctrl->setCurrentState(index.data(tree::WidgetStateRole));
-            if(editorInnerRole.isValid()){
-                ctrl->setRole((tree_editor_inner_role)editorInnerRole.toInt());
-            }
         }else
             return QStyledItemDelegate::setEditorData(editor, index);
     }else
@@ -210,10 +206,8 @@ void TreeItemDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, 
 
     auto editorType = index.data(tree::WidgetRole);
     if(editorType.isValid()){
-        tree::item_editor_widget_roles t_editor = (tree::item_editor_widget_roles)editorType.toInt();//json(editorType.toInt()).get<item_editor_widget_roles>();
+        tree::item_editor_widget_roles t_editor = (tree::item_editor_widget_roles)editorType.toInt();
         if(t_editor == tree::widgetComboBoxRole){
-            //QComboBox* comboBox = qobject_cast<QComboBox*>(editor);
-            //TreeComboBoxWidget* comboBox = qobject_cast<TreeComboBoxWidget*>(editor);
             TreeItemComboBox* comboBox = qobject_cast<TreeItemComboBox*>(editor);
             if (comboBox) {
                 model->setData(index, comboBox->text());
@@ -221,7 +215,6 @@ void TreeItemDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, 
             }else
                 return QStyledItemDelegate::setModelData(editor, model, index);
         }else if(t_editor == tree::widgetTextLineRole){
-            //TreeItemTextLine* edit = qobject_cast<TextLineWidget*>(editor);
             TreeItemTextLine* edit = qobject_cast<TreeItemTextLine*>(editor);
             if (!edit) {
                 return QStyledItemDelegate::setModelData(editor, model, index);
@@ -243,7 +236,6 @@ void TreeItemDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, 
             }
             disconnect(edit);
         }else if(t_editor == tree::widgetCheckBoxRole){
-            //TreeCheckBoxWidget* checkBox = qobject_cast<TreeCheckBoxWidget*>(editor);
             TreeItemCheckBox* checkBox = qobject_cast<TreeItemCheckBox*>(editor);
             if (!checkBox) {
                 return QStyledItemDelegate::setModelData(editor, model, index);
@@ -268,7 +260,6 @@ void TreeItemDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, 
             if (!ctrl) {
                 return QStyledItemDelegate::setModelData(editor, model, index);
             }
-            //qDebug() << __FUNCTION__ << "widgetVariantRole";
             model_->setData(index, ctrl->currentState(), tree::WidgetStateRole);
             model_->setData(index, ctrl->data());
         }else

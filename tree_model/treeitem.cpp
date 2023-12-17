@@ -5,6 +5,8 @@
 #include <QSqlError>
 #endif
 
+#include <alpaca/alpaca.h>
+
 using namespace arcirk::tree_model;
 
 TreeItem::TreeItem(const json &data, TreeItem *parent)
@@ -284,8 +286,11 @@ void TreeItem::set_object(const json &object, bool upgrade_database){
             try {
                 auto ba = itr.value().get<ByteArray>();
                 if(ba.size() > 0){
-                    const auto raw = reinterpret_cast<arcirk::synchronize::variant_p*>(ba.data());
-                    setData(m_conf->column_index(itr.key().c_str()), raw->representation.c_str(), tree::RepresentationRole);
+                    std::error_code ec;
+                    const auto raw = alpaca::deserialize<arcirk::synchronize::variant_p>(ba, ec);
+                    if (!ec) {
+                        setData(m_conf->column_index(itr.key().c_str()), raw.representation.c_str(), tree::RepresentationRole);
+                    }
                 }
             } catch (...) {
             }

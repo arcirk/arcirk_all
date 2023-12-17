@@ -1,5 +1,5 @@
 <RCC>
     <qresource prefix="/">
-        <file>res/org_from_pay.bsl</file>
+        <file>img/options.png</file>
     </qresource>
 </RCC>

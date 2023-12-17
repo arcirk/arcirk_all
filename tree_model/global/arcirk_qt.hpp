@@ -193,28 +193,30 @@ namespace arcirk::tree {
     };
 
     enum tree_editor_inner_role{
+        widgetNullType,
         widgetFilePath,
         widgetDirectoryPath,
         widgetColor,
         widgetText,
+        widgetMultiText,
         widgetByteArray,
         widgetInteger,
         widgetArray,
-        widgetNullType,
         widgetBoolean,
         widgetInnerRoleINVALID=-1
     };
 
     NLOHMANN_JSON_SERIALIZE_ENUM(tree_editor_inner_role, {
         {widgetInnerRoleINVALID, nullptr}    ,
+        {widgetNullType, "widgetNullType"}  ,
         {widgetFilePath, "widgetFilePath"}  ,
         {widgetDirectoryPath, "widgetDirectoryPath"}  ,
         {widgetColor, "widgetColor"}  ,
         {widgetText, "widgetText"}  ,
+        {widgetMultiText, "widgetMultiText"}  ,
         {widgetByteArray, "widgetByteArray"}  ,
         {widgetInteger, "widgetInteger"}  ,
         {widgetArray, "widgetArray"}  ,
-        {widgetNullType, "widgetNullType"}  ,
         {widgetBoolean, "widgetBoolean"}  ,
     })
 
@@ -442,6 +444,7 @@ namespace arcirk::tree_model{
 
             return result;
     }
+
 #ifdef BOOST_SERIALIZATION
     class data_ref
     {

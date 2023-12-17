@@ -20,6 +20,7 @@ MainDialog::MainDialog(QWidget *parent)
     connect(ui->btnSelect, &QToolButton::clicked, this, &MainDialog::onSelectPlugin);
     connect(ui->lineEdit, &QLineEdit::textChanged, this, &MainDialog::onTextChanged);
     connect(ui->buttonBox, &QDialogButtonBox::clicked, this, &MainDialog::onDialogBoxClicked);
+    connect(ui->btnParam, &QToolButton::clicked, this, &MainDialog::onBtnParamClicked);
 
     QSettings settings("TestPlugin", "Star Test");
 
@@ -45,15 +46,18 @@ void MainDialog::onBtnCreateClicked()
             QMessageBox::critical(this, "Ошибка", "Файл плагина не существует!");
             return;
         }
-        QPluginLoader loader(f.fileName());
-        QObject *obj = loader.instance();
+        auto loader = new QPluginLoader(f.fileName(), this);
+        QObject *obj = loader->instance();
         IAIPlugin* plugin
             = qobject_cast<IAIPlugin*>(obj);
         if(plugin){
-            if(plugin->editParam(this)){
-                loader.unload();
-            }
+            if(!plugin->accept())
+                QMessageBox::critical(this, "Ошибка", plugin->lastError());
+            else
+                QMessageBox::information(this, "Ошибка", "Обработка успешно завершена!");
+            loader->unload();
         }
+        delete loader;
     } catch (const std::exception& e) {
         qCritical() << e.what();
     }
@@ -77,5 +81,31 @@ void MainDialog::onDialogBoxClicked(QAbstractButton *button)
 {
     if(button == ui->buttonBox->button(QDialogButtonBox::Close))
         QApplication::exit();
+}
+
+
+void MainDialog::onBtnParamClicked()
+{
+    using namespace arcirk::plugins;
+    try {
+        QFile f(ui->lineEdit->text());
+        if(!f.exists()){
+            QMessageBox::critical(this, "Ошибка", "Файл плагина не существует!");
+            return;
+        }
+        auto loader = new QPluginLoader(f.fileName(), this);
+        QObject *obj = loader->instance();
+        IAIPlugin* plugin
+            = qobject_cast<IAIPlugin*>(obj);
+        if(plugin){
+            if(plugin->editParam(this)){
+                loader->unload();
+            }
+        }
+        delete loader;
+    } catch (const std::exception& e) {
+        qCritical() << e.what();
+    }
+
 }
 
