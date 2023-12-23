@@ -4,6 +4,8 @@
 #include <QFileDialog>
 #include <QUuid>
 #include <QFileInfo>
+#include <QMessageBox>
+#include "facelib.h"
 
 DialogTask::DialogTask(arcirk::services::task_options& task_data, QWidget *parent) :
     QDialog(parent),
@@ -11,14 +13,14 @@ DialogTask::DialogTask(arcirk::services::task_options& task_data, QWidget *paren
     task_data_(task_data)
 {
     ui->setupUi(this);
+
     if(task_data_.uuid.empty()){
         task_data_.uuid = QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();
         //task_data_.ref = task_data_.uuid;
     }
     ui->name->setText(task_data.name.c_str());
     ui->synonum->setText(task_data.synonum.c_str());
-    //ui->start_task->set
-    //ui->end_task->setText(task_data.name.c_str());
+
     ui->allowed->setCheckState(task_data.allowed ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
     ui->predefined->setCheckState(task_data.predefined ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
     ui->days_of_week->setText(task_data.days_of_week.c_str());
@@ -42,7 +44,9 @@ DialogTask::DialogTask(arcirk::services::task_options& task_data, QWidget *paren
     ui->cmbScriptType->setCurrentIndex(task_data_.type_script);
 
     connect(ui->btnSelectPlugin, &QToolButton::clicked, this, &DialogTask::onBtnSelectPluginClicked);
+    connect(ui->btnSave, &QToolButton::clicked, this, &DialogTask::onBtnSavePluginClicked);
     connect(ui->cmbScriptType, &QComboBox::currentIndexChanged, this, &DialogTask::onCmbScriptTypeCurrentIndexChanged);
+    connect(ui->btnPluginParam, &QToolButton::clicked, this, &DialogTask::onOpenParamDialog);
 }
 
 DialogTask::~DialogTask()
@@ -70,20 +74,105 @@ void DialogTask::onBtnSelectPluginClicked()
     if(task_data_.type_script == 1){
         auto result = QFileDialog::getOpenFileName(this, "Выбор файла", "", "Биллиотека (*.dll)");
         if(!result.isEmpty()){
-//            ui->script->setText(result);
-            ByteArray res{};
-            arcirk::read_file(result.toStdString(), task_data_.script);
-//            auto test = pre::json::to_json(task_data_);
-//            qDebug() << arcirk::type_string(test["script"]).c_str();
+            task_data_.script = ByteArray();
+            m_plugin_file = result;
             QFileInfo f(result);
             ui->script->setText(f.fileName());
         }
     }
 }
 
+void DialogTask::onBtnSavePluginClicked()
+{
+
+}
+
 
 void DialogTask::onCmbScriptTypeCurrentIndexChanged(int index)
 {
     task_data_.type_script = index;
+}
+
+void DialogTask::onOpenParamDialog()
+{
+    openParamDialog();
+}
+
+void DialogTask::openParamDialog()
+{
+    if(task_data_.type_script == 1){
+        if(ui->script->text().isEmpty())
+            return;
+        QPath p(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+        p /= "plugins";
+        p /= QString(task_data_.uuid.c_str());
+
+        QDir dir(p.path());
+        if(!dir.exists())
+            dir.mkpath(p.path());
+
+        p /= ui->script->text();
+
+
+
+        if(!p.exists()){
+            if(QMessageBox::question(this, "Параметры плагина", "Для настройки параметров требуется установить плагин на текущий компьютер. Продолжить?") == QMessageBox::No)
+                return;
+            QPath path(QString("html\\client_data\\plugins"));
+            path /= QString(task_data_.uuid.c_str());
+            path /= ui->script->text();
+
+            auto param = json::object({
+                {"file_name", path.path().toStdString()}
+            });
+
+            emit doInstallPlugin(param, task_data_.uuid);
+        }else{
+            using namespace arcirk::plugins;
+            try {
+                auto loader = new QPluginLoader(p.path(), this);
+                QObject *obj = loader->instance();
+                IAIPlugin* plugin
+                    = qobject_cast<IAIPlugin*>(obj);
+                if(plugin){
+                    if(task_data_.param.size() > 0){
+                        plugin->setParam(arcirk::byte_array_to_string(task_data_.param).c_str());
+                    }
+                    if(plugin->editParam(this)){
+                        auto param_t = arcirk::string_to_byte_array(plugin->param().toStdString());
+                        task_data_.param = ByteArray(param_t.size());
+                        std::copy(param_t.begin(), param_t.end(), task_data_.param.begin());
+                    }
+                    loader->unload();
+                }
+                delete loader;
+            } catch (const std::exception& e) {
+                qCritical() << e.what();
+            }
+
+        }
+    }
+}
+
+void DialogTask::onEndInstallPlugin(const QString& file_name)
+{
+    using namespace arcirk::plugins;
+    try {
+        auto loader = new QPluginLoader(file_name, this);
+        QObject *obj = loader->instance();
+        IAIPlugin* plugin
+            = qobject_cast<IAIPlugin*>(obj);
+        if(plugin){
+            if(plugin->editParam(this)){
+                auto param_t = arcirk::string_to_byte_array(plugin->param().toStdString());
+                task_data_.param = ByteArray(param_t.size());
+                std::copy(param_t.begin(), param_t.end(), task_data_.param.begin());
+            }
+            loader->unload();
+        }
+        delete loader;
+    } catch (const std::exception& e) {
+        qCritical() << e.what();
+    }
 }
 

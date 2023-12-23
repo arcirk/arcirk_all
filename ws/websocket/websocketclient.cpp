@@ -259,10 +259,12 @@ void WebSocketClient::parse_response(const QString &resp)
                 QString usr_info = QByteArray::fromBase64(msg.result.data());
                 client_param_ = parse_client_param(result.toStdString());
                 auto user_info_ = json::parse(usr_info.toStdString());
+                server_conf_.ServerUserHash = user_info_["hash"].get<std::string>();
                 m_currentSession = QUuid::fromString(QString::fromStdString(client_param_.session_uuid));
                 m_currentUserUuid = QUuid::fromString(QString::fromStdString(client_param_.user_uuid));
                 doConnectionSuccess();
                 doConnectionChanged(true);
+
                 emit userInfo(user_info_);
             }else{
                 doDisplayError("SetClientParam", "Ошибка авторизации");
@@ -275,10 +277,6 @@ void WebSocketClient::parse_response(const QString &resp)
                 //update_server_configuration("davService", msg.result);
         }else if(msg.command == arcirk::enum_synonym(arcirk::server::server_commands::ExecuteSqlQuery)){
             emit serverResponse(msg);
-//            if(msg.result != "error")
-//                //parse_exec_query_result(msg);
-//            else
-//                emit displayError("ExecuteSqlQuery", QString::fromStdString(msg.message));
         }else if(msg.command == arcirk::enum_synonym(arcirk::server::server_commands::SyncGetDiscrepancyInData)){
             emit syncGetDiscrepancyInData(msg);
         }
@@ -326,7 +324,7 @@ void WebSocketClient::doConnectionChanged(bool state)
     emit connectionChanged(state);
 }
 
-nlohmann::json WebSocketClient::exec_http_query(const std::string &command, const nlohmann::json &param, const ByteArray& data)
+nlohmann::json WebSocketClient::exec_http_query(const std::string &command, const nlohmann::json &param, const ByteArray& data, bool returnAllMessage)
 {
 
     QEventLoop loop;
@@ -396,11 +394,17 @@ nlohmann::json WebSocketClient::exec_http_query(const std::string &command, cons
          return WS_RESULT_ERROR;
     }
 
+    if(returnAllMessage){
+        if(json::accept(httpData.toStdString())){
+            return json::parse(httpData.toStdString());
+        }else
+            return WS_RESULT_ERROR;
+    }
+
     auto msg = pre::json::from_json<arcirk::server::server_response>(httpData.toStdString());
 
     if(msg.result.empty())
         return {};
-
     try {
         if(msg.result != WS_RESULT_ERROR){
             if(msg.result != WS_RESULT_SUCCESS){

@@ -24,7 +24,8 @@ RowDialog::RowDialog(const json& data, User_Data& user_data, QWidget *parent,
                      const QList<QString>& invisible,
                      const QList<QString>& order,
                      const QString& parentSynonim,
-                     const QMap<QString, tree_editor_inner_role>& inner_roles) :
+                     const QMap<QString, tree_editor_inner_role>& inner_roles,
+                     const QString& path) :
     QDialog(parent),
     ui(new Ui::RowDialog),
     m_user_data(user_data)
@@ -58,7 +59,12 @@ RowDialog::RowDialog(const json& data, User_Data& user_data, QWidget *parent,
         m_data["ref"] = generate_uuid().toStdString();
     }
 
-    createControls(invisible, order);
+    auto count = createControls(invisible, order);
+
+    if(is_group){
+        auto control = createPathBox(path);
+        addWidget("path_lbl", count + 1, control, true);
+    }
 
     auto btn = ui->buttonBox->button(QDialogButtonBox::Cancel);
     if(btn)
@@ -106,7 +112,7 @@ void RowDialog::accept()
         return QDialog::accept();
 }
 
-void RowDialog::createControls(const QList<QString>& invisible, const QList<QString>& order)
+int RowDialog::createControls(const QList<QString>& invisible, const QList<QString>& order)
 {
     auto items = m_data.items();
     QList<QString> m_columns;
@@ -154,6 +160,8 @@ void RowDialog::createControls(const QList<QString>& invisible, const QList<QStr
                 w->setVisible(false);
         }
     }
+
+    return row;
 }
 
 QList<QWidget *> RowDialog::createControl(const QString &key, const json &value)
@@ -317,53 +325,8 @@ QList<QWidget *> RowDialog::createComboBox(const QString &key, const json &value
 QList<QWidget *> RowDialog::createVariantBox(const QString &key, const json &value)
 {
     auto control = new TreeItemVariant(0,0, this);
-//    auto  itr = m_inner_roles.find(key);
-//    if(itr != m_inner_roles.end()){
-//        control->setRole(itr.value());
-//    }
     control->setData(value);
 
-//    try {
-//        auto ba = value.get<ByteArray>();
-//        if(ba.size() > 0)
-//            control->setRawData(&ba);
-//    } catch (const std::exception& e) {
-//        qCritical() << e.what();
-//    }
-
-//    if(control->role() == widgetFilePath ||
-//        control->role() == widgetDirectoryPath ||
-//        control->role() == widgetText){
-//        if(value.is_string()){
-//            control->setText(value.get<std::string>().c_str());
-//        }
-//    }else if(control->role() == widgetInteger){
-//        if(value.is_number()){
-//            control->setData(value.get<int>());
-//        }
-//    }else if(control->role() == widgetByteArray){
-//        if(value.is_array() && value.size() > 0){
-//            auto ba = value.get<ByteArray>();
-//            control->setRawData(&bt);
-
-////            auto itr = m_user_data.find(tree::RepresentationRole);
-////            if(itr != m_user_data.end()){
-////                auto it = itr.value().find(key);
-////                if(it != itr.value().end()){
-////                    control->setText(it.value().toString());
-////                }else{
-////                    control->setText("<бинарные данные>");
-////                }
-////                auto bt = value.get<ByteArray>();
-////                control->setRawData(&bt);
-////            }else
-////                control->setText("<бинарные данные>");
-//        }
-//    }else if(control->role() == widgetArray){
-//        if(value.is_array() && value.size() > 0){
-//            control->setData(QVariant(arcirk::tree::to_string_list(value)));
-//        }
-//    }
 
     control->setProperty("class", "VariatBox");
     control->setObjectName(key);
@@ -379,6 +342,15 @@ QList<QWidget *> RowDialog::createVariantBox(const QString &key, const json &val
 
     //control->reset();
 
+    return QList<QWidget*>{control, lbl};
+}
+
+QList<QWidget*> RowDialog::createPathBox(const QString &path)
+{
+    auto control = new QLabel(this);
+    control->setText(path);
+    auto lbl = new QLabel(this);
+    lbl->setText("Путь:");
     return QList<QWidget*>{control, lbl};
 }
 

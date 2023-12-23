@@ -81,6 +81,7 @@ Boost_USE_STATIC_LIBS = ON
 #windows:LIBS += -lbcrypt
 
 INCLUDEPATH += $(BOOST_INCLDUE)
+INCLUDEPATH += $$PWD/../plugins/virtual/facelib
 
 CONFIG(debug, debug|release) {
     LIBS += -LC:/lib/vcpkg/installed/x64-windows/debug/lib -lboost_locale-vc140-mt-gd -lfmtd

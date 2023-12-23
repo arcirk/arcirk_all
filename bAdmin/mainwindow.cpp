@@ -216,6 +216,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 
     connect(treeView, &TreeViewWidget::doubleClicked, this, &MainWindow::onTreeViewDoubleClicked);
+    connect(treeView, &TreeViewWidget::addTreeItem, this, &MainWindow::onAddTreeItem);
 
 }
 
@@ -328,6 +329,98 @@ void MainWindow::connectionChanged(bool state)
     set_enable_form(state);
 }
 
+void MainWindow::onSavePluginFile(const QString &uuidUser, const QString &fileName)
+{
+    //сохраняем файл на сервер
+    QFile f(fileName);
+    if(!f.exists()){
+         displayError("Ошибка", "Файл плагина не найден!");
+         return;
+    }
+    ByteArray data{};
+    arcirk::read_file(fileName.toStdString(), data);
+    if(data.size() > 0){
+         QString destantion  = QString("html\\client_data\\plugins\\%1").arg(uuidUser);
+         QFileInfo inf(fileName);
+         json param{
+             {"destantion", destantion.toUtf8().toBase64().toStdString()},
+             {"file_name", inf.fileName().toStdString()}
+         };
+         auto resp = m_client->exec_http_query(arcirk::enum_synonym(arcirk::server::server_commands::CreateDirectories), param);
+         resp = m_client->exec_http_query(arcirk::enum_synonym(arcirk::server::server_commands::DownloadFile), param, data);
+         if(resp == WS_RESULT_ERROR)
+            displayError("Ошибка", "Ошибка копирования файла на сервер!");
+         else{
+            if(resp.is_object()){
+                trayShowMessage("Файл успешно загружен на сервер!");
+            }
+         }
+    }
+
+}
+
+void MainWindow::onAddTreeItem(const QModelIndex &index, const json &data)
+{
+    auto model = treeView->get_model();
+    if(model->server_object() == arcirk::server::ProfileDirectory){
+         auto index = model->find(QUuid::fromString(data["ref"].get<std::string>().c_str()));
+         if(index.isValid()){
+            if(data["is_group"].get<int>() == 1){
+                QString destantion  = QDir::toNativeSeparators(model->path(index));
+                json param{
+                    {"destantion", destantion.toUtf8().toBase64().toStdString()},
+                };
+                auto resp = m_client->exec_http_query(arcirk::enum_synonym(arcirk::server::server_commands::CreateDirectories), param);
+                if(resp == WS_RESULT_ERROR)
+                    displayError("Ошибка", "Ошибка создания каталога на сервере!");
+                else{
+                    trayShowMessage("Каталог успешно создан на севрвере!");
+                }
+            }
+         }
+    }
+}
+
+void MainWindow::onInstallPlugin(const json &param, const std::string& ref)
+{
+
+    infoIco->setVisible(true);
+    infoIco->movie()->start();
+    infoBar->setText("Загрузка файла с сервера ...");
+    auto result = m_client->exec_http_query(arcirk::enum_synonym(arcirk::server::server_commands::UploadFile), param, {}, true);
+    if(result != WS_RESULT_ERROR){
+         infoBar->setText("Установка ...");
+         try {
+            ByteArray bt = result["data"].get<ByteArray>();
+            if(bt.size() == 0)
+                displayError("Ошибка", "Ошибка данных плагина!");
+            else{
+                QPath p(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+                p /= "plugins";
+                p /= QString(ref.c_str());
+
+                QDir dir(p.path());
+                if(!dir.exists())
+                    dir.mkpath(p.path());
+
+                QFileInfo fs(param["file_name"].get<std::string>().c_str());
+                p /= fs.fileName();
+
+                arcirk::write_file(p.path().toStdString(), bt);
+                trayShowMessage("Плагин успешно установлен!");
+                emit doEndInstallPlugin(p.path());
+            }
+         } catch (const std::exception& e) {
+            qCritical() << e.what();
+         }
+    }else
+         displayError("Ошибка", "Ошибка получения файла плагина!");
+
+    infoIco->setVisible(false);
+    infoIco->movie()->stop();
+    infoBar->setText(QString("Подключен: %1 (%2)").arg(m_client->conf().server_host.c_str(), m_client->server_conf().ServerName.c_str()));
+}
+
 
 void MainWindow::formControl()
 {
@@ -437,10 +530,11 @@ void MainWindow::serverResponse(const arcirk::server::server_response &message)
         }
     }else if(command == server_commands::ProfileDeleteFile){
         if(message.message == "OK"){
-            QMessageBox::information(this, "Удаление файла", "Файл успешно удален!");
-            auto model = get_model();// (TreeItemModel*)ui->treeView->model();
-            model->clear();
+//            QMessageBox::information(this, "Удаление файла", "Файл успешно удален!");
+//            auto model = get_model();// (TreeItemModel*)ui->treeView->model();
+//            model->clear();
             //model->fetchRoot("ProfileDirectory");
+            QMessageBox::information(this, "Удаление файла", "Добавить обработчик!");
         }else if(message.message == "error"){
             QMessageBox::critical(this, "Удаление файла", "Ошибка удаения файла!");
         }
@@ -1560,6 +1654,7 @@ void MainWindow::createModels()
 
             model->set_connection(root_tree_conf::typeConnection::serverDirectorias,
                                   http_conf(m_client->http_url().toString().toStdString(), m_client->conf().hash, "ProfileDirectory"));
+            model->set_user_role_data("size", tree::user_role::UseRole, tree::attribute_use::forItem);
         }else
             model = new TreeItemModel(this);
             //model = new TreeItemModel(m_client->conf(), this);
@@ -2110,6 +2205,8 @@ void MainWindow::onTreeViewDoubleClicked(const QModelIndex &index_)
     using json = nlohmann::json;
     using namespace arcirk::server;
 
+    //qDebug() << model->path(index);
+
     try {
         if(model->server_object() == arcirk::server::DatabaseUsers){
             auto object = model->to_object(index);
@@ -2222,6 +2319,9 @@ void MainWindow::onTreeViewDoubleClicked(const QModelIndex &index_)
             dlg.exec();
             if(dlg.result() == QDialog::Accepted){
                 model->set_object(index, pre::json::to_json(obj));
+                if(!dlg.currentScript().isEmpty()){
+                    onSavePluginFile(NIL_STRING_UUID, dlg.currentScript());
+                }
                 auto arr_service = model->to_array(index.parent());
                 json param{};
                 param["task_options"] = arr_service;
@@ -2610,21 +2710,48 @@ void MainWindow::onBtnDeleteClicked()
     auto object = model->to_object(index);
 
     if(model->server_object() == server_objects::ProfileDirectory){
-
-        int ind = model->column_index("path");
-        auto file_path = model->index(index.row(), ind, index.parent()).data().toString();
-        auto file_name = model->index(index.row(), 0, index.parent()).data().toString();
-        auto result = QMessageBox::question(this, "Удаление файла", QString("Удалить файл %1").arg(file_name));
-
-        if(result == QMessageBox::Yes) {
-            json param{
-                    {"file_name", file_path.toStdString()}
-            };
-            auto command = arcirk::enum_synonym(arcirk::server::server_commands::ProfileDeleteFile);
-            auto resp = m_client->exec_http_query(command, param);
-            if (resp.get<std::string>() == "success")
-                model->remove(index);
+        auto path = model->path(index);
+        auto object_name = object["name"].get<std::string>();
+        if(!path.isEmpty()){
+            if(!model->is_group(index)){
+                auto result = QMessageBox::question(this, "Удаление файла", QString("Удалить файл %1").arg(object_name.c_str()));
+                if(result == QMessageBox::Yes) {
+                    json param{
+                        {"destantion", path.toUtf8().toBase64().toStdString()}
+                    };
+                    auto command = arcirk::enum_synonym(arcirk::server::server_commands::bDeleteFile);
+                    auto resp = m_client->exec_http_query(command, param);
+                    if (resp == WS_RESULT_SUCCESS)
+                        model->remove(index);
+                }
+            }else{
+                auto result = QMessageBox::question(this, "Удаление файла", QString("Удалить каталог %1").arg(object_name.c_str()));
+                if(result == QMessageBox::Yes) {
+                    json param{
+                        {"destantion", path.toUtf8().toBase64().toStdString()}
+                    };
+                    auto command = arcirk::enum_synonym(arcirk::server::server_commands::DeleteDirectory);
+                    auto resp = m_client->exec_http_query(command, param);
+                    if (resp == WS_RESULT_SUCCESS)
+                        model->remove(index);
+                }
+            }
         }
+
+//        int ind = model->column_index("path");
+//        auto file_path = model->index(index.row(), ind, index.parent()).data().toString();
+//        auto file_name = model->index(index.row(), 0, index.parent()).data().toString();
+//        auto result = QMessageBox::question(this, "Удаление файла", QString("Удалить файл %1").arg(file_name));
+
+//        if(result == QMessageBox::Yes) {
+//            json param{
+//                    {"file_name", file_path.toStdString()}
+//            };
+//            auto command = arcirk::enum_synonym(arcirk::server::server_commands::ProfileDeleteFile);
+//            auto resp = m_client->exec_http_query(command, param);
+//            if (resp.get<std::string>() == "success")
+//                model->remove(index);
+//        }
     }else if(model->server_object() == server_objects::DatabaseUsers){
         int ind = model->column_index("first");
         int indRef = model->column_index("ref");
@@ -3097,6 +3224,8 @@ void MainWindow::onBtnAddGroupClicked()
                 model->add(obj, parent);
             }
         }
+    }else if(model->server_object() == arcirk::server::ProfileDirectory){
+        treeView->openNewGroupDialog();
     }
 
 }
@@ -3644,7 +3773,10 @@ void MainWindow::onBtnEditCacheClicked()
         connect(this, &MainWindow::certUserContainers, &dlg, &DialogCertUserCache::onContainers);
         connect(this, &MainWindow::availableCertificates, &dlg, &DialogCertUserCache::onAvailableCertificates);
         connect(&dlg, &DialogCertUserCache::selectCertificate, this, &MainWindow::onSelectCertificate);
+        connect(&dlg, &DialogCertUserCache::doSavePluginFile, this, &MainWindow::onSavePluginFile);
+        connect(&dlg, &DialogCertUserCache::doInstallPlugin, this, &MainWindow::onInstallPlugin);
         connect(this, &MainWindow::selectCertificate, &dlg, &DialogCertUserCache::onSelectCertificate);
+        connect(this, &MainWindow::doEndInstallPlugin, &dlg, &DialogCertUserCache::onEndInstallPlugin);
 
         dlg.setModal(true);
         dlg.exec();

@@ -39,6 +39,7 @@ TreeViewWidget::TreeViewWidget(QWidget *parent, const QString& typeName)
     m_toolBar = nullptr;
     m_inners_dialogs = false;
     m_only_groups_in_root = false;
+    m_add_group_in_root_only = false;
 
     setProperty("typeName", typeName);
 
@@ -370,9 +371,13 @@ void TreeViewWidget::openNewGroupDialog()
                 m_parent_name = obj.value("name", "").c_str();
         }
     }
+    QString path = "/";
+    if(current_index.isValid())
+        path = model->path(current_index);
+
     auto dlg = RowDialog(row_data, m_udata, this, model->columns_aliases(), QList<QString>{"data_type", "_id", "path"},
                          model->columns_order(),
-                         m_parent_name);
+                         m_parent_name, {}, path);
     dlg.setIcon(model->rows_icon(item_icons_enum::ItemGroup));
     if(dlg.exec()){
         auto data = dlg.data();

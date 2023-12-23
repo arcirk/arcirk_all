@@ -169,6 +169,10 @@ namespace arcirk::server{
         GetChannelToken,
         IsChannel,
         GetDatabaseStructure,
+        Run1CScript,
+        CreateDirectories,
+        DeleteDirectory,
+        bDeleteFile,
         CMD_INVALID=-1,
     };
 
@@ -215,6 +219,10 @@ namespace arcirk::server{
         {GetChannelToken, "GetChannelToken"}    ,
         {IsChannel, "IsChannel"}    ,
         {GetDatabaseStructure, "GetDatabaseStructure"}    ,
+        {Run1CScript, "Run1CScript"}    ,
+        {CreateDirectories, "CreateDirectories"}    ,
+        {DeleteDirectory, "DeleteDirectory"}    ,
+        {bDeleteFile, "DeleteFile"}    ,
     });
 
 
@@ -305,7 +313,7 @@ public:
     void send_message(const std::string &receiver, const std::string &message,
                       const json &param = {});
 
-    json exec_http_query(const std::string& command, const json& param, const ByteArray& data = {});
+    json exec_http_query(const std::string& command, const json& param, const ByteArray& data = {}, bool returnAllMessage = false);
     static json http_query(const QUrl& ws, const QString& token, const std::string& command, const json& param, const ByteArray& data = {});
 
     QByteArray exec_http_query_get(const std::string& command, const json& param);

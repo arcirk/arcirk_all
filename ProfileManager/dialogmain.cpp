@@ -36,8 +36,9 @@
 #include <QLineEdit>
 #include <QPluginLoader>
 #include <QTabWidget>
-#include <plugins/bankArhive/bankarhiveinterface.h>
-#include "taskparamdialog.h"
+#include <QMovie>
+#include "facelib.h"
+//#include "taskparamdialog.h"
 
 
 namespace arcirk::cryptography {
@@ -135,7 +136,14 @@ DialogMain::DialogMain(QWidget *parent)
 
     m_client->set_system_user(current_user->user_name());
 
+    infoIco = new QLabel(this);
+    auto mv = new QMovie(":/img/animation_loaded.gif");
+    mv->setScaledSize(QSize(16,16));
+    infoIco->setMovie(mv);
+    infoIco->setMaximumHeight(16);
+    infoIco->setVisible(false);
     infoBar = new QLabel(this);
+    ui->statusbar->addWidget(infoIco);
     ui->statusbar->addWidget(infoBar);
     infoBar->setText("Не подключен");
 
@@ -147,13 +155,7 @@ DialogMain::DialogMain(QWidget *parent)
 
     createDynamicMenu();
 
-    auto buttons = ui->buttonBox->buttons();
-    foreach (auto btn, buttons) {
-        if(btn->text() == "Close")
-            btn->setText("Закрыть");
-        else if(btn->text() == "Save")
-            btn->setText("Сохранить и\nзакрыть");
-    }
+    ui->buttonBox->button(QDialogButtonBox::Save)->setText("Закрыть");
 
     mozillaApp = new QProcess(this);
 
@@ -191,7 +193,7 @@ DialogMain::DialogMain(QWidget *parent)
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &DialogMain::onButtonBoxAccepted);
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &DialogMain::onButtonBoxRejected);
     connect(ui->tabCrypt, &QTabWidget::tabBarClicked, this, &DialogMain::onTabCryptTabBarClicked);
-
+    connect(ui->btnInstallPlugin, &QToolButton::clicked, this, &DialogMain::onBtnInstallBpugin);
 }
 
 void DialogMain::createTrayActions()
@@ -789,7 +791,7 @@ void DialogMain::displayError(const QString &what, const QString &err)
 void DialogMain::connectionSuccess()
 {
     qDebug() << __FUNCTION__;
-    current_user->read_database_cache(m_client->url(), m_client->client_server_param().hash.c_str());
+    current_user->read_database_cache(m_client->url(), m_client->server_conf().ServerUserHash.c_str());
     reset_data();
 
 }
@@ -945,6 +947,7 @@ void DialogMain::read_mstsc_param()
     treeViewMstsc->hideColumn(model->column_index("reset_user"));
     treeViewMstsc->hideColumn(model->column_index("not_full_window"));
     treeViewMstsc->hideColumn(model->column_index("def_port"));
+    treeViewMstsc->hideColumn(model->column_index("is_group"));
 
 }
 
@@ -1002,8 +1005,7 @@ void DialogMain::read_mpl_options()
 
     treeViewMpl->enable_sort(false);
     treeViewMpl->setModel(model);
-    treeViewMpl->hideColumn(model->column_index("ref"));
-    treeViewMpl->hideColumn(model->column_index("parent"));
+    treeViewMpl->hide_default_columns();
     update_mpl_items_icons();
 
 }
@@ -1689,12 +1691,16 @@ void DialogMain::onTasksButtonClick()
         auto task = services::task_options();
         task.uuid = QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();
         task.name = "Новая задача 1";
-        //task.ref = task.uuid;
-        //task.parent = NIL_STRING_UUID;
+
         auto dlg = DialogTask(task, this);
+        connect(&dlg, &DialogTask::doInstallPlugin, this, &DialogMain::onBtnInstallBpuginPrivate);
+        connect(this, &DialogMain::doEndInstallPlugin, &dlg, &DialogTask::onEndInstallPlugin);
         if(dlg.exec() == QDialog::Accepted){
             auto model = (ITree<services::task_options>*)treeTasks->get_model();
             model->add_struct(task);
+            if(!dlg.currentScript().isEmpty()){
+                onSavePluginFile(current_user->cert_user_data().ref.c_str(), dlg.currentScript());
+            }
         }
     }else if(btn->objectName() == "btnTaskEdit"){
         auto index = treeTasks->current_index();
@@ -1702,9 +1708,13 @@ void DialogMain::onTasksButtonClick()
         auto model = (ITree<services::task_options>*)treeTasks->get_model();
         auto task = model->object(index);
         auto dlg = DialogTask(task, this);
+        connect(&dlg, &DialogTask::doInstallPlugin, this, &DialogMain::onBtnInstallBpuginPrivate);
+        connect(this, &DialogMain::doEndInstallPlugin, &dlg, &DialogTask::onEndInstallPlugin);
         if(dlg.exec() == QDialog::Accepted){
-            //auto model = (ITree<services::task_options>*)treeTasks->get_model();
             model->set_struct(task, index);
+            if(!dlg.currentScript().isEmpty()){
+                onSavePluginFile(current_user->cert_user_data().ref.c_str(), dlg.currentScript());
+            }
         }
     }
 }
@@ -2792,6 +2802,7 @@ void DialogMain::read_tasks_param()
     treeTasks->hideColumn(model->column_index("days_of_week"));
     treeTasks->hideColumn(model->column_index("uuid"));
     treeTasks->hideColumn(model->column_index("name"));
+    treeTasks->hideColumn(model->column_index("is_group"));
 
 }
 
@@ -2951,15 +2962,11 @@ void DialogMain::create_tasks_model()
         qMakePair("script", "Скрипт"),
         qMakePair("comment", "Комментарий"),
         qMakePair("predefined", "Предопределенное"),
+        qMakePair("script_synonum", "Представление скрипта"),
+        qMakePair("type_script", "Тип скрипта"),
     });
     model->set_enable_rows_icons(false);
     model->set_columns_order(QList<QString>{"allowed", "synonum", "start_task", "end_task", "interval"});
-//    //model->set_widget("allowed", item_editor_widget_roles::widgetCheckBoxRole);
-//    auto delegate = new TreeItemDelegate(true, ui->treeTasks);
-//    ui->treeTasks->setItemDelegate(delegate);
-//    ui->treeTasks->setEditTriggers(QAbstractItemView::AllEditTriggers);
-//    ui->treeTasks->setIndentation(0);
-//    model->reset();
     treeTasks->setModel(model);
 
     connect(ui->btnTaskAdd, &QToolButton::clicked, this, &DialogMain::onTasksButtonClick);
@@ -2972,16 +2979,8 @@ void DialogMain::create_tasks_model()
     auto header = treeTasks->header();
     header->resizeSection(0, 20);
     header->setSectionResizeMode(0, QHeaderView::Fixed);
-}
 
-json DialogMain::plugin_param(const QString &plugin_path)
-{
-//    try {
-//        QPluginLoader loader(plugin_path);
-
-//    } catch (...) {
-//    }
-    return {};
+    treeTasks->hideColumn(model->column_index("reset_version"));
 }
 
 void DialogMain::onBtnTaskStartClicked()
@@ -3017,39 +3016,24 @@ void DialogMain::onBtnTaskStartClicked()
             QMessageBox::critical(this, "Ошибка", "Файл плагина не найден!");
             return;
         }
-        QPluginLoader loader(f.fileName());
-        if( loader.load() ) {
-            qDebug() << "Плагин загружен";
-            QObject *obj = loader.instance();
-            IPlugin* plugin
-                = qobject_cast<IPlugin*>(obj);
+        using namespace arcirk::plugins;
+        try {
+            auto loader = new QPluginLoader(f.fileName(), this);
+            QObject *obj = loader->instance();
+            IAIPlugin* plugin
+                = qobject_cast<IAIPlugin*>(obj);
             if(plugin){
-                json param = json::object();
-                param["destantion"] = "\\\\192.168.10.11\\обмен\\Отдел ИТ\\Борисоглебский\\temp\\";
-                param["host"] = m_client->http_url().toString().toStdString();
-                param["token"] = m_client->token().toStdString();
-                plugin->setParam(param.dump().c_str());
-                if(plugin->isValid()){
-                    plugin->accept();
-                }
-//                auto res = pluginIF->readData();
-//                if(res.size() > 0){
-//                    auto r = param_bank();
-//                    r.fromRaw(res);
-//                    const void* poTemp = (const void*)res->constData();
-//                    const param_bank* poStruct = static_cast< const param_bank* >(poTemp);
-//                    qDebug() << poStruct->fiels.size();
-//                    foreach (auto itr, poStruct->fiels) {
-//                        qDebug() << itr.size();
-//                    }
-//                }
+                if(!plugin->accept())
+                    QMessageBox::critical(this, "Ошибка", plugin->lastError());
+                else
+                    QMessageBox::information(this, "Ошибка", "Обработка успешно завершена!");
+                loader->unload();
             }
-        }else{
-            qDebug() << "Ошибка загрузки плагина" << loader.errorString();
+            delete loader;
+        } catch (const std::exception& e) {
+            qCritical() << e.what();
         }
-        loader.unload();
     }
-
 }
 
 
@@ -3068,41 +3052,64 @@ void DialogMain::onBtnTaskDeleteClicked()
 
 void DialogMain::onBtnParamClicked()
 {
-
     auto index = treeTasks->current_index();
     if(!index.isValid()){
         QMessageBox::critical(this, "Ошибка", "Не выбран элемент!");
         return;
     }
-//    auto model = (ITreeTasksModel*)treeTasks->get_model();
 
-    auto struct_task_param = json::object();
-//    auto object = model->object(index);
-
-//    if(!object.param.empty()){
-//        auto p = QByteArray::fromBase64(object.param.data());
-//        if(json::accept(p.toStdString())){
-//            struct_task_param = json::parse(p.toStdString());
+    auto model = (ITreeTasksModel*)treeTasks->get_model();
+    auto object = model->object(index);
+    if(object.type_script == 1){
+        QPath p(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+        p /= "plugins";
+        p /= QString(object.uuid.c_str());
+        p /= QString(object.script_synonum.c_str());
+//        QString plugin_name = object.script_synonum.c_str();
+//        if(plugin_name.isEmpty()){
+//            QMessageBox::critical(this, "Ошибка", "Не указан файл плагина!");
+//            return;
 //        }
-//    }else{
-//        if(object.type_script == 1){
-//            QPluginLoader loader(object.script.c_str());
-//            if( loader.load() ) {
-//                qDebug() << "Плагин загружен";
-//                QObject *obj = loader.instance();
-//                IPlugin* plugin
-//                    = qobject_cast<IPlugin*>(obj);
-//                struct_task_param = json::parse(plugin->param());
-//                loader.unload();
+//        QString file = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/plugins/" + plugin_name;
+//        if(!QDir(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/plugins").exists())
+//            QDir().mkpath(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/plugins");
+//        if(!QFile::exists(file)){
+//            if(object.script.size() == 0){
+//                QMessageBox::critical(this, "Ошибка", "Плагин не загружен!");
+//                return;
+//            } else{
+//                arcirk::write_file(file.toStdString(), object.script);
 //            }
 //        }
-//    }
 
-    auto dlg = TaskParamDialog(struct_task_param, this);
-    if(dlg.exec() == QDialog::Accepted){
-//        struct_task_param = dlg.dialog_result();
-//        object.param = QByteArray(struct_task_param.dump().data()).toBase64().toStdString();
-//        model->set_struct(object, index);
+        QFile f(p.path());
+        if(!f.exists()){
+            QMessageBox::critical(this, "Ошибка", "Файл плагина не найден!");
+            return;
+        }
+        using namespace arcirk::plugins;
+        try {
+            auto loader = new QPluginLoader(f.fileName(), this);
+            QObject *obj = loader->instance();
+            IAIPlugin* plugin
+                = qobject_cast<IAIPlugin*>(obj);
+            if(plugin){
+                if(object.param.size() > 0){
+                    plugin->setParam(arcirk::byte_array_to_string(object.param).c_str());
+                }
+                if(plugin->editParam(this)){
+                    //qDebug() << plugin->param();
+                    auto bt = arcirk::string_to_byte_array(plugin->param().toStdString());
+                    object.param = ByteArray(bt.size());
+                    std::copy(bt.begin(), bt.end(), object.param.begin());
+                    model->set_struct(object, index);
+                }
+                loader->unload();
+            }
+            delete loader;
+        } catch (const std::exception& e) {
+            qCritical() << e.what();
+        }
     }
 
 }
@@ -3118,10 +3125,126 @@ void DialogMain::onTreeTaskDoubleClicked(const QModelIndex &index)
         auto model = (ITree<services::task_options>*)treeTasks->get_model();
         auto task = model->object(index_);
         auto dlg = DialogTask(task, this);
+        connect(&dlg, &DialogTask::doInstallPlugin, this, &DialogMain::onBtnInstallBpuginPrivate);
+        connect(this, &DialogMain::doEndInstallPlugin, &dlg, &DialogTask::onEndInstallPlugin);
         if(dlg.exec() == QDialog::Accepted){
             model->set_struct(task, index_);
+            if(!dlg.currentScript().isEmpty()){
+                onSavePluginFile(current_user->cert_user_data().ref.c_str(), dlg.currentScript());
+            }
         }
     }
 
 }
 
+void DialogMain::onSavePluginFile(const QString &uuidUser, const QString &fileName)
+{
+    //сохраняем файл на сервер
+    QFile f(fileName);
+    if(!f.exists()){
+        displayError("Ошибка", "Файл плагина не найден!");
+        return;
+    }
+    ByteArray data{};
+    arcirk::read_file(fileName.toStdString(), data);
+    if(data.size() > 0){
+        QString destantion  = QString("html\\client_data\\plugins\\%1").arg(uuidUser);
+        QFileInfo inf(fileName);
+        json param{
+            {"destantion", destantion.toUtf8().toBase64().toStdString()},
+            {"file_name", inf.fileName().toStdString()}
+        };
+        auto resp = m_client->exec_http_query(arcirk::enum_synonym(arcirk::server::server_commands::CreateDirectories), param);
+        resp = m_client->exec_http_query(arcirk::enum_synonym(arcirk::server::server_commands::DownloadFile), param, data);
+        if(resp == WS_RESULT_ERROR)
+            displayError("Ошибка", "Ошибка копирования файла на сервер!");
+        else{
+            if(resp.is_object()){
+                trayShowMessage("Файл успешно загружен на сервер!");
+            }
+        }
+    }
+
+}
+
+void DialogMain::onInstallPlugin(const json &param, const std::string& ref)
+{
+
+    infoIco->setVisible(true);
+    infoIco->movie()->start();
+    infoBar->setText("Загрузка файла с сервера ...");
+    auto result = m_client->exec_http_query(arcirk::enum_synonym(arcirk::server::server_commands::UploadFile), param, {}, true);
+    if(result != WS_RESULT_ERROR){
+         infoBar->setText("Установка ...");
+         try {
+            ByteArray bt = result["data"].get<ByteArray>();
+            if(bt.size() == 0)
+                displayError("Ошибка", "Ошибка данных плагина!");
+            else{
+                QPath p(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+                p /= "plugins";
+                p /= QString(ref.c_str());
+
+                QDir dir(p.path());
+                if(!dir.exists())
+                    dir.mkpath(p.path());
+
+                QFileInfo fs(param["file_name"].get<std::string>().c_str());
+                p /= fs.fileName();
+
+                if(p.exists())
+                    QFile::remove(p.path());
+
+                arcirk::write_file(p.path().toStdString(), bt);
+                trayShowMessage("Плагин успешно установлен!");
+                emit doEndInstallPlugin(p.path());
+            }
+         } catch (const std::exception& e) {
+            qCritical() << e.what();
+         }
+    }else
+         displayError("Ошибка", "Ошибка получения файла плагина!");
+
+    infoIco->setVisible(false);
+    infoIco->movie()->stop();
+    infoBar->setText(QString("Подключен: %1 (%2)").arg(m_client->conf().server_host.c_str(), m_client->server_conf().ServerName.c_str()));
+}
+
+void DialogMain::onBtnInstallBpuginPrivate(const json &param, const std::string &ref)
+{
+    onInstallPlugin(param, ref);
+}
+
+void DialogMain::onEndInstallPlugin(const QString &file_name)
+{
+    emit doEndInstallPlugin(file_name);
+}
+
+void DialogMain::onBtnInstallBpugin()
+{
+    auto model = (ITree<services::task_options>*)treeTasks->get_model();
+    auto index = treeTasks->current_index();
+    if(!index.isValid()){
+         QMessageBox::critical(this, "Ошибка", "Не выбрана строка!");
+         return;
+    }
+
+    auto obj = model->object(index);
+    if(obj.type_script !=1){
+         QMessageBox::critical(this, "Ошибка", "Не верный тип скрипта!");
+         return;
+    }
+
+    if(QMessageBox::question(this, "Установка", "Установить плагин текущему пользователю?") == QMessageBox::No)
+         return;
+
+    QPath path(QString("html\\client_data\\plugins"));
+    path /= QString(current_user->cert_user_data().ref.c_str());
+    path /= QString(obj.script_synonum.c_str());
+
+    auto param = json::object({
+        {"file_name", path.path().toStdString()}
+    });
+
+    onInstallPlugin(param, obj.uuid);
+}

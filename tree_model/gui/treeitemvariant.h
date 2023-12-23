@@ -44,6 +44,7 @@ namespace arcirk::tree::widgets {
         QWidget *createEditorTextLine();
         QWidget *createEditorTextBox();
         QWidget *createEditorNumber();
+        QWidget *createBooleanBox();
 
         void setControlType();
 
@@ -72,6 +73,7 @@ namespace arcirk::tree::widgets {
         void onSpinChanged(int value);
         void onTextChanged(const QString& value);
         void onTextEditChanged();
+        void onCurrentIndexChanged(int row, int col, int index);
 
     };
 }

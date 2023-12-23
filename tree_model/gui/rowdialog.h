@@ -21,7 +21,9 @@ namespace arcirk::tree_widget {
         explicit RowDialog(const json& data, User_Data& user_data,
                            QWidget *parent = nullptr, const QMap<QString, QString>& aliases = {},
                            const QList<QString>& invisible = {}, const QList<QString>& order = {},
-                           const QString& parentSynonim = "", const QMap<QString, tree_editor_inner_role>& inner_roles = {});
+                           const QString& parentSynonim = "",
+                           const QMap<QString, tree_editor_inner_role>& inner_roles = {},
+                           const QString& path = "");
         ~RowDialog();
 
         json data();
@@ -43,7 +45,7 @@ namespace arcirk::tree_widget {
         bool is_new_element;
         QMap<QString, tree_editor_inner_role> m_inner_roles;
 
-        void createControls(const QList<QString>& invisible = {}, const QList<QString>& order = {});
+        int createControls(const QList<QString>& invisible = {}, const QList<QString>& order = {});
         QList<QWidget*> createControl(const QString& key, const json& value);
         QList<QWidget*> createEditor(const QString& key, item_editor_widget_roles role, const json& value);
         QString fieldAlias(const QString& field);
@@ -54,6 +56,8 @@ namespace arcirk::tree_widget {
         QList<QWidget*> createTextEdit(const QString& key, const json& value);
         QList<QWidget*> createComboBox(const QString& key, const json& value);
         QList<QWidget*> createVariantBox(const QString& key, const json& value);
+        QList<QWidget*> createPathBox(const QString& path);
+
         item_editor_widget_roles widgetRole(const QString& key);
         bool widgetNotNull(const QString& key);
         QVariant widgetExtRole(const QString& key);

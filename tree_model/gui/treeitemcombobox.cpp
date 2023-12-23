@@ -41,6 +41,11 @@ QString TreeItemComboBox::text() const
     return m_combo->currentText();
 }
 
+void TreeItemComboBox::setModel(PairModel *model)
+{
+    m_combo->setModel(model);
+}
+
 void TreeItemComboBox::addItems(const QStringList &lst)
 {
     m_combo->addItems(lst);
@@ -49,6 +54,11 @@ void TreeItemComboBox::addItems(const QStringList &lst)
 void TreeItemComboBox::setCurrentIndex(int index)
 {
     m_combo->setCurrentIndex(index);
+}
+
+QVariant TreeItemComboBox::data(int index) const
+{
+    return m_combo->currentData();
 }
 
 void TreeItemComboBox::onCurrentIndexChanged(int index)

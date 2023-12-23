@@ -1,6 +1,7 @@
 QT += gui widgets
 QT += core
 QT += network
+QT += pdf
 
 TEMPLATE = lib
 DEFINES += BANKARHIVE_LIBRARY

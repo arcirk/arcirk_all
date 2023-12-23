@@ -539,6 +539,17 @@ void TreeItemModel::reset_sql_table()
 
 }
 
+void TreeItemModel::get_path(const QModelIndex &index, int column, QString &current)
+{
+    auto item = getItem(index);
+    if(item == rootItem)
+        return;
+    if(item->childCount() > 0)
+        current.insert(0, "/");
+    current.insert(0, item->data(column).toString());
+    get_path(index.parent(), column, current);
+}
+
 json TreeItemModel::to_array(const QModelIndex &parent, bool childs, bool group_only) const
 {
 
@@ -1239,4 +1250,19 @@ void TreeItemModel::reset_variant_roles(const QModelIndex& parent)
             }
         }
     }
+}
+
+QString TreeItemModel::path(const QModelIndex &index, int column)
+{
+    if(column < 0 || column >= columnCount())
+        return "/";
+
+    auto item = getItem(index);
+
+    if(item == rootItem)
+        return "/";
+
+    QString result;
+    get_path(index, column, result);
+    return result;
 }

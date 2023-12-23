@@ -220,6 +220,20 @@
         </widget>
        </item>
        <item>
+        <widget class="QToolButton" name="btnPluginParam">
+         <property name="text">
+          <string>...</string>
+         </property>
+         <property name="icon">
+          <iconset resource="pm_resurses.qrc">
+           <normaloff>:/img/options.png</normaloff>:/img/options.png</iconset>
+         </property>
+         <property name="autoRaise">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QToolButton" name="btnSavePlugin">
          <property name="text">
           <string>...</string>

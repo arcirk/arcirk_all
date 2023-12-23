@@ -152,6 +152,78 @@ inline QStringList sqlite_types_qt = {"INTEGER",
     "CHAR"
 };
 
+struct QPath
+{
+    QPath(const QString& p) {
+        m_patch = p;
+    }
+
+    QString path() const{
+        return m_patch;
+    }
+    QPath& operator +=(const QString& v){
+        m_patch.append(v);
+        return *this;;
+    }
+
+    QPath& operator /=(const QString& v){
+        m_patch.append(QDir::fromNativeSeparators(QDir::separator()));
+        m_patch.append(v);
+        return *this;
+    }
+//    QPath& operator /=(const std::string& v){
+//        m_patch.append(QDir::fromNativeSeparators(QDir::separator()));
+//        m_patch.append(v.c_str());
+//        return *this;
+//    }
+    QPath& operator /=(char* v){
+        m_patch.append(QDir::fromNativeSeparators(QDir::separator()));
+        m_patch.append(v);
+        return *this;
+    }
+
+    QPath& operator =(const QFile& f){
+        m_patch = f.fileName();
+        return *this;
+    }
+
+    QPath& operator =(const std::string& f){
+        m_patch = f.c_str();
+        return *this;
+    }
+
+    const QPath& operator <<(const QString& v){
+        if(v != QDir::separator())
+            m_patch.append(QDir::separator());
+        m_patch.append(v);
+        return *this;
+    }
+
+    bool exists() const{
+        QFileInfo f(m_patch);
+        return f.exists();
+    }
+
+    bool isDir(){
+        QFileInfo f(m_patch);
+        return f.isDir();
+    }
+
+    bool isFile(){
+        QFileInfo f(m_patch);
+        return f.isFile();
+    }
+
+    bool mkpath(){
+        QDir d(m_patch);
+        return d.mkpath(m_patch);
+    }
+
+private:
+    QString m_patch;
+
+};
+
 
 namespace arcirk::tree {
 

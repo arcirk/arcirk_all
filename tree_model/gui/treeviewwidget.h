@@ -85,11 +85,17 @@ namespace arcirk::tree_widget {
 
         void currentChanged(const QModelIndex &current, const QModelIndex &previous) override;
 
-        void add_group_in_root_only(bool value){m_add_group_in_root_only = value;};;
+        void add_group_in_root_only(bool value){m_add_group_in_root_only = value;};
 
         void hide_default_columns();
 
         void close_editor();
+
+        void openNewItemDialog();
+        void openNewGroupDialog();
+        void openOpenEditDialog();
+        void openOpenMoveToDialog();
+        void deleteItemCommand();
 
     protected:
         void mousePressEvent(QMouseEvent *event) override;
@@ -119,11 +125,7 @@ namespace arcirk::tree_widget {
         void performDrag();
         int text_width(int column, const QModelIndex& parent, const int& result = 0);
 
-        void openNewItemDialog();
-        void openNewGroupDialog();
-        void openOpenEditDialog();
-        void openOpenMoveToDialog();
-        void deleteItemCommand();
+
         void addRow();
         void editRow();
         void moveUp();

@@ -18,11 +18,7 @@
 #include "commandline.h"
 #include "dialogtask.h"
 #include "taskparamdialog.h"
-
-//#include "tableviewdelegate.h"
-//#include "tree/treesortmodel.h"
-//#include "tree/treeitemdelegate.h"
-//#include "tree_model.h"
+#include "facelib.h"
 
 DialogCertUserCache::DialogCertUserCache(arcirk::database::cert_users& obj, TreeItemModel * users_model,
                                          const QString& def_url, QWidget *parent) :
@@ -101,7 +97,7 @@ DialogCertUserCache::DialogCertUserCache(arcirk::database::cert_users& obj, Tree
     connect(ui->txtServerUser, &QLineEdit::editingFinished, this, &DialogCertUserCache::onTxtServerUserEditingFinished);
     connect(ui->btnClear, &QToolButton::clicked, this, &DialogCertUserCache::onBtnClearClicked);
     connect(ui->tabCrypt, &QTabWidget::tabBarClicked, this, &DialogCertUserCache::onTabCryptTabBarClicked);
-
+    connect(ui->btnInstallPlugin, &QToolButton::clicked, this, &DialogCertUserCache::onBtnInstallBpugin);
 }
 
 DialogCertUserCache::~DialogCertUserCache()
@@ -933,6 +929,40 @@ void DialogCertUserCache::doSelectDatabaseUser()
     emit selectDatabaseUser();
 }
 
+void DialogCertUserCache::onBtnInstallBpugin()
+{
+    auto model = (ITree<services::task_options>*)treeTasks->get_model();
+    auto index = treeTasks->current_index();
+    if(!index.isValid()){
+        QMessageBox::critical(this, "Ошибка", "Не выбрана строка!");
+        return;
+    }
+
+    auto obj = model->object(index);
+    if(obj.type_script !=1){
+        QMessageBox::critical(this, "Ошибка", "Не верный тип скрипта!");
+        return;
+    }
+
+    if(QMessageBox::question(this, "Установка", "Установить плагин текущему пользователю?") == QMessageBox::No)
+        return;
+
+    QPath path(QString("html\\client_data\\plugins"));
+    path /= QString(object.ref.c_str());
+    path /= QString(obj.script_synonum.c_str());
+
+    auto param = json::object({
+        {"file_name", path.path().toStdString()}
+    });
+
+    emit doInstallPlugin(param, obj.uuid);
+}
+
+void DialogCertUserCache::onBtnInstallBpuginPrivate(const json &param, const std::string &ref)
+{
+    emit doInstallPlugin(param, ref);
+}
+
 void DialogCertUserCache::onSelectDatabaseUser(const json &user)
 {
     emit setSelectDatabaseUser(user);
@@ -949,21 +979,23 @@ void DialogCertUserCache::onAvailableCertificates(const json &table)
 
 void DialogCertUserCache::onSelectCertificate(const json cert)
 {
-    qDebug() << __FUNCTION__; // << cert.dump().c_str();
+    qDebug() << __FUNCTION__;
 
     auto cert_ = arcirk::secure_serialization<arcirk::database::certificates_view>(cert, __FUNCTION__);
-    auto model = treeAvailableCerts->get_model(); //(TreeItemModel*)ui->treeAvailableCerts->model();
+    auto model = treeAvailableCerts->get_model();
     if(!model){
-//        auto sort_model = new TreeSortModel(this);
         model = new TreeItemModel(this);
-//        sort_model->setSourceModel(model);
     }
     if(model->rowCount(QModelIndex()) == 0){
         auto table = arcirk::table_from_row(cert);
         model->set_table(table);
-        //ui->treeAvailableCerts->setModel(model);
     }else
         model->add(cert);
+}
+
+void DialogCertUserCache::onEndInstallPlugin(const QString &file_name)
+{
+    emit doEndInstallPlugin(file_name);
 }
 
 
@@ -1532,12 +1564,17 @@ void DialogCertUserCache::onTasksButtonClick()
         auto task = services::task_options();
         task.uuid = QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();
         task.name = "Новая задача 1";
-        //task.ref = task.uuid;
-        //task.parent = NIL_STRING_UUID;
+
         auto dlg = DialogTask(task, this);
+        connect(&dlg, &DialogTask::doInstallPlugin, this, &DialogCertUserCache::onBtnInstallBpuginPrivate);
+        connect(this, &DialogCertUserCache::doEndInstallPlugin, &dlg, &DialogTask::onEndInstallPlugin);
+
         if(dlg.exec() == QDialog::Accepted){
             auto model = (ITree<services::task_options>*)treeTasks->get_model();
             model->add_struct(task);
+            if(!dlg.currentScript().isEmpty()){
+                emit doSavePluginFile(object.ref.c_str(), dlg.currentScript());
+            }
         }
     }else if(btn->objectName() == "btnTaskEdit"){
         auto index = treeTasks->current_index();
@@ -1545,9 +1582,14 @@ void DialogCertUserCache::onTasksButtonClick()
         auto model = (ITree<services::task_options>*)treeTasks->get_model();
         auto task = model->object(index);
         auto dlg = DialogTask(task, this);
+        connect(&dlg, &DialogTask::doInstallPlugin, this, &DialogCertUserCache::onBtnInstallBpuginPrivate);
+        connect(this, &DialogCertUserCache::doEndInstallPlugin, &dlg, &DialogTask::onEndInstallPlugin);
+
         if(dlg.exec() == QDialog::Accepted){
-            //auto model = (ITree<services::task_options>*)treeTasks->get_model();
             model->set_struct(task, index);
+            if(!dlg.currentScript().isEmpty()){
+                emit doSavePluginFile(object.ref.c_str(), dlg.currentScript());
+            }
         }
     }
 }
@@ -1710,37 +1752,59 @@ void DialogCertUserCache::onBtnParamClicked()
         QMessageBox::critical(this, "Ошибка", "Не выбран элемент!");
         return;
     }
-    //    auto model = (ITreeTasksModel*)treeTasks->get_model();
 
-    auto struct_task_param = json::object();
-    //    auto object = model->object(index);
+    auto model = (ITree<services::task_options>*)treeTasks->get_model();
+    auto task_data_ = model->object(index);
+    if(task_data_.type_script == 1){
+        if(task_data_.script_synonum.empty())
+            return;
+        QPath p(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+        p /= "plugins";
+        p /= QString(task_data_.uuid.c_str());
 
-    //    if(!object.param.empty()){
-    //        auto p = QByteArray::fromBase64(object.param.data());
-    //        if(json::accept(p.toStdString())){
-    //            struct_task_param = json::parse(p.toStdString());
-    //        }
-    //    }else{
-    //        if(object.type_script == 1){
-    //            QPluginLoader loader(object.script.c_str());
-    //            if( loader.load() ) {
-    //                qDebug() << "Плагин загружен";
-    //                QObject *obj = loader.instance();
-    //                IPlugin* plugin
-    //                    = qobject_cast<IPlugin*>(obj);
-    //                struct_task_param = json::parse(plugin->param());
-    //                loader.unload();
-    //            }
-    //        }
-    //    }
+        QDir dir(p.path());
+        if(!dir.exists())
+            dir.mkpath(p.path());
 
-    auto dlg = TaskParamDialog(struct_task_param, this);
-    if(dlg.exec() == QDialog::Accepted){
-        //        struct_task_param = dlg.dialog_result();
-        //        object.param = QByteArray(struct_task_param.dump().data()).toBase64().toStdString();
-        //        model->set_struct(object, index);
+        p /= task_data_.script_synonum.c_str();
+
+        if(!p.exists()){
+            if(QMessageBox::question(this, "Параметры плагина", "Для настройки параметров требуется установить плагин на текущий компьютер. Продолжить?") == QMessageBox::No)
+                return;
+            QPath path(QString("html\\client_data\\plugins"));
+            path /= QString(task_data_.uuid.c_str());
+            path /= task_data_.script_synonum.c_str();
+
+            auto param = json::object({
+                {"file_name", path.path().toStdString()}
+            });
+
+            emit doInstallPlugin(param, task_data_.uuid);
+        }else{
+            using namespace arcirk::plugins;
+            try {
+                auto loader = new QPluginLoader(p.path(), this);
+                QObject *obj = loader->instance();
+                IAIPlugin* plugin
+                    = qobject_cast<IAIPlugin*>(obj);
+                if(plugin){
+                    if(task_data_.param.size() > 0){
+                        plugin->setParam(arcirk::byte_array_to_string(task_data_.param).c_str());
+                    }
+                    if(plugin->editParam(this)){
+                        auto param_t = plugin->param();
+                        task_data_.param = ByteArray(param_t.size());
+                        std::copy(param_t.begin(), param_t.end(), task_data_.param.begin());
+                    }
+                    loader->unload();
+                }
+                delete loader;
+            } catch (const std::exception& e) {
+                qCritical() << e.what();
+            }
+
+        }
     }
-
 }
 
 void DialogCertUserCache::onTreeTaskDoubleClicked(const QModelIndex &index)
@@ -1754,8 +1818,13 @@ void DialogCertUserCache::onTreeTaskDoubleClicked(const QModelIndex &index)
         auto model = (ITree<services::task_options>*)treeTasks->get_model();
         auto task = model->object(index_);
         auto dlg = DialogTask(task, this);
+        connect(&dlg, &DialogTask::doInstallPlugin, this, &DialogCertUserCache::onBtnInstallBpuginPrivate);
+        connect(this, &DialogCertUserCache::doEndInstallPlugin, &dlg, &DialogTask::onEndInstallPlugin);
         if(dlg.exec() == QDialog::Accepted){
             model->set_struct(task, index_);
+            if(!dlg.currentScript().isEmpty()){
+                emit doSavePluginFile(object.ref.c_str(), dlg.currentScript());
+            }
         }
     }
 

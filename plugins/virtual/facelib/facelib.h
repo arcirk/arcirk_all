@@ -15,7 +15,7 @@ namespace arcirk::plugins {
         virtual bool isValid() = 0;
         virtual bool accept() = 0;
         virtual bool prepare() = 0;
-        virtual QByteArray param() const = 0;
+        virtual QString param() const = 0;
         virtual QString lastError() const = 0;
 
     };

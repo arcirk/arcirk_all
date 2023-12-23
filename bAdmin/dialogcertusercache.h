@@ -145,8 +145,10 @@ signals:
     void setSelectHosts(const json& hosts);
     void selectDatabaseUser();
     void setSelectDatabaseUser(const json& user);
-    //void getAvailableCertificates(const QString& user_uuid);
     void selectCertificate();
+    void doSavePluginFile(const QString& uuidUser, const QString& fileName);
+    void doInstallPlugin(const json& param, const std::string& ref);
+    void doEndInstallPlugin(const QString& file_name);
 
 public slots:
    void onCertUserCache(const QString& host, const QString& system_user, const nlohmann::json& data);
@@ -158,9 +160,13 @@ public slots:
    void onSelectHosts(const json& hosts);
    void doSelectHosts();
    void doSelectDatabaseUser();
+   void onBtnInstallBpugin();
+   void onBtnInstallBpuginPrivate(const json& param, const std::string& ref);
    void onSelectDatabaseUser(const json& user);
    void onAvailableCertificates(const json& table);
    void onSelectCertificate(const json cert);
+   void onEndInstallPlugin(const QString& file_name);
 };
+
 
 #endif // DIALOGCERTUSERCACHE_H

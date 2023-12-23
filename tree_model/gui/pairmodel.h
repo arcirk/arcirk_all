@@ -2,15 +2,16 @@
 #define PAIRMODEL_H
 
 #include <QAbstractListModel>
+typedef QPair<QVariant, QVariant> DataPair;
 
 class PairModel : public QAbstractListModel
 {
-    Q_OBJECT
-
-    typedef QPair<QVariant, QVariant> DataPair;
+    Q_OBJECT    
     QList< DataPair > m_content;
 
 public:
+
+
     explicit PairModel(QObject *parent = nullptr);
 
     virtual QVariant data( const QModelIndex & index, int role = Qt::DisplayRole ) const;

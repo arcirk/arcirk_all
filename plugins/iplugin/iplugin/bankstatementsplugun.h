@@ -7,6 +7,8 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QPdfDocument>
+#include <QPdfSelection>
 
 BOOST_FUSION_DEFINE_STRUCT(
     (arcirk::plugins), plugin_param,
@@ -17,80 +19,29 @@ BOOST_FUSION_DEFINE_STRUCT(
     (std::string, parent)
 )
 
+BOOST_FUSION_DEFINE_STRUCT(
+    (arcirk::plugins), task_param,
+    (std::string, host) //хост 1С
+    (std::string, token) // base64(user:password)
+    (std::string, ib) //имя ИБ на хосте
+    (bool, remove) // удалять не удалять файлы из папки "Загрузки"
+)
+
+BOOST_FUSION_DEFINE_STRUCT(
+    (arcirk::plugins), pay_details,
+    (std::string, parent)
+    (std::string, pay)
+    (std::string, parent_name)
+    (std::string, pdf_dir)
+    (std::string, txt_dir)
+    )
+
 #define PLUGIN_FILE_NAME "BankStatements.json"
+
 
 namespace arcirk::plugins {
 
-    struct QPath
-    {
-        QPath(const QString& p) {
-            m_patch = p;
-            //m_info = QFileInfo(p);
-        }
-
-        QString path() const{
-            return m_patch;
-        }
-
-        const QString& operator +(const QString& v){
-            if(v != QDir::separator())
-                m_patch.append(QDir::separator());
-            m_patch.append(v);
-            return m_patch;
-        }
-        const QString& operator +=(const QString& v){
-            m_patch.append(v);
-            return m_patch;
-        }
-
-        const QString& operator /=(const QString& v){
-            m_patch.append(QDir::fromNativeSeparators(QDir::separator()));
-            m_patch.append(v);
-            return m_patch;
-        }
-
-        const QString& operator =(const QFile& f){
-            m_patch = f.fileName();
-            return m_patch;
-        }
-
-        const QString& operator =(const QDir& d){
-            m_patch = d.path();
-            return m_patch;
-        }
-
-        const QString& operator <<(const QString& v){
-            if(v != QDir::separator())
-                m_patch.append(QDir::separator());
-            m_patch.append(v);
-            return m_patch;
-        }
-
-        bool exists() const{
-            QFileInfo f(m_patch);
-            return f.exists();
-        }
-
-        bool isDir(){
-            QFileInfo f(m_patch);
-            return f.isDir();
-        }
-
-        bool isFile(){
-            QFileInfo f(m_patch);
-            return f.isFile();
-        }
-
-        bool mkpath(){
-            QDir d(m_patch);
-            return d.mkpath(m_patch);
-        }
-
-
-    private:
-        QString m_patch;
-
-    };
+    typedef QMap<QString, pay_details > PayArray;
 
     struct param_t
     {
@@ -104,21 +55,75 @@ namespace arcirk::plugins {
         QList<QDateTime> creates;
         QList<QString> suffix;
         QList<QString> loc_paths;
+        QList<QString> pay;
 
-        void read(const QString& file){
+        bool verifyText(const QString& file, QByteArray& data, const PayArray& pays, QString& p){
             QFile f(file);
+            bool isFind = false;
             if(f.open(QIODevice::ReadOnly)){
-                files.push_back(f.readAll());
+                data = f.readAll();
                 f.close();
-                QFileInfo fs(file);
-                auto name = fs.fileName().left(fs.fileName().length() - fs.suffix().length() - 1);
-                names.push_back(name);
-                suffix.push_back(fs.suffix());
-                creates.push_back(fs.lastModified());
-                loc_paths.push_back(fs.fileName());
+                if(data.indexOf("1CClientBankExchange") != -1){
+                    for (auto itr = pays.begin(); itr != pays.end(); ++itr) {
+                        if(data.indexOf(itr.key().toStdString()) != -1){
+                            isFind = true;
+                            p = itr.key();
+                            break;
+                        }
+                    }
+                    return isFind;
+                }else
+                     data = {};
             }
+            return false;
+        }
+        bool verifyPdf(const QString& file, QByteArray& data, const PayArray& pays, QString& p){
+            auto pdf = QPdfDocument();
+            auto res = pdf.load(file);
+            if(res == QPdfDocument::Error::None){
+                auto ba = pdf.getAllText(0);
+                auto text = ba.text();
+                pdf.close();
+                bool isFind = false;
+                for (auto itr = pays.begin(); itr != pays.end(); ++itr) {
+                    if(text.indexOf(itr.key()) != -1){
+                        isFind = true;
+                        p = itr.key();
+                        break;
+                    }
+                }
+                if(isFind){
+                    QFile f(file);
+                    if(f.open(QIODevice::ReadOnly)){
+                        data = f.readAll();
+                        f.close();
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
 
-
+        void read(const QString& file, const PayArray& pays){
+            QFileInfo fs(file);
+            QByteArray data;
+            QString m_pay;
+            if(fs.suffix() == "txt"){
+                if(!verifyText(file, data, pays, m_pay)){
+                    return;
+                }
+            }else if(fs.suffix() == "pdf"){
+                if(!verifyPdf(file, data, pays, m_pay)){
+                    return;
+                }
+            }
+            files.push_back(data);
+            auto name = fs.fileName().left(fs.fileName().length() - fs.suffix().length() - 1);
+            names.push_back(name);
+            suffix.push_back(fs.suffix());
+            creates.push_back(fs.lastModified());
+            loc_paths.push_back(fs.fileName());
+            pay.push_back(m_pay);
         }
 
         QByteArray toRaw() const{
@@ -129,6 +134,7 @@ namespace arcirk::plugins {
             stream << creates;
             stream << suffix;
             stream << loc_paths;
+            stream << pay;
             return ba;
         }
 
@@ -141,7 +147,7 @@ namespace arcirk::plugins {
             stream >> creates;
             stream >> suffix;
             stream >> loc_paths;
-
+            stream >> pay;
         }
 
         QString generateName(int index){
@@ -153,30 +159,6 @@ namespace arcirk::plugins {
             }
             return result;
         }
-    };
-    struct file_details{
-
-        file_details(){};
-
-        QString date;
-        QString pay;
-
-        void parse(const QString& file_name){
-            if(file_name.indexOf("Выписка за") ==-1)
-                return;
-            QStringList lst = file_name.split(" ");
-            if(lst.size() == 6){
-                date = lst[3];
-                pay = lst[5];
-            }
-        }
-    };
-
-    struct task_param{
-        QString host;
-        QString token;
-        QString destantion;
-        QString destantion_bnk;
     };
 
     class BankStatementsPlugun : public QObject, public IAIPlugin
@@ -191,7 +173,7 @@ namespace arcirk::plugins {
         bool isValid();
         bool accept();
         bool prepare();
-        QByteArray param() const;
+        QString param() const;
         bool editParam(QWidget* parent);
         QString lastError() const;
 
@@ -199,15 +181,16 @@ namespace arcirk::plugins {
         bool is_valid = false;
         json m_param;
         QString m_last_error;
-        task_param m_task_param;
 
         json default_param() const;
         json read_param() const;
         void write_param();
+        json read_value(const ByteArray& value) const;
 
-        QByteArray readData() const;
-        QJsonObject http_get(const QString& command, const QString& param);
+        QByteArray readData(PayArray& pays) const;
+        json http_get(const QString& command, const json& param, const task_param& t_param);
 
+        bool pay_list(PayArray& pays, const task_param& t_param);
     };
 
 }

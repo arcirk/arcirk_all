@@ -186,6 +186,8 @@ namespace arcirk::tree_model {
         void reset_variant_roles(const QModelIndex& parent = QModelIndex());
         //
 
+        QString path(const QModelIndex& index, int column = 0);
+
     protected:
         QSqlDatabase m_db;
         std::shared_ptr<root_tree_conf> m_conf;
@@ -208,6 +210,8 @@ namespace arcirk::tree_model {
 
         bool remove_sql_data(const QModelIndex &index);
         void reset_sql_table();
+
+        void get_path(const QModelIndex& index, int column, QString& current);
 
 #ifdef BADMIN_APPLICATION
         arcirk::server::server_objects m_server_object;

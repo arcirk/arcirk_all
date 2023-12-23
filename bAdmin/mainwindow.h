@@ -93,6 +93,10 @@ private slots:
     void connectionSuccess(); //при успешной авторизации
     void connectionChanged(bool state);
 
+    void onSavePluginFile(const QString& uuidUser, const QString& fileName);
+    void onAddTreeItem(const QModelIndex& index, const json& data);
+    void onInstallPlugin(const json& param, const std::string& ref);
+
 private:
     Ui::MainWindow *                         ui;
     WebSocketClient *                        m_client;
@@ -284,6 +288,7 @@ signals:
     void openTreeModelSettingsDialog(TreeItemModel* model);
 
     void openTableViewDialog(database::tables table);
+    void doEndInstallPlugin(const QString& file_name);
 
 public slots:
     void openConnection();

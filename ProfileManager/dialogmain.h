@@ -77,8 +77,9 @@ protected:
 
 private:
     Ui::DialogMain *ui;
-    IWClient *      m_client;
+    IWClient *             m_client;
     QLabel *               infoBar;
+    QLabel *               infoIco;
     QMap<QString, QString> m_colAliases;
     CertUser *             current_user;
     QString                current_url;
@@ -192,9 +193,6 @@ private:
     void create_tasks_model();
 
 
-    //////
-    json plugin_param(const QString& plugin_path);
-
 signals:
     void setConnectionChanged(bool state);
 
@@ -205,6 +203,7 @@ signals:
     void setSelectHosts(const json& hosts);
     void selectDatabaseUser();
     void setSelectDatabaseUser(const json& user);
+    void doEndInstallPlugin(const QString& file_name);
 
 public slots:
     void openConnection();
@@ -269,6 +268,12 @@ private slots:
     void onBtnTaskStartClicked();
     void onBtnTaskDeleteClicked();
     void onBtnParamClicked();
+    void onBtnInstallBpugin();
     void onTreeTaskDoubleClicked(const QModelIndex &index);
+
+    void onSavePluginFile(const QString& uuidUser, const QString& fileName);
+    void onInstallPlugin(const json& param, const std::string& ref);
+    void onBtnInstallBpuginPrivate(const json& param, const std::string& ref);
+    void onEndInstallPlugin(const QString& file_name);
 };
 #endif // DIALOGMAIN_H

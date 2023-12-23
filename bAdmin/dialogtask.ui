@@ -211,8 +211,36 @@
           <string>...</string>
          </property>
          <property name="icon">
-          <iconset resource="resurses.qrc">
+          <iconset resource="ba_resurses.qrc">
            <normaloff>:/img/link.png</normaloff>:/img/link.png</iconset>
+         </property>
+         <property name="autoRaise">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="btnPluginParam">
+         <property name="text">
+          <string>...</string>
+         </property>
+         <property name="icon">
+          <iconset resource="ba_resurses.qrc">
+           <normaloff>:/img/options.png</normaloff>:/img/options.png</iconset>
+         </property>
+         <property name="autoRaise">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="btnSave">
+         <property name="text">
+          <string>...</string>
+         </property>
+         <property name="icon">
+          <iconset resource="ba_resurses.qrc">
+           <normaloff>:/img/save.png</normaloff>:/img/save.png</iconset>
          </property>
          <property name="autoRaise">
           <bool>true</bool>
@@ -236,7 +264,7 @@
   </layout>
  </widget>
  <resources>
-  <include location="resurses.qrc"/>
+  <include location="ba_resurses.qrc"/>
  </resources>
  <connections>
   <connection>

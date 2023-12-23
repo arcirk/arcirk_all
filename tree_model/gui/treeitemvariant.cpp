@@ -13,6 +13,8 @@
 #include <QLineEdit>
 #include <QSpinBox>
 #include <QTextEdit>
+//#include <QComboBox>
+#include "treeitemcombobox.h"
 #include <alpaca/alpaca.h>
 
 using namespace arcirk::tree::widgets;
@@ -42,6 +44,10 @@ TreeItemVariant::TreeItemVariant(int row, int column, QWidget *parent)
     m_current_menu->addAction(action);
     action = new QAction("Число", this);
     action->setObjectName(enum_synonym(tree_editor_inner_role::widgetInteger).c_str());
+    connect(action, &QAction::triggered, this, &TreeItemVariant::onMenuItemClicked);
+    m_current_menu->addAction(action);
+    action = new QAction("Булево", this);
+    action->setObjectName(enum_synonym(tree_editor_inner_role::widgetBoolean).c_str());
     connect(action, &QAction::triggered, this, &TreeItemVariant::onMenuItemClicked);
     m_current_menu->addAction(action);
     action = new QAction("Список значений", this);
@@ -212,9 +218,22 @@ void TreeItemVariant::update()
                 val = jval.get<int>();
             }
             auto m_integer = qobject_cast<QSpinBox*>(m_current_widget);
-            if(m_integer)
+            if(m_integer){
                 m_integer->setValue(val);
-            m_raw.representation = QString::number(m_integer->value()).toStdString();
+                m_raw.representation = QString::number(m_integer->value()).toStdString();
+            }
+        }else if(role == widgetBoolean){
+            bool val = false;
+            if(jval.is_number()){
+                val = (bool)jval.get<int>();
+            }else if(jval.is_boolean()){
+                val = jval.get<bool>();
+            }
+            auto m_combo = qobject_cast<TreeItemComboBox*>(m_current_widget);
+            if(m_combo){
+                m_combo->setCurrentIndex(val ? 1 : 0);
+                m_raw.representation = m_combo->text().toStdString();
+            }
         }
     }else if(type == vBinary){
         if(role == widgetByteArray){
@@ -250,8 +269,9 @@ void TreeItemVariant::createEditor()
         m_current_widget = createEditorTextBox();
     }else if(m_role == tree_editor_inner_role::widgetInteger){
         m_current_widget = createEditorNumber();
+    }else if(m_role == tree_editor_inner_role::widgetBoolean){
+        m_current_widget = createBooleanBox();
     }
-
 }
 
 QWidget *TreeItemVariant::createEditorNull()
@@ -344,8 +364,8 @@ QWidget *TreeItemVariant::createEditorNumber()
     auto m_integer = new QSpinBox(this);
     m_integer->setObjectName("SpinBox");
     m_integer->setMaximum(9999);
-    m_integer->setAlignment(Qt::AlignRight);
-    m_hbox->addWidget(m_integer);
+    //m_integer->setAlignment(Qt::AlignRight);
+    m_hbox->addWidget(m_integer,0, Qt::AlignRight);
     auto m_erase = new QToolButton(this);
     m_erase->setObjectName("eraseButton");
     m_erase->setIcon(QIcon(":/img/erase_type.png"));
@@ -354,6 +374,27 @@ QWidget *TreeItemVariant::createEditorNumber()
     connect(m_erase, &QToolButton::clicked, this, &TreeItemVariant::onEraseClicked);
     connect(m_integer, &QSpinBox::valueChanged, this, &TreeItemVariant::onSpinChanged);
     return m_integer;
+}
+
+QWidget *TreeItemVariant::createBooleanBox()
+{
+    auto m_combo = new TreeItemComboBox(0,0, this);
+    m_combo->setObjectName("ComboBox");
+    auto model = new PairModel(m_combo);
+    model->setContent(QList<DataPair>{
+        qMakePair("Ложь", false),
+        qMakePair("Истина", true)
+    });
+    m_combo->setModel(model);
+    m_hbox->addWidget(m_combo);
+    auto m_erase = new QToolButton(this);
+    m_erase->setObjectName("eraseButton");
+    m_erase->setIcon(QIcon(":/img/erase_type.png"));
+    m_erase->setToolTip("Удалить тип");
+    m_hbox->addWidget(m_erase);
+    connect(m_erase, &QToolButton::clicked, this, &TreeItemVariant::onEraseClicked);
+    connect(m_combo, &TreeItemComboBox::currentIndexChanged, this, &TreeItemVariant::onCurrentIndexChanged);
+    return m_combo;
 }
 
 void TreeItemVariant::setControlType()
@@ -493,6 +534,21 @@ void TreeItemVariant::onTextEditChanged()
         emit itemValueChanged(row(), column(), m_current_value);
     }
 
+}
+
+void TreeItemVariant::onCurrentIndexChanged(int /*row*/, int /*col*/, int index)
+{
+    auto control = qobject_cast<TreeItemComboBox*>(sender());
+    if(control){
+        m_current_value = control->data(index);
+        json v = false;
+        if(m_current_value.typeId() == QMetaType::Bool){
+            v = m_current_value.toBool();
+        }
+        auto bt = arcirk::string_to_byte_array(v.dump());
+        generateRaw(control->text().toStdString(), &bt);
+        emit itemValueChanged(row(), column(), m_current_value);
+    }
 }
 
 #endif

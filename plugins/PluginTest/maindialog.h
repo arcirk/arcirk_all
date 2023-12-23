@@ -23,6 +23,14 @@ private slots:
     void onDialogBoxClicked(QAbstractButton * button);
     void onBtnParamClicked();
 
+    void on_btnSelectPdf_clicked();
+
+    void on_btnReadPdf_clicked();
+
+    void on_btnHash_clicked();
+
+    void on_pushButton_clicked();
+
 private:
     Ui::MainDialog *ui;
 };

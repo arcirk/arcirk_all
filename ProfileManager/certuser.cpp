@@ -339,14 +339,20 @@ void CertUser::set_database_cache(const json &data)
 
 void CertUser::read_database_cache(const QUrl &ws, const QString& token)
 {
+
+    auto where_values = json::object({
+        {"host", host().toStdString()}
+    });
+    if(!user_info_.sid.empty())
+        where_values["sid"] = user_info_.sid;
+    else
+        where_values["system_user"] = user_name().toStdString();
+
     json query_param = {
         {"table_name", arcirk::enum_synonym(tables::tbCertUsers)},
         {"query_type", "select"},
         {"values", {}},
-        {"where_values", json::object({
-             {"host", host().toStdString()},
-             {"system_user", user_name().toStdString()}
-         })}
+        {"where_values", where_values}
     };
 
     //qDebug() << qPrintable(query_param.dump().c_str());

@@ -9,6 +9,8 @@
 #include <QSettings>
 #include <QLineEdit>
 #include <QDialogButtonBox>
+#include <QPdfDocument>
+#include <QPdfSelection>
 
 MainDialog::MainDialog(QWidget *parent)
     : QDialog(parent)
@@ -107,5 +109,62 @@ void MainDialog::onBtnParamClicked()
         qCritical() << e.what();
     }
 
+}
+
+
+void MainDialog::on_btnSelectPdf_clicked()
+{
+    auto result = QFileDialog::getOpenFileName(this, "Выбор файла...", "", "Файлы pdf(*.pdf)");
+    if(!result.isEmpty())
+        ui->txtPdfFile->setText(result);
+}
+
+
+void MainDialog::on_btnReadPdf_clicked()
+{
+    auto pdf = QPdfDocument(this);
+    auto res = pdf.load(ui->txtPdfFile->text());
+    qDebug() << res;
+
+    auto ba = pdf.getAllText(0);
+
+    auto text = ba.text();
+
+    if(text.indexOf("40702810218350004297") != -1){
+        qDebug() << "Это выписка";
+    }else
+        qDebug() << "Счет не найден!";
+
+}
+
+void MainDialog::on_btnHash_clicked()
+{
+    QString concatenated = "IIS_1C:LbyFvj1";
+    QByteArray data = concatenated.toLocal8Bit().toBase64();
+    qDebug() << data;
+}
+
+
+void MainDialog::on_pushButton_clicked()
+{
+    using namespace arcirk::plugins;
+    try {
+        QFile f(ui->lineEdit->text());
+        if(!f.exists()){
+            QMessageBox::critical(this, "Ошибка", "Файл плагина не существует!");
+            return;
+        }
+        auto loader = new QPluginLoader(f.fileName(), this);
+        QObject *obj = loader->instance();
+        IAIPlugin* plugin
+            = qobject_cast<IAIPlugin*>(obj);
+        if(plugin){
+            qDebug() << qPrintable(plugin->param());
+            loader->unload();
+        }
+        delete loader;
+    } catch (const std::exception& e) {
+        qCritical() << e.what();
+    }
 }
 

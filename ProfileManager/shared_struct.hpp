@@ -42,6 +42,7 @@ BOOST_FUSION_DEFINE_STRUCT(
     (std::string, script_synonum)
     (std::string, comment)
     (ByteArray, param)
+    (bool, reset_version)
     )
 
 
