@@ -10,19 +10,24 @@ CONFIG += c++20
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
+include(../common/arcirk/arcirk.pri)
 
 SOURCES += \
+    gui/araydialog.cpp \
     gui/comparewidget.cpp \
+    gui/pairmodel.cpp \
+    gui/rowdialog.cpp \
     gui/selectgroupdialog.cpp \
+    gui/selectitemdialog.cpp \
+    gui/tabletoolbar.cpp \
     gui/texteditdialog.cpp \
-    gui/textlinewidget.cpp \
-    gui/treecheckboxwidget.cpp \
-    gui/treecomboboxwidget.cpp \
     gui/treeitemcheckbox.cpp \
     gui/treeitemcombobox.cpp \
     gui/treeitemdelegate.cpp \
     gui/treeitemnumber.cpp \
+    gui/treeitemtextedit.cpp \
     gui/treeitemtextline.cpp \
+    gui/treeitemvariant.cpp \
     gui/treeitemwidget.cpp \
     gui/treeviewwidget.cpp \
     sort/treesortmodel.cpp \
@@ -30,24 +35,26 @@ SOURCES += \
     treeitem.cpp
 
 HEADERS += \
-    global/arcirk.hpp \
     global/arcirk_qt.hpp \
+    gui/araydialog.h \
     gui/comparewidget.h \
+    gui/pairmodel.h \
+    gui/rowdialog.h \
     gui/selectgroupdialog.h \
+    gui/selectitemdialog.h \
+    gui/tabletoolbar.h \
     gui/texteditdialog.h \
-    gui/textlinewidget.h \
-    gui/treecheckboxwidget.h \
-    gui/treecomboboxwidget.h \
     gui/treeitemcheckbox.h \
     gui/treeitemcombobox.h \
     gui/treeitemdelegate.h \
     gui/treeitemnumber.h \
+    gui/treeitemtextedit.h \
     gui/treeitemtextline.h \
+    gui/treeitemvariant.h \
     gui/treeitemwidget.h \
     gui/treeviewwidget.h \
     iface/iface.hpp \
     sort/treesortmodel.h \
-    sql/query_builder.hpp \
     tree_model.h \
     treeitem.h
 
@@ -76,12 +83,13 @@ VERSION = 1.1.1
 QMAKE_TARGET_COPYRIGHT = (c)(arcirk) Arcady Borisoglebsky
 
 FORMS += \
+    gui/araydialog.ui \
     gui/comparewidget.ui \
+    gui/rowdialog.ui \
     gui/selectgroupdialog.ui \
+    gui/selectitemdialog.ui \
+    gui/tabletoolbar.ui \
     gui/texteditdialog.ui \
-    gui/textlinewidget.ui \
-    gui/treecheckboxwidget.ui \
-    gui/treecomboboxwidget.ui \
     gui/treeitemwidget.ui
 
 RESOURCES += \
