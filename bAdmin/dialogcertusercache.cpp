@@ -998,6 +998,11 @@ void DialogCertUserCache::onEndInstallPlugin(const QString &file_name)
     emit doEndInstallPlugin(file_name);
 }
 
+void DialogCertUserCache::onInstallPrivatePlugin(const QString &file_name, const QString &task_ref)
+{
+    emit installPlugin(file_name, task_ref);
+}
+
 
 void DialogCertUserCache::onRadioRunAsAdminToggled(bool checked)
 {
@@ -1567,6 +1572,7 @@ void DialogCertUserCache::onTasksButtonClick()
 
         auto dlg = DialogTask(task, this);
         connect(&dlg, &DialogTask::doInstallPlugin, this, &DialogCertUserCache::onBtnInstallBpuginPrivate);
+        connect(&dlg, &DialogTask::installPrivatePlugin, this, &DialogCertUserCache::onInstallPrivatePlugin);
         connect(this, &DialogCertUserCache::doEndInstallPlugin, &dlg, &DialogTask::onEndInstallPlugin);
 
         if(dlg.exec() == QDialog::Accepted){
@@ -1583,6 +1589,7 @@ void DialogCertUserCache::onTasksButtonClick()
         auto task = model->object(index);
         auto dlg = DialogTask(task, this);
         connect(&dlg, &DialogTask::doInstallPlugin, this, &DialogCertUserCache::onBtnInstallBpuginPrivate);
+        connect(&dlg, &DialogTask::installPrivatePlugin, this, &DialogCertUserCache::onInstallPrivatePlugin);
         connect(this, &DialogCertUserCache::doEndInstallPlugin, &dlg, &DialogTask::onEndInstallPlugin);
 
         if(dlg.exec() == QDialog::Accepted){
@@ -1792,7 +1799,7 @@ void DialogCertUserCache::onBtnParamClicked()
                         plugin->setParam(arcirk::byte_array_to_string(task_data_.param).c_str());
                     }
                     if(plugin->editParam(this)){
-                        auto param_t = plugin->param();
+                        auto param_t = arcirk::string_to_byte_array(plugin->param().toStdString());
                         task_data_.param = ByteArray(param_t.size());
                         std::copy(param_t.begin(), param_t.end(), task_data_.param.begin());
                     }

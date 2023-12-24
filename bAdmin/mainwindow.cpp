@@ -3775,13 +3775,23 @@ void MainWindow::onBtnEditCacheClicked()
         connect(&dlg, &DialogCertUserCache::selectCertificate, this, &MainWindow::onSelectCertificate);
         connect(&dlg, &DialogCertUserCache::doSavePluginFile, this, &MainWindow::onSavePluginFile);
         connect(&dlg, &DialogCertUserCache::doInstallPlugin, this, &MainWindow::onInstallPlugin);
+        connect(&dlg, &DialogCertUserCache::installPlugin, this, &MainWindow::onInstallPrivatePlugin);
         connect(this, &MainWindow::selectCertificate, &dlg, &DialogCertUserCache::onSelectCertificate);
         connect(this, &MainWindow::doEndInstallPlugin, &dlg, &DialogCertUserCache::onEndInstallPlugin);
 
         dlg.setModal(true);
-        dlg.exec();
-        if(dlg.result() == QDialog::Accepted){
+
+        if(dlg.exec()){
             auto n_object = pre::json::to_json(struct_user);
+            model->set_object(index, n_object);
+            if(struct_user.system_user == current_user->user_name().toStdString() &&
+                struct_user.host == current_user->host().toStdString()){
+                current_user->set_database_cache(struct_user.cache);
+                auto detailed_records = current_user->cache().value("mstsc_param", json::object()).value("detailed_records", json::array());
+                update_rdp_files(detailed_records);
+                createDynamicMenu();
+            }
+            //qDebug() << qPrintable(n_object.dump().c_str());
             auto query_param = nlohmann::json{
                 {"table_name", enum_synonym(tables::tbCertUsers)},
                 {"where_values", nlohmann::json{{"ref", struct_user.ref}}},
@@ -3792,16 +3802,6 @@ void MainWindow::onBtnEditCacheClicked()
             m_client->send_command(arcirk::server::server_commands::ExecuteSqlQuery, nlohmann::json{
                                        {"query_param", QByteArray(query_param.dump().data()).toBase64().toStdString()}
                                    });
-            model->set_object(index, n_object);
-            if(struct_user.system_user == current_user->user_name().toStdString() &&
-                    struct_user.host == current_user->host().toStdString()){
-                current_user->set_database_cache(struct_user.cache);
-                auto cache = current_user->cache();
-                auto mstsc_param = cache.value("mstsc_param", json::object());
-                auto detailed_records = mstsc_param.value("detailed_records", json::array());
-                update_rdp_files(detailed_records);
-                createDynamicMenu();
-            }
         }
     }
 }
@@ -4086,6 +4086,44 @@ void MainWindow::onDownloadAnydeskComlete(const QString &file)
     infoIco->movie()->stop();
     infoBar->setText(QString("Подключен: %1 (%2)").arg(m_client->conf().server_host.c_str(), m_client->server_conf().ServerName.c_str()));
 
+
+}
+
+void MainWindow::onInstallPrivatePlugin(const QString &file_name, const QString& task_ref)
+{
+    QFile f(file_name);
+    if(!f.exists()){
+        displayError("Ошибка", "Файл плагина не существует!");
+        return;
+    }
+
+    QPath p(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+    p /= "plugins";
+    p /= task_ref;
+
+    QDir dir(p.path());
+    if(!dir.exists())
+        dir.mkpath(p.path());
+
+    QByteArray data{};
+    if(f.open(QIODevice::ReadOnly)){
+        data = f.readAll();
+        f.close();
+    }else{
+        displayError("Ошибка", "Ошибка чтения файла!");
+        return;
+    }
+
+    QFileInfo fs(file_name);
+    p /= fs.fileName();
+
+    QFile dest(p.path());
+    if(dest.open(QIODevice::WriteOnly)){
+        dest.write(data);
+        dest.close();
+        trayShowMessage("Плагин успешно установлен!");
+        emit doEndInstallPlugin(p.path());
+    }
 
 }
 

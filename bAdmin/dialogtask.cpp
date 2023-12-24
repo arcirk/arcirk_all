@@ -5,6 +5,8 @@
 #include <QUuid>
 #include <QFileInfo>
 #include <QMessageBox>
+#include <QDialogButtonBox>
+#include <QPushButton>
 #include "facelib.h"
 
 DialogTask::DialogTask(arcirk::services::task_options& task_data, QWidget *parent) :
@@ -16,7 +18,6 @@ DialogTask::DialogTask(arcirk::services::task_options& task_data, QWidget *paren
 
     if(task_data_.uuid.empty()){
         task_data_.uuid = QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();
-        //task_data_.ref = task_data_.uuid;
     }
     ui->name->setText(task_data.name.c_str());
     ui->synonum->setText(task_data.synonum.c_str());
@@ -30,12 +31,8 @@ DialogTask::DialogTask(arcirk::services::task_options& task_data, QWidget *paren
     ui->txtComment->setText(task_data.comment.c_str());
 
     ui->name->setEnabled(!task_data.predefined);
-    //ui->uuid->setEnabled(!task_data.predefined);
-    auto buttons = ui->buttonBox->buttons();
-    foreach (auto btn, buttons) {
-        if(btn->text() == "Cancel")
-            btn->setText("Отмена");
-    }
+
+    ui->buttonBox->button(QDialogButtonBox::Cancel)->setText("Отмена");
 
     if(!task_data.name.empty())
         setWindowTitle(QString("Служба (%1)").arg(task_data.name.c_str()));
@@ -114,19 +111,23 @@ void DialogTask::openParamDialog()
         p /= ui->script->text();
 
 
-
         if(!p.exists()){
             if(QMessageBox::question(this, "Параметры плагина", "Для настройки параметров требуется установить плагин на текущий компьютер. Продолжить?") == QMessageBox::No)
                 return;
-            QPath path(QString("html\\client_data\\plugins"));
-            path /= QString(task_data_.uuid.c_str());
-            path /= ui->script->text();
+            if(m_plugin_file.isEmpty()){
+                QPath path(QString("html\\client_data\\plugins"));
+                path /= QString(task_data_.uuid.c_str());
+                path /= ui->script->text();
 
-            auto param = json::object({
-                {"file_name", path.path().toStdString()}
-            });
+                auto param = json::object({
+                    {"file_name", path.path().toStdString()}
+                });
 
-            emit doInstallPlugin(param, task_data_.uuid);
+                emit doInstallPlugin(param, task_data_.uuid);
+            }else{
+                emit installPrivatePlugin(m_plugin_file, task_data_.uuid.c_str());
+            }
+
         }else{
             using namespace arcirk::plugins;
             try {

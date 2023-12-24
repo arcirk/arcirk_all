@@ -758,8 +758,13 @@ void WebSocketClient::set_client_param(const json& value){
 void WebSocketClient::set_server_conf(const json& value){
     auto name = server_conf_.ServerName;
     auto addr = server_conf_.ServerHost;
+    auto hash = server_conf_.ServerUserHash;
+
     server_conf_ = arcirk::secure_serialization<server::server_config>(value, __FUNCTION__);
     if(server_conf_.ServerName.empty() && server_conf_.ServerHost == addr){
         server_conf_.ServerName = name;
     }
+
+    if(server_conf_.ServerUserHash.empty())
+        server_conf_.ServerUserHash = hash;
 }

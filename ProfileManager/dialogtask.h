@@ -30,9 +30,12 @@ private:
     Ui::DialogTask *ui;
     arcirk::services::task_options& task_data_;
     QString m_plugin_file;
+    QString m_cron_string;
 
     void openParamDialog();
     void openParam(const QString& file_name);
+
+    void generate_cron_string();
 
 signals:
     void doInstallPlugin(const json &param, const std::string& ref);

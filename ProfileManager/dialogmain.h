@@ -44,23 +44,23 @@ using namespace arcirk::tree_widget;
 
 typedef ITree<services::task_options> ITreeTasksModel;
 
-struct param_bank
-{
-    param_bank() {}
+//struct param_bank
+//{
+//    param_bank() {}
 
-    QList<QByteArray> fields;
-    QList<QString> names;
+//    QList<QByteArray> fields;
+//    QList<QString> names;
 
-    void fromRaw(const QByteArray& data){
-        if(data.size() == 0)
-            return;
-        QDataStream stream {data};
-        stream >> fields;
-        stream >> names;
+//    void fromRaw(const QByteArray& data){
+//        if(data.size() == 0)
+//            return;
+//        QDataStream stream {data};
+//        stream >> fields;
+//        stream >> names;
 
-    }
+//    }
 
-};
+//};
 
 class DialogMain : public QDialog
 {

@@ -78,6 +78,10 @@ DialogMain::DialogMain(QWidget *parent)
 {
     ui->setupUi(this);
 
+#ifdef RELEASE
+    ui->grpDebug->setVisible(false);
+#endif
+
     m_show_alerts = false;
 
     treeViewMpl = new TreeViewWidget(this);
@@ -194,6 +198,13 @@ DialogMain::DialogMain(QWidget *parent)
     connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &DialogMain::onButtonBoxRejected);
     connect(ui->tabCrypt, &QTabWidget::tabBarClicked, this, &DialogMain::onTabCryptTabBarClicked);
     connect(ui->btnInstallPlugin, &QToolButton::clicked, this, &DialogMain::onBtnInstallBpugin);
+
+#ifdef DEBUG
+    ui->txtDebugUserName->setText(current_user->user_name());
+    ui->txtDebugSID->setText(current_user->getInfo().sid.c_str());
+    ui->txtDebugHost->setText(current_user->host());
+#endif
+
 }
 
 void DialogMain::createTrayActions()
@@ -793,7 +804,9 @@ void DialogMain::connectionSuccess()
     qDebug() << __FUNCTION__;
     current_user->read_database_cache(m_client->url(), m_client->server_conf().ServerUserHash.c_str());
     reset_data();
-
+#ifdef DEBUG
+    ui->txtDebugHash->setText(m_client->server_conf().ServerUserHash.c_str());
+#endif
 }
 
 void DialogMain::read_cache(const nlohmann::json &data)
@@ -1574,6 +1587,7 @@ void DialogMain::onCertificates(const arcirk::client::cryptopro_data &data)
         treeCertificates->hideColumn(model->column_index("parent"));
         treeCertificates->hideColumn(model->column_index("ref"));
         treeCertificates->hideColumn(model->column_index("sha1"));
+        treeCertificates->hideColumn(model->column_index("is_group"));
         treeCertificates->setSortingEnabled(true);
         treeCertificates->sortByColumn(0, Qt::AscendingOrder);
         //treeCertificates->resizeColumnToContents(0);
@@ -1615,6 +1629,7 @@ void DialogMain::onContainers(const arcirk::client::cryptopro_data &data)
         }
         treeContainers->hideColumn(model->column_index("parent"));
         treeContainers->hideColumn(model->column_index("ref"));
+        treeContainers->hideColumn(model->column_index("is_group"));
         //treeContainers->resizeColumnToContents(0);
         treeContainers->setSortingEnabled(true);
         treeContainers->sortByColumn(1, Qt::AscendingOrder);
@@ -2009,9 +2024,9 @@ void DialogMain::onBtnResetCertIlstClicked()
     onCertificates(crypt_data);
     onContainers(crypt_data);
 
-    if(m_client->isConnected()){
-        write_cache();
-    }
+//    if(m_client->isConnected()){
+//        write_cache();
+//    }
 }
 
 

@@ -37,6 +37,7 @@ private:
 
 signals:
     void doInstallPlugin(const json &param, const std::string& ref);
+    void installPrivatePlugin(const QString &file_name, const QString &task_ref);
 
 public slots:
     void onEndInstallPlugin(const QString& file_name);

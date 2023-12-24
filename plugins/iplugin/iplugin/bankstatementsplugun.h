@@ -32,8 +32,8 @@ BOOST_FUSION_DEFINE_STRUCT(
     (std::string, parent)
     (std::string, pay)
     (std::string, parent_name)
-    (std::string, pdf_dir)
-    (std::string, txt_dir)
+    (std::string, pdf_dir)//каталог файлов pdf
+    (std::string, txt_dir) //каталог выписок 1С
     )
 
 #define PLUGIN_FILE_NAME "BankStatements.json"

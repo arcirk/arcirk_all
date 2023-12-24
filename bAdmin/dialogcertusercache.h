@@ -149,6 +149,7 @@ signals:
     void doSavePluginFile(const QString& uuidUser, const QString& fileName);
     void doInstallPlugin(const json& param, const std::string& ref);
     void doEndInstallPlugin(const QString& file_name);
+    void installPlugin(const QString& file_name, const QString& task_ref);
 
 public slots:
    void onCertUserCache(const QString& host, const QString& system_user, const nlohmann::json& data);
@@ -166,6 +167,7 @@ public slots:
    void onAvailableCertificates(const json& table);
    void onSelectCertificate(const json cert);
    void onEndInstallPlugin(const QString& file_name);
+   void onInstallPrivatePlugin(const QString& file_name, const QString& task_ref);
 };
 
 

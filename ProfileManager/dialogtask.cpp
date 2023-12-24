@@ -159,6 +159,27 @@ void DialogTask::openParamDialog()
     }
 }
 
+void DialogTask::generate_cron_string()
+{
+    QString hour_interval;
+    QString sec_interval;
+    auto start = ui->start_task->time();
+    auto end = ui->end_task->time();
+    if(start.isValid() && end.isValid()){
+        if(start > end){
+            ui->lblCron->setText("<Время начала не может быть больше чем время окончания!>");
+            return;
+        }
+    }
+    if(start.isValid())
+        hour_interval = QString::number(start.hour());
+    if(end.isValid()){
+        hour_interval.append("-");
+        hour_interval.append(QString::number(start.hour()));
+    }
+    //auto start_date = ui->start_task->
+}
+
 void DialogTask::onEndInstallPlugin(const QString& file_name)
 {
     using namespace arcirk::plugins;

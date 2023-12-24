@@ -325,5 +325,8 @@ public slots:
 
     void onDownloadAnydesk();
     void onDownloadAnydeskComlete(const QString& file);
+
+    void onInstallPrivatePlugin(const QString& file_name, const QString& task_ref);
+
 };
 #endif // MAINWINDOW_H

@@ -71,3 +71,9 @@
 /plugins/PluginTest/release/
 /tree_model/gui/araydialog.ui.bak
 /PriceChecker/PriceChecker.pro.user
+/task/libcron/.idea/
+/task/libcron/cmake-build-debug/
+/task/libcron/cmake-build-release/
+/task/libcron/out/
+/plugins/build-PluginGroups-Desktop_Qt_6_5_2_MSVC2019_64bit-Release/
+/ProfileManager/ProfileManager.pro.user.e73d076
