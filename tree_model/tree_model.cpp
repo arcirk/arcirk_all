@@ -381,9 +381,11 @@ void TreeItemModel::clear()
 void TreeItemModel::reset()
 {
     beginResetModel();
+#ifdef USE_QUERY_BUILDER_LIB
     if((m_conf->type_connection()==root_tree_conf::sqlIteMemoryConnection ||
          m_conf->type_connection()==root_tree_conf::sqlIteConnection) && m_db.isOpen())
         reset_sql_table();
+#endif
     endResetModel();
 }
 
@@ -470,9 +472,11 @@ void TreeItemModel::move_to(const QModelIndex &index, const QModelIndex &new_par
 
 bool TreeItemModel::remove(const QModelIndex &index, bool upgrade_database)
 {
+#ifdef USE_QUERY_BUILDER_LIB
     if(upgrade_database && m_conf->is_database_changed()){
         remove_sql_data(index);
     }
+#endif
     return removeRow(index.row(), index.parent());
 }
 
@@ -579,7 +583,7 @@ void TreeItemModel::to_array_(const QModelIndex &parent, json& result, bool chil
     }
 
 }
-
+#ifdef USE_QUERY_BUILDER_LIB
 bool TreeItemModel::connect_sql_database(const QString& table_name )
 {
     if(m_conf->type_connection() == root_tree_conf::sqlIteConnection){
@@ -600,6 +604,7 @@ bool TreeItemModel::connect_sql_database(const QString& table_name )
 
     return m_db.isOpen();
 }
+#endif
 
 void TreeItemModel::load_from_database(const QString& parent)
 {
@@ -608,6 +613,7 @@ void TreeItemModel::load_from_database(const QString& parent)
 
     if(m_conf->type_connection() == root_tree_conf::sqlIteConnection
         || m_conf->type_connection() == root_tree_conf::sqlIteMemoryConnection){
+#ifdef USE_QUERY_BUILDER_LIB
         if(!m_db.isOpen())
             return;
 
@@ -631,6 +637,7 @@ void TreeItemModel::load_from_database(const QString& parent)
 
             }
         }
+#endif
     }else if(m_conf->type_connection() == root_tree_conf::httpConnection){
         auto http_result = http_get(parent.toStdString());
         if(http_result.is_object()){
@@ -927,7 +934,7 @@ void TreeItemModel::set_object(const QModelIndex &index, const nlohmann::json &o
     }
 }
 
-QModelIndex TreeItemModel::find(const QUuid &ref, const QModelIndex parent) const
+QModelIndex TreeItemModel::find(const QUuid &ref, const QModelIndex& parent) const
 {
     for (int i = 0; i < rowCount(parent); ++i) {
         auto item = index(i, 0, parent);
@@ -944,7 +951,7 @@ QModelIndex TreeItemModel::find(const QUuid &ref, const QModelIndex parent) cons
     return QModelIndex();
 }
 
-QModelIndex TreeItemModel::find(int column, const QVariant &source, const QModelIndex parent) const
+QModelIndex TreeItemModel::find(int column, const QVariant &source, const QModelIndex& parent) const
 {
     QModelIndexList matches = match(
         index(0,column, parent),
@@ -958,7 +965,7 @@ QModelIndex TreeItemModel::find(int column, const QVariant &source, const QModel
     return QModelIndex();
 }
 
-QList<QModelIndex> TreeItemModel::find_all(int column, const QVariant &source, const QModelIndex parent) const
+QList<QModelIndex> TreeItemModel::find_all(int column, const QVariant &source, const QModelIndex& parent) const
 {
     QList<QModelIndex> result{};
     QModelIndexList matches = match(
@@ -1004,6 +1011,7 @@ void TreeItemModel::set_hierarchical_list(bool value){
     emit hierarchicalListChanged(value);
 }
 
+#ifdef USE_QUERY_BUILDER_LIB
 void TreeItemModel::set_connection(root_tree_conf::typeConnection type, const QString &value, const QString &table_name)
 {
     m_conf->set_type_connection(type);
@@ -1017,6 +1025,7 @@ void TreeItemModel::set_connection(root_tree_conf::typeConnection type, const QS
             load_from_database(NIL_STRING_UUID);
     }
 }
+#endif
 
 void TreeItemModel::set_connection(root_tree_conf::typeConnection type, const http::http_conf &value)
 {

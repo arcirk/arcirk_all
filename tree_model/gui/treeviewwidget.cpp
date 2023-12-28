@@ -40,6 +40,7 @@ TreeViewWidget::TreeViewWidget(QWidget *parent, const QString& typeName)
     m_inners_dialogs = false;
     m_only_groups_in_root = false;
     m_add_group_in_root_only = false;
+    m_allow_def_commands = true;
 
     setProperty("typeName", typeName);
 
@@ -242,11 +243,15 @@ void TreeViewWidget::currentChanged(const QModelIndex &current, const QModelInde
 
             m_toolBar->setButtonEnabled("move_to_item", true);
             if(!model->hierarchical_list()){
-                if(index.row() < model->rowCount() - 1)
+                if(index.row() == model->rowCount() - 1)
+                    m_toolBar->setButtonEnabled("move_down_item", false);
+                else if(index.row() < model->rowCount() - 1)
                     m_toolBar->setButtonEnabled("move_down_item", true);
 
                 if(index.row() != 0)
                     m_toolBar->setButtonEnabled("move_up_item", true);
+                else
+                    m_toolBar->setButtonEnabled("move_up_item", false);
             }
         }else{
             m_toolBar->setButtonEnabled("add_group", false);
@@ -639,10 +644,10 @@ void TreeViewWidget::onSourceModelChanged()
         auto delegate = (TreeItemDelegate*)this->itemDelegate();
         if(delegate!=0)
             delegate->setGridLine(!model_->hierarchical_list());
-        if(!m_not_sort)
-            setSortingEnabled(!model_->hierarchical_list());
-        else
-            setSortingEnabled(false);
+//        if(!m_not_sort)
+//            setSortingEnabled(!model_->hierarchical_list());
+//        else
+          setSortingEnabled(m_not_sort);
     }
 }
 
@@ -657,22 +662,26 @@ void TreeViewWidget::onToolBarItemClicked(const QString &buttonName)
     json b = buttonName.toStdString();
     auto btn = b.get<toolbar_buttons>();
     if(!m_inners_dialogs){
-        if(btn == add_item){
-            addRow();
-        }else if(btn == add_group){
-            //
-        }else if(btn == delete_item){
-            deleteItemCommand();
-        }else if(btn == edit_item){
-            editRow();
-        }else if(btn == move_to_item){
-            //
-        }else if(btn == move_up_item){
-            moveUp();
-        }else if(btn == move_down_item){
-            moveDown();
+        if(m_allow_def_commands){
+            if(btn == add_item){
+                addRow();
+            }else if(btn == add_group){
+                //
+            }else if(btn == delete_item){
+                deleteItemCommand();
+            }else if(btn == edit_item){
+                editRow();
+            }else if(btn == move_to_item){
+                //
+            }else if(btn == move_up_item){
+                moveUp();
+            }else if(btn == move_down_item){
+                moveDown();
+            }else
+                emit toolBarItemClicked(buttonName);
         }else
             emit toolBarItemClicked(buttonName);
+
     }else{
         if(btn == add_item){
             openNewItemDialog();
@@ -738,6 +747,19 @@ void TreeViewWidget::moveUp()
 
     if(current_index.isValid())
         model->move_up(current_index);
+
+    auto index = this->current_index();
+    if(!model->hierarchical_list()){
+        if(index.row() == model->rowCount() - 1)
+            m_toolBar->setButtonEnabled("move_down_item", false);
+        else if(index.row() < model->rowCount() - 1)
+            m_toolBar->setButtonEnabled("move_down_item", true);
+
+        if(index.row() != 0)
+            m_toolBar->setButtonEnabled("move_up_item", true);
+        else
+            m_toolBar->setButtonEnabled("move_up_item", false);
+    }
 }
 
 void TreeViewWidget::moveDown()
@@ -749,6 +771,19 @@ void TreeViewWidget::moveDown()
 
     if(current_index.isValid())
         model->move_down(current_index);
+
+    auto index = this->current_index();
+    if(!model->hierarchical_list()){
+        if(index.row() == model->rowCount() - 1)
+            m_toolBar->setButtonEnabled("move_down_item", false);
+        else if(index.row() < model->rowCount() - 1)
+            m_toolBar->setButtonEnabled("move_down_item", true);
+
+        if(index.row() != 0)
+            m_toolBar->setButtonEnabled("move_up_item", true);
+        else
+            m_toolBar->setButtonEnabled("move_up_item", false);
+    }
 }
 
 #endif

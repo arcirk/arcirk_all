@@ -12,13 +12,17 @@
 #include <tuple>
 #include <QSplitter>
 #include <QWidget>
+
+#ifdef USE_QUERY_BUILDER_LIB
 #include <QSqlDatabase>
 #include <QSqlDriver>
 #include <QSqlError>
-#include <QRegularExpression>
 #include <QSqlQuery>
 #include <QSqlRecord>
 #include <QSqlField>
+#endif
+
+#include <QRegularExpression>
 #include <QIcon>
 #include <QFileIconProvider>
 
@@ -421,6 +425,7 @@ namespace arcirk::tree_model{
             return val;
     }
 
+#ifdef USE_QUERY_BUILDER_LIB
     inline json from_sql(QSqlDatabase& sql, const QString& query){
         QSqlQuery rs(sql);
         rs.exec(query);
@@ -516,6 +521,7 @@ namespace arcirk::tree_model{
 
             return result;
     }
+#endif
 
 #ifdef BOOST_SERIALIZATION
     class data_ref
@@ -562,7 +568,9 @@ namespace arcirk::tree_model{
                 m_type_connection       = noConnection;
                 m_enable_rows_icons     = true;
                 m_database_changed      = false;
+#ifdef USE_QUERY_BUILDER_LIB
                 m_database              = nullptr;
+#endif
                 m_use_binary_links      = false;
                 m_http_conf = http::http_conf();
                 enable_drag_and_drop(false);
@@ -800,6 +808,7 @@ namespace arcirk::tree_model{
             std::string id_column() const {return "ref";};
             std::string parent_column() const {return "parent";};
 
+#ifdef USE_QUERY_BUILDER_LIB
             void set_user_sql_where(const json value){m_user_where = value;};
             json user_sql_where(){return m_user_where;};
 
@@ -808,7 +817,7 @@ namespace arcirk::tree_model{
 
             QSqlDatabase* get_database(){return m_database;};
             void set_database(QSqlDatabase* value){m_database = value;};
-
+#endif
             QMap<QString, QString> column_aliases_default() const{
 
                 QMap<QString, QString> m_colAliases{};
@@ -911,7 +920,9 @@ namespace arcirk::tree_model{
             http::http_conf                           m_http_conf;
             json                                m_user_where;
             bool                                m_database_changed;
+#ifdef USE_QUERY_BUILDER_LIB
             QSqlDatabase*                       m_database;
+#endif
             bool                                m_use_binary_links;
 
             void user_data_init()

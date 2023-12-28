@@ -72,7 +72,7 @@ namespace arcirk::tree_widget {
 
         QString object_name() const {return "TreeViewWidget";};
 
-        void enable_sort(bool value){m_not_sort = !value;};
+        void enable_sort(bool value){m_not_sort = value;};
 
         void clear();
 
@@ -97,6 +97,13 @@ namespace arcirk::tree_widget {
         void openOpenMoveToDialog();
         void deleteItemCommand();
 
+        void allow_def_commands(bool value) {m_allow_def_commands = value;};
+
+        void addRow();
+        void editRow();
+        void moveUp();
+        void moveDown();
+
     protected:
         void mousePressEvent(QMouseEvent *event) override;
         void mouseMoveEvent(QMouseEvent *event) override;
@@ -120,16 +127,15 @@ namespace arcirk::tree_widget {
         bool m_inners_dialogs;
         bool m_only_groups_in_root; //
         bool m_add_group_in_root_only;
+        bool m_allow_def_commands;
+
             //
         void set_hierarchy_list(bool value);
         void performDrag();
         int text_width(int column, const QModelIndex& parent, const int& result = 0);
 
 
-        void addRow();
-        void editRow();
-        void moveUp();
-        void moveDown();
+
 
     signals:
         void doDropEvent(const QModelIndex& index, const QString& sender);

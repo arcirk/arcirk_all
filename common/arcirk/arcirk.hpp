@@ -1,10 +1,9 @@
 #ifndef ARCIRK_HPP
 #define ARCIRK_HPP
 
-#ifdef _WINDOWS
+#ifdef _WIN32
 #pragma warning(disable:4100)
 #pragma warning(disable:4267)
-//#pragma comment(lib, "advapi32")
 #endif
 
 #include <iostream>
@@ -75,15 +74,6 @@ namespace arcirk::synchronize {
         vBinary
     };
 }
-
-
-//BOOST_FUSION_DEFINE_STRUCT(
-//    (arcirk::synchronize), variant_p,
-//    (std::string, representation)
-//    (int, type)
-//    (int, role)
-//    (ByteArray, data)
-//)
 
 namespace arcirk::synchronize {
     struct variant_p{
@@ -255,7 +245,7 @@ inline tm current_date() {
     using namespace std;
     tm current{};
     time_t t = time(nullptr);
-#ifdef _WINDOWS
+#ifdef _WIN32
     localtime_s(&current, &t);
 #else
     localtime_r(&t, &current);
@@ -267,7 +257,7 @@ inline tm seconds_to_date(const long int& dt){
     using namespace std;
     time_t t = (time_t)dt;
     tm current{};
-#ifdef _WINDOWS
+#ifdef _WIN32
     localtime_s(&current, &t);
 #else
     localtime_r(&t, &current);
@@ -309,7 +299,7 @@ inline long int end_day(const std::tm& d){
 }
 
 
-inline void fail(const std::string& what, const std::string& error, bool conv = true, const std::string& log_folder = "logs"){
+[[maybe_unused]] inline void fail(const std::string& what, const std::string& error, bool conv = true, const std::string& log_folder = "logs"){
 
 #ifdef BOOST_FILESYSTEM
     const std::tm tm = arcirk::current_date();
@@ -352,12 +342,12 @@ inline void fail(const std::string& what, const std::string& error, bool conv = 
         out << res << '\n';
     }
     out.close();
-#else
+#else   
     std::cerr << what << ":" << error << std::endl;
 #endif
 
 };
-inline void log(const std::string& what, const std::string& message, bool conv = true, const std::string& log_folder = "logs"){
+[[maybe_unused]] inline void log(const std::string& what, const std::string& message, bool conv = true, const std::string& log_folder = "logs"){
 
 #ifdef BOOST_FILESYSTEM
     const std::tm tm = arcirk::current_date();
@@ -495,7 +485,7 @@ inline std::string crypt(const std::string &source, const std::string& key) {
     if(source.empty())
         return {};
     try {
-#ifdef _WINDOWS
+#ifdef _WIN32
         std::string s  = arcirk::from_utf(source);
         std::string p  = arcirk::from_utf(key);
         std::vector<char> source_(s.c_str(), s.c_str() + s.size() + 1);
@@ -933,7 +923,7 @@ namespace base64{
         return ret;
     }
     inline ByteArray base64_to_byte(std::string const& encoded_string) {
-        int in_len = encoded_string.size();
+        int in_len = (int)encoded_string.size();
         int i = 0;
         int j = 0;
         int in_ = 0;

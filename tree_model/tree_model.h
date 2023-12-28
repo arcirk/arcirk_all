@@ -88,9 +88,9 @@ namespace arcirk::tree_model {
         json to_object(const QModelIndex &index) const;
         json to_table_model(const QModelIndex &parent, bool childs = false, bool group_only = false) const;
 
-        QModelIndex find(const QUuid& ref, const QModelIndex parent = QModelIndex()) const;
-        QModelIndex find(int column, const QVariant& source, const QModelIndex parent = QModelIndex()) const;
-        QList<QModelIndex> find_all(int column, const QVariant& source, const QModelIndex parent = QModelIndex()) const;
+        QModelIndex find(const QUuid& ref, const QModelIndex& parent = QModelIndex()) const;
+        QModelIndex find(int column, const QVariant& source, const QModelIndex& parent = QModelIndex()) const;
+        QList<QModelIndex> find_all(int column, const QVariant& source, const QModelIndex& parent = QModelIndex()) const;
 
         json empty_data();
         void set_object_name(const QModelIndex& index, const QString& name);
@@ -105,10 +105,15 @@ namespace arcirk::tree_model {
         void set_enable_drag(bool value){m_conf->set_enable_drag(value);};
         void set_enable_drop(bool value){m_conf->set_enable_drop(value);};
 
+#ifdef USE_QUERY_BUILDER_LIB
         void set_connection(root_tree_conf::typeConnection type, const QString& value, const QString& table_name);
-        void set_connection(root_tree_conf::typeConnection type, const http::http_conf& value);
-        void enable_database_changed(){m_conf->set_database_changed(true);};
+#endif
 
+        void set_connection(root_tree_conf::typeConnection type, const http::http_conf& value);
+
+#ifdef USE_QUERY_BUILDER_LIB
+        void enable_database_changed(){m_conf->set_database_changed(true);};
+#endif
         QPair<int, int> widget_address(){return m_widget_address;};
         void set_widget_address(const QPair<int, int> value){m_widget_address = value;};
 
@@ -166,8 +171,9 @@ namespace arcirk::tree_model {
         void set_server_object(arcirk::server::server_objects value) {m_server_object = value;};
 #endif
 
+#ifdef USE_QUERY_BUILDER_LIB
         void set_user_sql_where(const json& value){m_conf->set_user_sql_where(value);};
-
+#endif
         void reset_sql_data();
 
         json unload_column(int column, const QModelIndex& parent = QModelIndex(), bool recursive = false);
@@ -189,7 +195,9 @@ namespace arcirk::tree_model {
         QString path(const QModelIndex& index, int column = 0);
 
     protected:
+#ifdef USE_QUERY_BUILDER_LIB
         QSqlDatabase m_db;
+#endif
         std::shared_ptr<root_tree_conf> m_conf;
 
         void init_root_data(const json& rootData);
@@ -202,8 +210,9 @@ namespace arcirk::tree_model {
 
         void init_class(const json& rootData = {});
         void to_array_(const QModelIndex &parent, json& result, bool childs = false, bool group_only = false) const;
-
+#ifdef USE_QUERY_BUILDER_LIB
         bool connect_sql_database(const QString& table_name = "");
+#endif
         void load_from_database(const QString& parent = NIL_STRING_UUID);
         json http_get(const json &parent) const;
         json http_get_directory(const json &parent) const;

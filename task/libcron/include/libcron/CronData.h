@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include <libcron/TimeTypes.h>
+#include "TimeTypes.h"
 
 namespace libcron
 {

@@ -18,7 +18,7 @@ namespace libcron
         while (!done && --max_iterations > 0)
         {
             bool date_changed = false;
-            year_month_day ymd = date::floor<days>(curr);
+            date::year_month_day ymd = date::floor<days>(curr);
 
             // Add months until one of the allowed days are found, or stay at the current one.
             if (data.get_months().find(static_cast<Months>(unsigned(ymd.month()))) == data.get_months().end())
@@ -44,7 +44,7 @@ namespace libcron
             else
             {
                 //Add days until the current weekday is one of the allowed weekdays
-                year_month_weekday ymw = date::floor<days>(curr);
+                date::year_month_weekday ymw = date::floor<days>(curr);
 
                 if (data.get_day_of_week().find(static_cast<DayOfWeek>(ymw.weekday().c_encoding())) ==
                     data.get_day_of_week().end())

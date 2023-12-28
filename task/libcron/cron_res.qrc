@@ -1,0 +1,17 @@
+<RCC>
+    <qresource prefix="/">
+        <file>img/animation_loaded.gif</file>
+        <file>img/item.png</file>
+        <file>img/itemOver.png</file>
+        <file>img/startTask.png</file>
+        <file>img/task-management-14.svg</file>
+        <file>img/task-progress-1.svg</file>
+        <file>img/task-process-2.svg</file>
+        <file>img/task-process-1.svg</file>
+        <file>img/task_16.png</file>
+        <file>img/Tasks.ico</file>
+        <file>img/task.png</file>
+        <file>img/taskPause.png</file>
+        <file>img/options.png</file>
+    </qresource>
+</RCC>

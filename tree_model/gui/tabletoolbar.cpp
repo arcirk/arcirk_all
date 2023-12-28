@@ -92,7 +92,7 @@ void TableToolBar::setSeparatorVisible(int index, bool value)
     }
 }
 
-QToolButton *TableToolBar::botton(const QString &name)
+QToolButton *TableToolBar::button(const QString &name)
 {
     auto itr = m_bottons.find(name);
     if(itr != m_bottons.end())
@@ -101,7 +101,7 @@ QToolButton *TableToolBar::botton(const QString &name)
     return nullptr;
 }
 
-void TableToolBar::addBotton(const QString &name, const QIcon &ico, bool checkable, int position)
+void TableToolBar::addButton(const QString &name, const QIcon &ico, bool checkable, int position)
 {
     auto btn = new QToolButton(this);
     btn->setIcon(ico);
@@ -115,6 +115,18 @@ void TableToolBar::addBotton(const QString &name, const QIcon &ico, bool checkab
         pos = position;
     ui->horizontalLayout->insertWidget( pos, btn);
     connect(btn, &QToolButton::clicked, this, &TableToolBar::onButtonClicked);
+}
+
+void TableToolBar::insertSeparator(int position)
+{
+    auto label = new QLabel(this);
+    label->setText("");
+    label->setFrameShape(QFrame::VLine);
+    label->setFrameShadow(QFrame::Raised);
+    int pos = ui->horizontalLayout->count() - 1;
+    if(position != -1)
+        pos = position;
+    ui->horizontalLayout->insertWidget( pos, label);
 }
 
 void arcirk::tree_widget::TableToolBar::onHierarchyState(bool state)

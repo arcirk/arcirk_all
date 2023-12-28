@@ -84,3 +84,9 @@
 /task/build-libcron-Desktop_Qt_6_5_2_MSVC2019_64bit-Release/
 /task/qt/build-bTasks-Desktop_Qt_6_5_2_MSVC2019_64bit-Debug/
 /task/libcron/CMakeLists.txt.user
+/task/build-TaskGroup-Desktop_Qt_6_5_2_MSVC2019_64bit-Debug/
+/task/libcron/build-libcron-Desktop_Qt_6_5_2_MSVC2019_64bit-Debug/
+/task/libcron/debug/
+/task/libcron/release/
+/task/qt/bTasks/
+/task/TaskGroup/TaskGroup.pro.user
