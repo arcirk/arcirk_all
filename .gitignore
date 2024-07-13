@@ -90,3 +90,5 @@
 /task/libcron/release/
 /task/qt/bTasks/
 /task/TaskGroup/TaskGroup.pro.user
+/build-ProfileManager-Desktop_Qt_6_6_1_MSVC2019_64bit-Debug/
+/build-query_builder_ui-Desktop_Qt_6_6_1_MSVC2019_64bit-Debug/

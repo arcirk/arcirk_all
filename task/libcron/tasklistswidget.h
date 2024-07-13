@@ -6,6 +6,7 @@
 #include "gui/treeviewwidget.h"
 #include "gui/tabletoolbar.h"
 #include "common.hpp"
+#include "cronworker.h"
 
 using namespace arcirk::tree_widget;
 using namespace arcirk::tree_model;
@@ -35,12 +36,15 @@ typedef arcirk::tree_model::ITree<arcirk::tasks::task_options> ITreeTaskModel;
         TreeViewWidget* treeView;
         TableToolBar* m_toolBar;
 
+
     private slots:
         void onToolBarItemClicked(const QString& buttonName);
         void onTreeItemDoubleClicked(const QModelIndex& index, const QString& item_name);
 
+
     signals:
         void taskListChanged();
+        void startTask(const arcirk::tasks::task_options& task);
 
     };
 }

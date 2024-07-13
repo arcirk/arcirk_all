@@ -1,6 +1,5 @@
 #ifndef IS_OS_ANDROID
 #include "treeitemvariant.h"
-//#include "qbitarray.h"
 #include <QHBoxLayout>
 #include <QToolButton>
 #include <QAction>
@@ -13,7 +12,6 @@
 #include <QLineEdit>
 #include <QSpinBox>
 #include <QTextEdit>
-//#include <QComboBox>
 #include "treeitemcombobox.h"
 #include <alpaca/alpaca.h>
 

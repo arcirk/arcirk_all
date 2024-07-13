@@ -83,6 +83,9 @@ namespace libcron
 
             void get_time_until_expiry_for_tasks(
                     std::vector<std::tuple<std::string, std::chrono::system_clock::duration>>& status) const;
+            void get_time_until_expiry_for_tasks(
+                    std::vector<std::tuple<std::string, std::chrono::system_clock::duration>>& status,
+                const std::chrono::system_clock::time_point& now) const;
 
             friend std::ostream& operator<<<>(std::ostream& stream, const Cron<ClockType, LockType>& c);
 
@@ -277,6 +280,20 @@ namespace libcron
                                                           std::chrono::system_clock::duration>>& status) const
     {
         auto now = clock.now();
+        status.clear();
+
+        std::for_each(tasks.get_tasks().cbegin(), tasks.get_tasks().cend(),
+                      [&status, &now](const Task& t)
+                      {
+                          status.emplace_back(t.get_name(), t.time_until_expiry(now));
+                      });
+    }
+
+    template<typename ClockType, typename LockType>
+    void Cron<ClockType, LockType>::get_time_until_expiry_for_tasks(std::vector<std::tuple<std::string,
+                                                                                           std::chrono::system_clock::duration>>& status,
+                                                                    const std::chrono::system_clock::time_point& now) const
+    {
         status.clear();
 
         std::for_each(tasks.get_tasks().cbegin(), tasks.get_tasks().cend(),

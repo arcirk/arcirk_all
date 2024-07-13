@@ -3,6 +3,7 @@
 #include "taskitem.h"
 #include <QToolButton>
 #include "propertydialog.h"
+#include "croncpp.hpp"
 
 using namespace arcirk::tasks;
 
@@ -54,6 +55,8 @@ TaskListsWidget::TaskListsWidget(QWidget *parent) :
     m_toolBar->addButton("btnTaskPause", QIcon(":/img/taskPause.png"));
     m_toolBar->insertSeparator();
     m_toolBar->addButton("btnTaskParam", QIcon(":/img/options.png"));
+    m_toolBar->insertSeparator();
+    m_toolBar->addButton("btnGetTimeUntil", QIcon(":/img/options.png"));
 
     ui->verticalLayout->addWidget(m_toolBar);
     ui->verticalLayout->addWidget(treeView);
@@ -146,8 +149,8 @@ void TaskListsWidget::onToolBarItemClicked(const QString &buttonName)
     }else if(buttonName == "btnTaskParam"){
         const auto index = treeView->current_index();
         if(index.isValid()){
-            auto model = (ITreeTaskModel)treeView->get_model();
-            auto task = model.object(index);
+            auto model = (ITreeTaskModel*)treeView->get_model();
+            auto task = model->object(index);
             auto str = arcirk::byte_array_to_string(task.param);
             json param;
             if(json::accept(str)){
@@ -161,12 +164,73 @@ void TaskListsWidget::onToolBarItemClicked(const QString &buttonName)
             auto dlg = plugins::PropertyDialog(param, this);
             if(dlg.exec()){
                 task.param = arcirk::string_to_byte_array(dlg.result().dump());
-                model.set_struct(task, index);
+                model->set_struct(task, index);
                 emit taskListChanged();
             }
         }
 
+    }else if(buttonName == "btnTaskStart"){
+        const auto index = treeView->current_index();
+        if(index.isValid()){
+            auto model = (ITreeTaskModel*)treeView->get_model();
+            auto task = model->object(index);
+            emit startTask(task);
+        }
+    }else if(buttonName == "btnGetTimeUntil"){
+        auto model = (ITreeTaskModel*)treeView->get_model();
+        auto arr = model->array(QModelIndex(), true);
+
+        //libcron::Cron<libcron::LocalClock, libcron::Locker> cron;
+
+        std::time_t now = std::time(0);
+        foreach (auto itr, arr) {
+//            auto res = cron.add_schedule(itr.name, itr.cron_string, [](auto&) {});
+//            qDebug() << res;
+            auto cron = cron::make_cron(itr.cron_string);
+            for (int y = 0; y < 5; ++y) {
+                std::time_t next = cron::cron_next(cron, now);
+                //std::cout << ctime(&next) << std::endl;
+                qDebug() << "Следующее выполение: " << ctime(&next) ;
+                now = next;
+            }
+
+        }
+//        cron.tick();
+//        std::vector<std::tuple<std::string,
+//                               std::chrono::system_clock::duration>> status;
+//        auto tp1 = std::chrono::system_clock::now();
+//        cron.get_time_until_expiry_for_tasks(status);
+
+//        auto t = time(0);
+//        qDebug() << "Следующее выполение: " << ctime(&t) << std::get<1>(status[0]).count();
+
+//        for (int i = 0; i < status.size(); ++i) {
+
+//            time_t t = std::chrono::system_clock::to_time_t(tp1 + std::get<1>(status[i]));
+//            qDebug() << "Следующее выполение: " << ctime(&t);
+////            auto next = tp1 + std::get<1>(status[i]);
+//////            t = std::chrono::system_clock::to_time_t(next);
+//////            qDebug() << "test: " << ctime(&t);
+//            auto next = cron.get_clock().now() +  std::get<1>(status[i]);
+//            auto secs = std::chrono::seconds(8 * 60 * 60);
+//            const auto offset = duration_cast<std::chrono::system_clock::duration>(secs);
+//            for (int y = 0; y < 5; ++y) {
+//                cron.tick();
+//                cron.get_time_until_expiry_for_tasks(status, next);
+////                tp1 = next - offset;
+////                time_t t = std::chrono::system_clock::to_time_t(tp1 + std::get<1>(status[i]));
+////                qDebug() << "Следующее выполение: " << ctime(&t);
+
+//                next = next + std::get<1>(status[i]);
+//                tp1 = next - offset;
+//                time_t t = std::chrono::system_clock::to_time_t(tp1 + std::get<1>(status[i]));
+//                qDebug() << "Следующее выполение: " << ctime(&t) << std::get<1>(status[i]).count();
+//            }
+
+
+//        }
     }
+
 }
 
 void TaskListsWidget::onTreeItemDoubleClicked(const QModelIndex &index, const QString &item_name)
@@ -182,3 +246,4 @@ void TaskListsWidget::onTreeItemDoubleClicked(const QModelIndex &index, const QS
         emit taskListChanged();
     }
 }
+

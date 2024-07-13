@@ -13,6 +13,7 @@
 #include <QDialogButtonBox>
 #include "gui/pairmodel.h"
 #include <QTimeEdit>
+#include "weeksmonthsdialog.h"
 
 using namespace arcirk::tasks;
 
@@ -23,6 +24,8 @@ TaskItem::TaskItem(task_options& task, QWidget *parent) :
 {
     ui->setupUi(this);
 
+    initCron(task.cron_string.c_str());
+
     auto pmpdel = new PairModel(this);
     pmpdel->setContent(QList{
         DataPair{"Пользовательский", "users"},
@@ -32,8 +35,19 @@ TaskItem::TaskItem(task_options& task, QWidget *parent) :
         DataPair{"Eжедневно", "@daily"},
         DataPair{"Ежечасно", "@hourly"}
     });
+
     ui->cmbCronType->setModel(pmpdel);
     connect(ui->cmbCronType, &QComboBox::currentIndexChanged, this, &TaskItem::onCronTypeCurrentIndexChanged);
+
+    auto impdel = new PairModel(this);
+    impdel->setContent(QList{
+        DataPair{"Секунд(ы)", "secs"},
+        DataPair{"Минут(ы)", "minuts"},
+        DataPair{"Час(ы)", "hours"}
+    });
+
+    ui->cmbInterval->setModel(impdel);
+    connect(ui->cmbInterval, &QComboBox::currentIndexChanged, this, &TaskItem::onCronTIntervalCurrentIndexChanged);
 
     if(task_data_.uuid.empty()){
         task_data_.uuid = QUuid::createUuid().toString(QUuid::WithoutBraces).toStdString();
@@ -45,6 +59,7 @@ TaskItem::TaskItem(task_options& task, QWidget *parent) :
     ui->allowed->setCheckState(task_data_.allowed ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
     ui->predefined->setCheckState(task_data_.predefined ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
     ui->days_of_week->setText(task_data_.days_of_week.c_str());
+    ui->days_of_month->setText(task_data_.days_of_month.c_str());
     ui->interval->setValue(task_data_.interval);
     ui->uuid->setText(task_data_.uuid.c_str());
     ui->script->setText(task_data_.script_synonum.c_str());
@@ -84,7 +99,15 @@ TaskItem::TaskItem(task_options& task, QWidget *parent) :
     connect(ui->synonum, &QLineEdit::textChanged, this, &TaskItem::onSynonimTextChange);
     connect(ui->start_task, &QTimeEdit::userTimeChanged, this, &TaskItem::onStartTaskUserTimeChanged);
     connect(ui->end_task, &QTimeEdit::userTimeChanged, this, &TaskItem::onEndTaskUserTimeChanged);
+    connect(ui->btnSelectWeeks, &QToolButton::clicked, this, &TaskItem::onOpenWeeksOptions);
+    connect(ui->btnSelectMonths, &QToolButton::clicked, this, &TaskItem::onOpenMonthsOptions);
 
+    if(ui->days_of_week->text().isEmpty())
+        ui->days_of_week->setText("*");
+    if(ui->days_of_month->text().isEmpty())
+        ui->days_of_month->setText("*");
+
+    connect(ui->cmbInterval, &QComboBox::currentIndexChanged, this, &TaskItem::onCmbIntervalCurrentIndexChanged);
 }
 
 TaskItem::~TaskItem()
@@ -97,6 +120,7 @@ void TaskItem::accept()
     task_data_.name = ui->name->text().trimmed().toStdString();
     task_data_.synonum = ui->synonum->text().trimmed().toStdString();
     task_data_.days_of_week = ui->days_of_week->text().trimmed().toStdString();
+    task_data_.days_of_month = ui->days_of_month->text().trimmed().toStdString();
     task_data_.uuid = ui->uuid->text().trimmed().toStdString();
     task_data_.script_synonum = ui->script->text().trimmed().toStdString();
     task_data_.interval = ui->interval->value();
@@ -148,6 +172,24 @@ void TaskItem::onNameTextChange(const QString &value)
 void TaskItem::onSynonimTextChange(const QString &value)
 {
     task_data_.synonum = value.toStdString();
+}
+
+void TaskItem::onOpenWeeksOptions()
+{
+    auto dlg = WeeksMonthsDialog(0, generateCronText(), this);
+    if(dlg.exec()){
+        ui->days_of_week->setText(dlg.currentCronText());
+        ui->lblCronString->setText(generateCronText());
+    }
+}
+
+void TaskItem::onOpenMonthsOptions()
+{
+    auto dlg = WeeksMonthsDialog(1, generateCronText(), this);
+    if(dlg.exec()){
+        ui->days_of_month->setText(dlg.currentCronText());
+        ui->lblCronString->setText(generateCronText());
+    }
 }
 
 void TaskItem::openParamDialog()
@@ -210,25 +252,61 @@ void TaskItem::openParamDialog()
     }
 }
 
-QString TaskItem::generateCronText() const
+QString TaskItem::generateCronText()
 {
     if(ui->cmbCronType->currentIndex() > 0){
         return ui->cmbCronType->currentData().toString();
     };
 
-    QTime start_time = ui->start_task->time();
-    QTime end_time = ui->end_task->time();
+//    QStringList result{"*"};
 
-    int h = start_time.hour();
-    int m = end_time.minute();
+//    QTime start_time = ui->start_task->time();
+//    QTime end_time = ui->end_task->time();
 
-    QString cron_string = "*";
-    if((h+m) > 0){
-        cron_string.append(QString(" %1 %2").arg(QString::number(m), QString::number(h)));
-    }else
-        cron_string.append(" * *");
+//    int start_min = start_time.minute();
+//    int end_min = end_time.minute();
+//    int start_hour = start_time.hour();
+//    int end_hour = end_time.hour();
 
-    return cron_string;
+//    //seconds:
+
+//    //minutes:
+//    if(start_min + end_min == 0)
+//        result.append("*");
+//    else
+//        result.append(QString("%1-%2").arg(QString::number(start_min), QString::number(start_min)));
+//    //hours:
+//    if(start_hour + end_hour == 0)
+//        result.append("*");
+//    else
+//        result.append(QString("%1-%2").arg(QString::number(start_hour), QString::number(end_hour)));
+//    //day of month:
+//    result.append(ui->days_of_month->text());
+//    //month:
+//    result.append("*");
+//    //day of week:
+//    result.append(ui->days_of_week->text());
+
+//    return result.join(" ");
+
+    m_cron[3] = ui->days_of_month->text();
+    if(ui->days_of_week->text() == "*" && m_cron[3] != "*")
+        m_cron[5] = ui->days_of_week->text();
+    else
+        m_cron[5] = "?";
+
+
+    return m_cron.join(" ");
+}
+
+void TaskItem::initCron(const QString &text)
+{
+    auto tmp = text.split(" ");
+    if(tmp.size() == 6){
+        m_cron = QStringList(tmp);
+    }else{
+        m_cron = QString("* * * * * ?").split(" ");
+    }
 }
 
 void TaskItem::onEndInstallPlugin(const QString& file_name)
@@ -260,7 +338,13 @@ void TaskItem::onCronTypeCurrentIndexChanged(int index)
     ui->start_task->setEnabled(enable);
     ui->end_task->setEnabled(enable);
     ui->interval->setEnabled(enable);
-    ui->days_of_week->setEnabled(enable);
+    ui->btnSelectWeeks->setEnabled(enable);
+    ui->btnSelectMonths->setEnabled(enable);
+}
+
+void TaskItem::onCronTIntervalCurrentIndexChanged(int index)
+{
+
 }
 
 
@@ -272,5 +356,15 @@ void TaskItem::onStartTaskUserTimeChanged(const QTime &time)
 void TaskItem::onEndTaskUserTimeChanged(const QTime &time)
 {
     ui->lblCronString->setText(generateCronText());
+}
+
+
+void TaskItem::onCmbIntervalCurrentIndexChanged(int index)
+{
+    if(ui->cmbInterval->currentData().toString() == "minuts"){
+        m_cron[0] = "0";
+        m_cron[1] = QString("*/%1").arg(QString::number(ui->interval->value()));
+        ui->lblCronString->setText(generateCronText());
+    }
 }
 

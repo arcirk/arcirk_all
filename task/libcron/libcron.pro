@@ -22,31 +22,37 @@ unix {
 
 HEADERS += \
     common.hpp \
-    include/libcron/Cron.h \
-    include/libcron/CronClock.h \
-    include/libcron/CronData.h \
-    include/libcron/CronRandomization.h \
-    include/libcron/CronSchedule.h \
-    include/libcron/DateTime.h \
-    include/libcron/Task.h \
-    include/libcron/TaskQueue.h \
-    include/libcron/TimeTypes.h \
+    cron_parser.hpp \
+    croncpp.hpp \
+#    cronworker.h \
+#    include/libcron/Cron.h \
+#    include/libcron/CronClock.h \
+#    include/libcron/CronData.h \
+#    include/libcron/CronRandomization.h \
+#    include/libcron/CronSchedule.h \
+#    include/libcron/DateTime.h \
+#    include/libcron/Task.h \
+#    include/libcron/TaskQueue.h \
+#    include/libcron/TimeTypes.h \
     propertydialog.h \
     taskitem.h \
-    tasklistswidget.h
+    tasklistswidget.h \
+    weeksmonthsdialog.h
 
 SOURCES += \
+#    cronworker.cpp \
     propertydialog.cpp \
-    src/CronClock.cpp \
-    src/CronData.cpp \
-    src/CronRandomization.cpp \
-    src/CronSchedule.cpp \
-    src/Task.cpp \
+#    src/CronClock.cpp \
+#    src/CronData.cpp \
+#    src/CronRandomization.cpp \
+#    src/CronSchedule.cpp \
+#    src/Task.cpp \
     taskitem.cpp \
-    tasklistswidget.cpp
+    tasklistswidget.cpp \
+    weeksmonthsdialog.cpp
 
-INCLUDEPATH += $$PWD/../libcron/externals/date/include
-INCLUDEPATH += $$PWD/../libcron/include
+#INCLUDEPATH += $$PWD/../libcron/externals/date/include
+#INCLUDEPATH += $$PWD/../libcron/include
 
 RESOURCES += \
     cron_res.qrc
@@ -54,7 +60,8 @@ RESOURCES += \
 FORMS += \
     propertydialog.ui \
     taskitem.ui \
-    tasklistswidget.ui
+    tasklistswidget.ui \
+    weeksmonthsdialog.ui
 
 Boost_USE_STATIC_LIBS = ON
 

@@ -15,6 +15,7 @@ BOOST_FUSION_DEFINE_STRUCT(
     (int, type_script)
     (bool, allowed)
     (std::string, days_of_week)
+    (std::string, days_of_month)
     (ByteArray, script)
     (std::string, script_synonum)
     (std::string, comment)

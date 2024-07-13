@@ -28,16 +28,20 @@ namespace arcirk::tasks {
         void onOpenParamDialog();
         void onNameTextChange(const QString& value);
         void onSynonimTextChange(const QString& value);
+        void onOpenWeeksOptions();
+        void onOpenMonthsOptions();
 
     private:
         Ui::TaskItem *ui;
         task_options &task_data_;
+        QStringList m_cron;
 
         QString m_plugin_file;
 
         void openParamDialog();
         void openParam(const QString& file_name);
-        QString generateCronText() const;
+        QString generateCronText();
+        void initCron(const QString& text);
 
     signals:
         void doInstallPlugin(const json &param, const std::string& ref);
@@ -48,8 +52,10 @@ namespace arcirk::tasks {
 
     private slots:
         void onCronTypeCurrentIndexChanged(int index);
+        void onCronTIntervalCurrentIndexChanged(int index);
         void onStartTaskUserTimeChanged(const QTime &time);
         void onEndTaskUserTimeChanged(const QTime &time);
+        void onCmbIntervalCurrentIndexChanged(int index);
     };
 
 }
